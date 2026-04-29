@@ -2,27 +2,102 @@
 <html>
 <head>
   <title>Inventory Dashboard</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .card { display: inline-block; padding: 10px 20px; margin: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; }
+    button { padding: 5px 10px; cursor: pointer; }
+  </style>
 </head>
 <body>
 
 <h1>Inventory Dashboard</h1>
 
-<div id="dashboard"></div>
+<div class="card">Total Capital: <span id="capital">0</span></div>
+<div class="card">Total Sales: <span id="sales">0</span></div>
+<div class="card">Total Profit: <span id="profit">0</span></div>
+<div class="card">On Hand: <span id="onhand">0</span></div>
+<div class="card">Sold: <span id="sold">0</span></div>
+
+<h2>Inventory List</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Product</th>
+      <th>Capital</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody id="table"></tbody>
+</table>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
+const API = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
 
-fetch(API_URL + "?action=getDashboard")
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById("dashboard").innerHTML = `
-      <p>Total Capital: ${data.totalCapital}</p>
-      <p>Total Sales: ${data.totalSales}</p>
-      <p>Total Profit: ${data.totalProfit}</p>
-      <p>On Hand: ${data.onHand}</p>
-      <p>Sold: ${data.sold}</p>
-    `;
+function loadDashboard(){
+  fetch(API + "?action=getDashboard")
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById("capital").innerText = d.totalCapital;
+    document.getElementById("sales").innerText = d.totalSales;
+    document.getElementById("profit").innerText = d.totalProfit;
+    document.getElementById("onhand").innerText = d.onHand;
+    document.getElementById("sold").innerText = d.sold;
   });
+}
+
+function loadItems(){
+  fetch(API + "?action=getItems")
+  .then(r => r.json())
+  .then(data => {
+
+    let html = "";
+
+    data.forEach(row => {
+      html += `
+        <tr>
+          <td>${row[0]}</td>
+          <td>${row[2]}</td>
+          <td>${row[7]}</td>
+          <td>${row[10]}</td>
+          <td>
+            ${row[10] === "ON HAND" 
+              ? `<button onclick="markSold('${row[0]}')">Mark Sold</button>` 
+              : "✔ Sold"}
+          </td>
+        </tr>
+      `;
+    });
+
+    document.getElementById("table").innerHTML = html;
+  });
+}
+
+function markSold(id){
+  const soldAmount = prompt("Enter sold amount:");
+
+  fetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "markSold",
+      id: id,
+      soldAmount: Number(soldAmount)
+    })
+  })
+  .then(r => r.json())
+  .then(() => {
+    loadDashboard();
+    loadItems();
+  });
+}
+
+loadDashboard();
+loadItems();
 </script>
 
 </body>
