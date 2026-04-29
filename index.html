@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Inventory Dashboard</title>
+</head>
+<body>
+
+<h1>Inventory Dashboard</h1>
+
+<div id="dashboard"></div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
+
+fetch(API_URL + "?action=getDashboard")
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("dashboard").innerHTML = `
+      <p>Total Capital: ${data.totalCapital}</p>
+      <p>Total Sales: ${data.totalSales}</p>
+      <p>Total Profit: ${data.totalProfit}</p>
+      <p>On Hand: ${data.onHand}</p>
+      <p>Sold: ${data.sold}</p>
+    `;
+  });
+</script>
+
+</body>
+</html>
