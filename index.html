@@ -2,347 +2,190 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inventory Dashboard</title>
+  <title>BuySell Inventory Pro</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
-    body { font-family: Arial; padding: 20px; }
-
-    .card {
-      display: inline-block;
-      padding: 10px 20px;
-      margin: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-
-    input, select, button {
-      padding: 6px;
-      margin: 5px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    .chart-container {
-      width: 400px;
-      max-width: 100%;
-      margin: 20px 0;
-    }
-
-    @media (max-width: 768px) {
-      .card {
-        display: block;
-      }
-      canvas {
-        width: 100% !important;
-      }
-    }
+    body{font-family:Arial,sans-serif;background:#f7f7f7;padding:20px;margin:0}
+    h1,h2{margin-bottom:10px}
+    .topbar,.formbox,.filters,.charts{background:#fff;padding:15px;border-radius:12px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+    .card{background:#fafafa;border:1px solid #ddd;padding:15px;border-radius:10px;text-align:center}
+    input,select,button{padding:8px;border-radius:6px;border:1px solid #ccc;margin:4px}
+    button{cursor:pointer}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:15px}
+    .item{background:#fff;border-radius:12px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+    .item img{width:100%;height:160px;object-fit:cover;border-radius:10px}
+    .profit-pos{color:green;font-weight:bold}
+    .profit-neg{color:red;font-weight:bold}
+    canvas{max-width:400px!important;max-height:250px!important}
   </style>
 </head>
-
 <body>
 
-<h1>Inventory Dashboard</h1>
+<h1>BuySell Inventory Pro</h1>
 
-<!-- DASHBOARD -->
-<div style="display:flex; flex-wrap:wrap; gap:10px;">
-  <div class="card">Total Capital: <span id="capital">0</span></div>
-  <div class="card">Total Sales: <span id="sales">0</span></div>
-  <div class="card">Total Profit: <span id="profit">0</span></div>
-  <div class="card">On Hand: <span id="onhand">0</span></div>
-  <div class="card">Sold: <span id="sold">0</span></div>
+<div class="topbar">
+  <div class="cards">
+    <div class="card">Capital<br><span id="capital">0</span></div>
+    <div class="card">Sales<br><span id="sales">0</span></div>
+    <div class="card">Profit<br><span id="profit">0</span></div>
+    <div class="card">On Hand<br><span id="onhand">0</span></div>
+    <div class="card">Sold<br><span id="sold">0</span></div>
+  </div>
 </div>
 
-<hr>
+<div class="formbox">
+  <h2>Add Product</h2>
+  <input type="text" id="name" placeholder="Product Name">
+  <input type="number" id="price" placeholder="Purchase Amount">
+  <input type="file" id="image">
+  <button onclick="addItem()">Add Item</button>
+</div>
 
-<!-- ADD ITEM -->
-<h2>Add Product</h2>
-<input type="text" id="name" placeholder="Product Name"><br>
-<input type="number" id="price" placeholder="Purchase Amount"><br>
-<input type="file" id="image"><br><br>
-<button onclick="addItem()">Add Item</button>
-
-<hr>
-
-<!-- CHARTS -->
-<h2>Analytics</h2>
-
-<div class="chart-container">
+<div class="charts">
+  <h2>Analytics</h2>
   <canvas id="profitChart"></canvas>
-</div>
-
-<div class="chart-container">
   <canvas id="statusChart"></canvas>
 </div>
 
-<hr>
+<div class="filters">
+  <h2>Inventory</h2>
+  <input type="text" id="search" placeholder="Search product..." onkeyup="loadItems()">
+  <select id="filter" onchange="loadItems()">
+    <option value="ALL">All</option>
+    <option value="ON HAND">On Hand</option>
+    <option value="SOLD">Sold</option>
+  </select>
+</div>
 
-<!-- SEARCH -->
-<h2>Inventory List</h2>
-
-<input type="text" id="search" placeholder="Search..." onkeyup="loadItems()">
-
-<select id="filter" onchange="loadItems()">
-  <option value="ALL">All</option>
-  <option value="ON HAND">On Hand</option>
-  <option value="SOLD">Sold</option>
-</select>
-
-<br><br>
-
-<!-- GRID -->
-<div id="grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:15px;"></div>
+<div id="grid" class="grid"></div>
 
 <script>
-
 const API = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
+let profitChart = null;
+let statusChart = null;
 
-// ================= CHART INSTANCES =================
-let profitChartInstance = null;
-let statusChartInstance = null;
+function safeFetch(url, options={}){
+  return fetch(url, options)
+    .then(async r => {
+      const text = await r.text();
+      try{return JSON.parse(text)}
+      catch(e){console.error('Invalid API Response:', text); return null;}
+    });
+}
 
-// ================= DASHBOARD =================
 function loadDashboard(){
-  fetch(API + "?action=getDashboard")
-  .then(r => r.json())
-  .then(d => {
-    document.getElementById("capital").innerText = d.totalCapital;
-    document.getElementById("sales").innerText = d.totalSales;
-    document.getElementById("profit").innerText = d.totalProfit;
-    document.getElementById("onhand").innerText = d.onHand;
-    document.getElementById("sold").innerText = d.sold;
+  safeFetch(API + '?action=getDashboard').then(d => {
+    if(!d) return;
+    capital.innerText = d.totalCapital;
+    sales.innerText = d.totalSales;
+    profit.innerText = d.totalProfit;
+    onhand.innerText = d.onHand;
+    sold.innerText = d.sold;
   });
 }
 
-// ================= LOAD ITEMS =================
 function loadItems(){
+  safeFetch(API + '?action=getItems').then(data => {
+    if(!Array.isArray(data)) return;
+    renderCharts(data);
 
-  fetch(API + "?action=getItems")
-.then(async r => {
-
-  const text = await r.text();   // 👈 read raw response first
-
-  try {
-    return JSON.parse(text);     // try convert to JSON
-  } catch (e) {
-    console.error("API did NOT return JSON:", text);
-    return [];                   // prevent crash
-  }
-
-})
-.then(data => {
-
-    if(Array.isArray(data)) {
-  loadCharts(data);
-}
-
-    const search = document.getElementById("search").value.toLowerCase();
-    const filter = document.getElementById("filter").value;
-
-    let html = "";
+    const s = search.value.toLowerCase();
+    const f = filter.value;
+    let html = '';
 
     data.forEach(row => {
+      const id = row[0] || '';
+      const name = row[2] || '';
+      const capitalVal = row[7] || 0;
+      const img = row[9] || '';
+      const status = row[10] || 'ON HAND';
+      const soldPrice = row[12] || '';
+      const profitVal = Number(row[13]) || 0;
 
-      const name = (row?.[2] || "").toLowerCase();
-const status = (row?.[10] || "ON HAND");
-
-      if(!name.includes(search)) return;
-      if(filter !== "ALL" && status !== filter) return;
-
-      const profit = Number(row?.[13] ?? 0);
-      const profitColor = profit >= 0 ? "green" : "red";
-
-      const image = row[9]
-        ? `<img src="${row[9]}" style="width:100%; height:150px; object-fit:cover; border-radius:10px;">`
-        : "";
+      if(!name.toLowerCase().includes(s)) return;
+      if(f !== 'ALL' && status !== f) return;
 
       html += `
-        <div style="border:1px solid #ddd; border-radius:10px; padding:10px;">
-          ${image}
-          <h3>${row[2]}</h3>
+      <div class="item">
+        ${img ? `<img src="${img}">` : ''}
+        <h3>${name}</h3>
+        <p>Capital: ₱${capitalVal}</p>
+        <p>Sold Price: ${soldPrice ? '₱'+soldPrice : '-'}</p>
+        <p class="${profitVal>=0?'profit-pos':'profit-neg'}">Profit: ₱${profitVal}</p>
+        <p>Status: ${status}</p>
 
-          <p>Capital: ${row[7]}</p>
+        ${status === 'ON HAND' ? `
+          <input type="number" id="sold-${id}" placeholder="Sold ₱" style="width:80px;">
+          <button onclick="markSold('${id}')">Mark Sold</button>
+        ` : ''}
 
-          <p style="color:${profitColor}; font-weight:bold;">
-            Profit: ${profit}
-          </p>
-
-          <p>Sold Price: ${row[12] ? "₱" + row[12] : "-"}</p>
-
-          <p>Status: ${status}</p>
-
-          ${status === "ON HAND"
-            ? `
-              <input type="number" id="sold-${row[0]}" placeholder="₱" style="width:80px;">
-              <button onclick="markSold('${row[0]}')">Mark Sold</button>
-            `
-            : `
-              ✔ Sold
-            `}
-
-          <button onclick="editItem('${row[0]}')">Edit</button>
-
-          <button onclick="deleteItem('${row[0]}')" style="color:red;">
-            Delete
-          </button>
-
-        </div>
-      `;
+        <button onclick="editItem('${id}')">Edit</button>
+        <button onclick="deleteItem('${id}')">Delete</button>
+      </div>`;
     });
 
-    document.getElementById("grid").innerHTML = html;
+    grid.innerHTML = html;
   });
 }
 
-// ================= CHARTS =================
-function loadCharts(data){
-
-  if(!Array.isArray(data)) return;
-
-  let profit = 0;
-  let sold = 0;
-  let onhand = 0;
-
-  data.forEach(row => {
-
-    profit += Number(row?.[13] || 0);
-
-    if(row?.[10] === "SOLD") sold++;
-    if(row?.[10] === "ON HAND") onhand++;
-  });
-
-  if(profitChartInstance) profitChartInstance.destroy();
-  if(statusChartInstance) statusChartInstance.destroy();
-
-  profitChartInstance = new Chart(document.getElementById("profitChart"), {
-    type: "bar",
-    data: {
-      labels: ["Total Profit"],
-      datasets: [{
-        label: "Profit",
-        data: [profit]
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false
-    }
-  });
-
-  statusChartInstance = new Chart(document.getElementById("statusChart"), {
-    type: "pie",
-    data: {
-      labels: ["On Hand", "Sold"],
-      datasets: [{
-        data: [onhand, sold]
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false
-    }
-  });
-}
-
-// ================= ADD ITEM =================
 function addItem(){
+  const nameVal = document.getElementById('name').value;
+  const priceVal = Number(document.getElementById('price').value);
 
-  const file = document.getElementById("image").files[0];
-
-  const name = document.getElementById("name").value;
-  const price = document.getElementById("price").value;
-
-  fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "addItem",
-      productName: name,
-      purchaseAmount: Number(price),
-      photoURL: ""
-    })
-  })
-  .then(r => r.json())
-  .then(() => {
-    loadItems();
-    loadDashboard();
-  });
+  safeFetch(API,{method:'POST',body:JSON.stringify({action:'addItem',productName:nameVal,purchaseAmount:priceVal,shippingFee:0,otherFee:0,quantity:1,photoURL:''})})
+  .then(()=>{name.value='';price.value='';loadDashboard();loadItems();});
 }
 
-// ================= MARK SOLD =================
 function markSold(id){
+  const soldAmount = Number(document.getElementById('sold-'+id).value);
+  if(!soldAmount) return alert('Enter sold amount');
 
-  const input = document.getElementById("sold-" + id);
-
-  const soldAmount = Number(input.value);
-
-  if(!soldAmount){
-    alert("Enter sold amount");
-    return;
-  }
-
-  fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "markSold",
-      id: id,
-      soldAmount: soldAmount
-    })
-  })
-  .then(r => r.json())
-  .then(() => {
-    loadItems();
-    loadDashboard();
-  });
+  safeFetch(API,{method:'POST',body:JSON.stringify({action:'markSold',id:id,soldAmount:soldAmount})})
+  .then(()=>{loadDashboard();loadItems();});
 }
 
-// ================= EDIT =================
 function editItem(id){
+  const newName = prompt('New Product Name');
+  const newPrice = prompt('New Purchase Amount');
+  if(!newName || !newPrice) return;
 
-  const newName = prompt("New product name:");
-  const newPrice = prompt("New price:");
-
-  fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "editItem",
-      id: id,
-      productName: newName,
-      purchaseAmount: Number(newPrice)
-    })
-  })
-  .then(() => {
-    loadItems();
-    loadDashboard();
-  });
+  safeFetch(API,{method:'POST',body:JSON.stringify({action:'editItem',id:id,productName:newName,purchaseAmount:Number(newPrice)})})
+  .then(()=>{loadDashboard();loadItems();});
 }
 
-// ================= DELETE =================
 function deleteItem(id){
+  if(!confirm('Delete this item?')) return;
+  safeFetch(API,{method:'POST',body:JSON.stringify({action:'deleteItem',id:id})})
+  .then(()=>{loadDashboard();loadItems();});
+}
 
-  if(!confirm("Delete item?")) return;
+function renderCharts(data){
+  let totalProfit = 0, soldCount = 0, onHandCount = 0;
+  data.forEach(r=>{
+    totalProfit += Number(r[13]) || 0;
+    if(r[10]==='SOLD') soldCount++;
+    if(r[10]==='ON HAND') onHandCount++;
+  });
 
-  fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "deleteItem",
-      id: id
-    })
-  })
-  .then(() => {
-    loadItems();
-    loadDashboard();
+  if(profitChart) profitChart.destroy();
+  if(statusChart) statusChart.destroy();
+
+  profitChart = new Chart(document.getElementById('profitChart'), {
+    type:'bar',
+    data:{labels:['Profit'],datasets:[{data:[totalProfit]}]},
+    options:{responsive:true}
+  });
+
+  statusChart = new Chart(document.getElementById('statusChart'), {
+    type:'pie',
+    data:{labels:['On Hand','Sold'],datasets:[{data:[onHandCount,soldCount]}]},
+    options:{responsive:true}
   });
 }
 
-// ================= INIT =================
 loadDashboard();
 loadItems();
-
 </script>
-
 </body>
 </html>
