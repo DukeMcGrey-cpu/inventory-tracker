@@ -10,6 +10,11 @@
   border-radius: 5px;
   border: 1px solid #ccc;
 }
+    .chart-container {
+  width: 400px;
+  max-width: 100%;
+  margin: 20px 0;
+}
     body { font-family: Arial; padding: 20px; }
     .card { display: inline-block; padding: 10px 20px; margin: 10px; border: 1px solid #ccc; border-radius: 8px; }
 
@@ -49,8 +54,15 @@
 
 <h2>Analytics</h2>
 
-<canvas id="profitChart" height="100"></canvas>
-<canvas id="statusChart" height="100"></canvas>
+<h2>Analytics</h2>
+
+<div class="chart-container">
+  <canvas id="profitChart"></canvas>
+</div>
+
+<div class="chart-container">
+  <canvas id="statusChart"></canvas>
+</div>
 
 <hr>
 
@@ -256,25 +268,33 @@ loadItems();
   });
 
   new Chart(document.getElementById("profitChart"), {
-    type: "bar",
-    data: {
-      labels: ["Total Profit"],
-      datasets: [{
-        label: "Profit",
-        data: [profit]
-      }]
-    }
-  });
+  type: "bar",
+  data: {
+    labels: ["Total Profit"],
+    datasets: [{
+      label: "Profit",
+      data: [profit]
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false
+  }
+});
 
   new Chart(document.getElementById("statusChart"), {
-    type: "pie",
-    data: {
-      labels: ["On Hand", "Sold"],
-      datasets: [{
-        data: [onhand, sold]
-      }]
-    }
-  });
+  type: "pie",
+  data: {
+    labels: ["On Hand", "Sold"],
+    datasets: [{
+      data: [onhand, sold]
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false
+  }
+});
 }
 </script>
 
