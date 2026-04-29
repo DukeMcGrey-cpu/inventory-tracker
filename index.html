@@ -21,171 +21,49 @@
   </style>
 </head>
 <body>
-
 <h1>BuySell Inventory Pro</h1>
-
-<div class="topbar">
-  <div class="cards">
-    <div class="card">Capital<br><span id="capital">0</span></div>
-    <div class="card">Sales<br><span id="sales">0</span></div>
-    <div class="card">Profit<br><span id="profit">0</span></div>
-    <div class="card">On Hand<br><span id="onhand">0</span></div>
-    <div class="card">Sold<br><span id="sold">0</span></div>
-  </div>
-</div>
-
+<div class="topbar"><div class="cards">
+<div class="card">Capital<br><span id="capital">0</span></div>
+<div class="card">Sales<br><span id="sales">0</span></div>
+<div class="card">Profit<br><span id="profit">0</span></div>
+<div class="card">On Hand<br><span id="onhand">0</span></div>
+<div class="card">Sold<br><span id="sold">0</span></div>
+</div></div>
 <div class="formbox">
-  <h2>Add Product</h2>
-  <input type="text" id="name" placeholder="Product Name">
-  <input type="number" id="price" placeholder="Purchase Amount">
-  <input type="file" id="image">
-  <button onclick="addItem()">Add Item</button>
+<h2>Add Product</h2>
+<input type="text" id="name" placeholder="Product Name">
+<input type="number" id="price" placeholder="Purchase Amount">
+<input type="file" id="image">
+<button onclick="addItem()">Add Item</button>
 </div>
-
 <div class="charts">
-  <h2>Analytics</h2>
-  <canvas id="profitChart"></canvas>
-  <canvas id="statusChart"></canvas>
+<h2>Analytics</h2>
+<canvas id="profitChart"></canvas>
+<canvas id="statusChart"></canvas>
+<canvas id="monthlyChart"></canvas>
 </div>
-
 <div class="filters">
-  <h2>Inventory</h2>
-  <input type="text" id="search" placeholder="Search product..." onkeyup="loadItems()">
-  <select id="filter" onchange="loadItems()">
-    <option value="ALL">All</option>
-    <option value="ON HAND">On Hand</option>
-    <option value="SOLD">Sold</option>
-  </select>
+<h2>Inventory</h2>
+<input type="text" id="search" placeholder="Search product..." onkeyup="loadItems()">
+<select id="filter" onchange="loadItems()">
+<option value="ALL">All</option><option value="ON HAND">On Hand</option><option value="SOLD">Sold</option>
+</select>
 </div>
-
 <div id="grid" class="grid"></div>
-
 <script>
 const API = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
-let profitChart = null;
-let statusChart = null;
-
-function safeFetch(url, options={}){
-  return fetch(url, options)
-    .then(async r => {
-      const text = await r.text();
-      try{return JSON.parse(text)}
-      catch(e){console.error('Invalid API Response:', text); return null;}
-    });
-}
-
-function loadDashboard(){
-  safeFetch(API + '?action=getDashboard').then(d => {
-    if(!d) return;
-    capital.innerText = d.totalCapital;
-    sales.innerText = d.totalSales;
-    profit.innerText = d.totalProfit;
-    onhand.innerText = d.onHand;
-    sold.innerText = d.sold;
-  });
-}
-
-function loadItems(){
-  safeFetch(API + '?action=getItems').then(data => {
-    if(!Array.isArray(data)) return;
-    renderCharts(data);
-
-    const s = search.value.toLowerCase();
-    const f = filter.value;
-    let html = '';
-
-    data.forEach(row => {
-      const id = row[0] || '';
-      const name = row[2] || '';
-      const capitalVal = row[7] || 0;
-      const img = row[9] || '';
-      const status = row[10] || 'ON HAND';
-      const soldPrice = row[12] || '';
-      const profitVal = Number(row[13]) || 0;
-
-      if(!name.toLowerCase().includes(s)) return;
-      if(f !== 'ALL' && status !== f) return;
-
-      html += `
-      <div class="item">
-        ${img ? `<img src="${img}">` : ''}
-        <h3>${name}</h3>
-        <p>Capital: ₱${capitalVal}</p>
-        <p>Sold Price: ${soldPrice ? '₱'+soldPrice : '-'}</p>
-        <p class="${profitVal>=0?'profit-pos':'profit-neg'}">Profit: ₱${profitVal}</p>
-        <p>Status: ${status}</p>
-
-        ${status === 'ON HAND' ? `
-          <input type="number" id="sold-${id}" placeholder="Sold ₱" style="width:80px;">
-          <button onclick="markSold('${id}')">Mark Sold</button>
-        ` : ''}
-
-        <button onclick="editItem('${id}')">Edit</button>
-        <button onclick="deleteItem('${id}')">Delete</button>
-      </div>`;
-    });
-
-    grid.innerHTML = html;
-  });
-}
-
-function addItem(){
-  const nameVal = document.getElementById('name').value;
-  const priceVal = Number(document.getElementById('price').value);
-
-  safeFetch(API,{method:'POST',body:JSON.stringify({action:'addItem',productName:nameVal,purchaseAmount:priceVal,shippingFee:0,otherFee:0,quantity:1,photoURL:''})})
-  .then(()=>{name.value='';price.value='';loadDashboard();loadItems();});
-}
-
-function markSold(id){
-  const soldAmount = Number(document.getElementById('sold-'+id).value);
-  if(!soldAmount) return alert('Enter sold amount');
-
-  safeFetch(API,{method:'POST',body:JSON.stringify({action:'markSold',id:id,soldAmount:soldAmount})})
-  .then(()=>{loadDashboard();loadItems();});
-}
-
-function editItem(id){
-  const newName = prompt('New Product Name');
-  const newPrice = prompt('New Purchase Amount');
-  if(!newName || !newPrice) return;
-
-  safeFetch(API,{method:'POST',body:JSON.stringify({action:'editItem',id:id,productName:newName,purchaseAmount:Number(newPrice)})})
-  .then(()=>{loadDashboard();loadItems();});
-}
-
-function deleteItem(id){
-  if(!confirm('Delete this item?')) return;
-  safeFetch(API,{method:'POST',body:JSON.stringify({action:'deleteItem',id:id})})
-  .then(()=>{loadDashboard();loadItems();});
-}
-
-function renderCharts(data){
-  let totalProfit = 0, soldCount = 0, onHandCount = 0;
-  data.forEach(r=>{
-    totalProfit += Number(r[13]) || 0;
-    if(r[10]==='SOLD') soldCount++;
-    if(r[10]==='ON HAND') onHandCount++;
-  });
-
-  if(profitChart) profitChart.destroy();
-  if(statusChart) statusChart.destroy();
-
-  profitChart = new Chart(document.getElementById('profitChart'), {
-    type:'bar',
-    data:{labels:['Profit'],datasets:[{data:[totalProfit]}]},
-    options:{responsive:true}
-  });
-
-  statusChart = new Chart(document.getElementById('statusChart'), {
-    type:'pie',
-    data:{labels:['On Hand','Sold'],datasets:[{data:[onHandCount,soldCount]}]},
-    options:{responsive:true}
-  });
-}
-
-loadDashboard();
-loadItems();
+let profitChart=null,statusChart=null,monthlyChart=null;
+function safeFetch(url,options={}){return fetch(url,options).then(async r=>{const text=await r.text();try{return JSON.parse(text)}catch(e){console.error(text);return null;}})}
+function loadDashboard(){safeFetch(API+'?action=getDashboard').then(d=>{if(!d)return;capital.innerText=d.totalCapital;sales.innerText=d.totalSales;profit.innerText=d.totalProfit;onhand.innerText=d.onHand;sold.innerText=d.sold;});}
+function loadItems(){safeFetch(API+'?action=getItems').then(data=>{if(!Array.isArray(data))return;renderCharts(data);const s=search.value.toLowerCase();const f=filter.value;let html='';data.forEach(row=>{const id=row[0]||'';const name=row[2]||'';const capitalVal=row[7]||0;const img=row[9]||'';const status=row[10]||'ON HAND';const soldPrice=row[12]||'';const profitVal=Number(row[13])||0;if(!name.toLowerCase().includes(s))return;if(f!=='ALL'&&status!==f)return;html+=`<div class="item">${img?`<img src="${img}">`:''}<h3>${name}</h3><p>Capital: ₱${capitalVal}</p><p>Sold Price: ${soldPrice?'₱'+soldPrice:'-'}</p><p class="${profitVal>=0?'profit-pos':'profit-neg'}">Profit: ₱${profitVal}</p><p>Status: ${status}</p>${status==='ON HAND'?`<input type="number" id="sold-${id}" placeholder="Sold ₱" style="width:80px;"><button onclick="markSold('${id}')">Mark Sold</button>`:`<button onclick="editSold('${id}')">Edit Sold</button>`}<button onclick="editItem('${id}')">Edit</button><button onclick="deleteItem('${id}')">Delete</button></div>`});grid.innerHTML=html;});}
+function uploadImage(file){return new Promise((resolve)=>{const reader=new FileReader();reader.onload=e=>{safeFetch(API,{method:'POST',body:JSON.stringify({action:'uploadPhoto',fileName:file.name,mimeType:file.type,base64:e.target.result})}).then(r=>resolve(r.photoURL||''));};reader.readAsDataURL(file);});}
+async function addItem(){const file=document.getElementById('image').files[0];let photo='';if(file)photo=await uploadImage(file);safeFetch(API,{method:'POST',body:JSON.stringify({action:'addItem',productName:name.value,purchaseAmount:Number(price.value),shippingFee:0,otherFee:0,quantity:1,photoURL:photo})}).then(()=>{name.value='';price.value='';image.value='';loadDashboard();loadItems();});}
+function markSold(id){const soldAmount=Number(document.getElementById('sold-'+id).value);if(!soldAmount)return alert('Enter sold amount');safeFetch(API,{method:'POST',body:JSON.stringify({action:'markSold',id:id,soldAmount:soldAmount})}).then(()=>{loadDashboard();loadItems();});}
+function editSold(id){const newSold=prompt('Enter new sold amount');if(!newSold)return;safeFetch(API,{method:'POST',body:JSON.stringify({action:'editSold',id:id,soldAmount:Number(newSold)})}).then(()=>{loadDashboard();loadItems();});}
+function editItem(id){const newName=prompt('New Product Name');const newPrice=prompt('New Purchase Amount');if(!newName||!newPrice)return;safeFetch(API,{method:'POST',body:JSON.stringify({action:'editItem',id:id,productName:newName,purchaseAmount:Number(newPrice)})}).then(()=>{loadDashboard();loadItems();});}
+function deleteItem(id){if(!confirm('Delete this item?'))return;safeFetch(API,{method:'POST',body:JSON.stringify({action:'deleteItem',id:id})}).then(()=>{loadDashboard();loadItems();});}
+function renderCharts(data){let totalProfit=0,soldCount=0,onHandCount=0;let monthly={};data.forEach(r=>{totalProfit+=Number(r[13])||0;if(r[10]==='SOLD')soldCount++;if(r[10]==='ON HAND')onHandCount++;const d=r[11]?new Date(r[11]):null;if(d&&r[10]==='SOLD'){const key=(d.getMonth()+1)+'/'+d.getFullYear();monthly[key]=(monthly[key]||0)+(Number(r[13])||0);}});if(profitChart)profitChart.destroy();if(statusChart)statusChart.destroy();if(monthlyChart)monthlyChart.destroy();profitChart=new Chart(document.getElementById('profitChart'),{type:'bar',data:{labels:['Profit'],datasets:[{data:[totalProfit]}]}});statusChart=new Chart(document.getElementById('statusChart'),{type:'pie',data:{labels:['On Hand','Sold'],datasets:[{data:[onHandCount,soldCount]}]}});monthlyChart=new Chart(document.getElementById('monthlyChart'),{type:'line',data:{labels:Object.keys(monthly),datasets:[{label:'Monthly Profit',data:Object.values(monthly)}]}});}
+loadDashboard();loadItems();
 </script>
 </body>
 </html>
