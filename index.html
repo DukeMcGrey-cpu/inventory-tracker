@@ -125,7 +125,9 @@ function loadItems(){
   .then(r => r.json())
   .then(data => {
 
-    loadCharts(data);
+    if(Array.isArray(data)) {
+  loadCharts(data);
+}
 
     const search = document.getElementById("search").value.toLowerCase();
     const filter = document.getElementById("filter").value;
@@ -134,13 +136,13 @@ function loadItems(){
 
     data.forEach(row => {
 
-      const name = (row[2] || "").toLowerCase();
-      const status = row[10];
+      const name = (row?.[2] || "").toLowerCase();
+const status = (row?.[10] || "ON HAND");
 
       if(!name.includes(search)) return;
       if(filter !== "ALL" && status !== filter) return;
 
-      const profit = Number(row[13]) || 0;
+      const profit = Number(row?.[13] ?? 0);
       const profitColor = profit >= 0 ? "green" : "red";
 
       const image = row[9]
@@ -188,15 +190,18 @@ function loadItems(){
 // ================= CHARTS =================
 function loadCharts(data){
 
+  if(!Array.isArray(data)) return;
+
   let profit = 0;
   let sold = 0;
   let onhand = 0;
 
   data.forEach(row => {
-    profit += Number(row[13]) || 0;
 
-    if(row[10] === "SOLD") sold++;
-    if(row[10] === "ON HAND") onhand++;
+    profit += Number(row?.[13] || 0);
+
+    if(row?.[10] === "SOLD") sold++;
+    if(row?.[10] === "ON HAND") onhand++;
   });
 
   if(profitChartInstance) profitChartInstance.destroy();
@@ -210,6 +215,10 @@ function loadCharts(data){
         label: "Profit",
         data: [profit]
       }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
     }
   });
 
@@ -220,6 +229,10 @@ function loadCharts(data){
       datasets: [{
         data: [onhand, sold]
       }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
     }
   });
 }
