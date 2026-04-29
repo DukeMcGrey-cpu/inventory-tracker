@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>Inventory Dashboard</title>
-
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     input, select {
   padding: 8px;
@@ -44,6 +44,13 @@
 <input type="file" id="image"><br><br>
 
 <button onclick="addItem()">Add Item</button>
+
+<hr>
+
+<h2>Analytics</h2>
+
+<canvas id="profitChart" height="100"></canvas>
+<canvas id="statusChart" height="100"></canvas>
 
 <hr>
 
@@ -102,10 +109,12 @@ function loadItems(){
   .then(r => r.json())
   .then(data => {
 
-    const search = document.getElementById("search").value.toLowerCase();
-    const filter = document.getElementById("filter").value;
+  loadCharts(data);   
 
-    let html = "";
+  const search = document.getElementById("search").value.toLowerCase();
+  const filter = document.getElementById("filter").value;
+
+  let html = "";
 
     data.forEach(row => {
 
@@ -232,6 +241,41 @@ function markSold(id){
 loadDashboard();
 loadItems();
 
+  function loadCharts(data){
+
+  let profit = 0;
+  let sold = 0;
+  let onhand = 0;
+
+  data.forEach(row => {
+
+    profit += Number(row[13]) || 0;
+
+    if(row[10] === "SOLD") sold++;
+    if(row[10] === "ON HAND") onhand++;
+  });
+
+  new Chart(document.getElementById("profitChart"), {
+    type: "bar",
+    data: {
+      labels: ["Total Profit"],
+      datasets: [{
+        label: "Profit",
+        data: [profit]
+      }]
+    }
+  });
+
+  new Chart(document.getElementById("statusChart"), {
+    type: "pie",
+    data: {
+      labels: ["On Hand", "Sold"],
+      datasets: [{
+        data: [onhand, sold]
+      }]
+    }
+  });
+}
 </script>
 
 </body>
