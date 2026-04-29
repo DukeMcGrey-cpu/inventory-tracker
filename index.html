@@ -24,15 +24,16 @@
 <h2>Inventory List</h2>
 
 <table>
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Product</th>
-      <th>Capital</th>
-      <th>Status</th>
-      <th>Action</th>
-    </tr>
-  </thead>
+ <thead>
+  <tr>
+    <th>Image</th>
+    <th>ID</th>
+    <th>Product</th>
+    <th>Capital</th>
+    <th>Status</th>
+    <th>Action</th>
+  </tr>
+</thead>
   <tbody id="table"></tbody>
 </table>
 
@@ -59,8 +60,14 @@ function loadItems(){
     let html = "";
 
     data.forEach(row => {
+
+      const image = row[9] 
+        ? `<img src="${row[9]}" width="50" height="50" style="object-fit:cover;border-radius:6px;">`
+        : "No Image";
+
       html += `
         <tr>
+          <td>${image}</td>
           <td>${row[0]}</td>
           <td>${row[2]}</td>
           <td>${row[7]}</td>
