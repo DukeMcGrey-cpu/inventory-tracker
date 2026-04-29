@@ -101,15 +101,22 @@ async function addItem(){
   console.log("ADD ITEM CLICKED");
 
   const file = document.getElementById("image").files[0];
-
   let photo = "";
 
-  if(file){
-    console.log("IMAGE DETECTED:", file.name);
-    photo = await uploadImage(file);
-    console.log("PHOTO URL FROM DRIVE:", photo);
-  }else{
-    console.log("NO IMAGE SELECTED");
+  try{
+
+    if(file){
+      console.log("IMAGE DETECTED:", file.name);
+      photo = await uploadImage(file);
+      console.log("PHOTO URL FROM DRIVE:", photo);
+    }else{
+      console.log("NO IMAGE SELECTED");
+    }
+
+  }catch(uploadErr){
+    console.error("IMAGE UPLOAD ERROR:", uploadErr);
+    alert("Image upload failed. Item will still be saved without photo.");
+    photo = "";
   }
 
   console.log("NOW SENDING PRODUCT DATA");
@@ -118,17 +125,20 @@ async function addItem(){
     method:'POST',
     body:JSON.stringify({
       action:'addItem',
-      productName:name.value,
-      purchaseAmount:Number(price.value),
+      productName:document.getElementById("name").value,
+      purchaseAmount:Number(document.getElementById("price").value),
       shippingFee:0,
       otherFee:0,
       quantity:1,
       photoURL:photo
     })
-  }).then(()=>{
-    name.value='';
-    price.value='';
-    image.value='';
+  }).then((res)=>{
+    console.log("ADD ITEM RESPONSE:", res);
+
+    document.getElementById("name").value='';
+    document.getElementById("price").value='';
+    document.getElementById("image").value='';
+
     loadDashboard();
     loadItems();
   });
