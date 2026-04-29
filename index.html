@@ -169,13 +169,17 @@ function loadItems(){
           <p style="color:${profitColor}; font-weight:bold;">
             Profit: ${profit}
           </p>
-          <p>Sold Price: ${row[12] || "-"}</p>
+          <p>Sold Price: ${row[12] ? "₱" + row[12] : "-"}</p>
+          
           <p>Status: ${status}</p>
 
           ${status === "ON HAND"
-            ? `<button onclick="markSold('${row[0]}')">Mark Sold</button>`
-            : "✔ Sold"}
-            <button onclick="editItem('${row[0]}')">Edit</button>
+  ? `
+    <input type="number" id="sold-${row[0]}" placeholder="Sold Price" style="width:100%; padding:5px; margin:5px 0;">
+
+    <button onclick="markSold('${row[0]}')">Mark Sold</button>
+  `
+  : "✔ Sold"}
         </div>
       `;
     });
@@ -253,22 +257,26 @@ async function addItem(){
 // ================= MARK SOLD =================
 function markSold(id){
 
-  const soldAmount = prompt("Enter SOLD price (how much you sold it for):");
+  const input = document.getElementById("sold-" + id);
+  const soldAmount = input ? Number(input.value) : 0;
 
-  if(!soldAmount) return;
+  if(!soldAmount){
+    alert("Please enter sold amount");
+    return;
+  }
 
   fetch(API, {
     method: "POST",
     body: JSON.stringify({
       action: "markSold",
       id: id,
-      soldAmount: Number(soldAmount)
+      soldAmount: soldAmount
     })
   })
   .then(r => r.json())
   .then(() => {
-    loadDashboard();
     loadItems();
+    loadDashboard();
   });
 }
 
