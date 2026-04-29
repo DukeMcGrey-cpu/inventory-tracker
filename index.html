@@ -110,20 +110,7 @@
 <!-- TABLE -->
 <h2>Inventory List</h2>
 
-<table>
-  <thead>
-  <tr>
-    <th>Image</th>
-    <th>ID</th>
-    <th>Product</th>
-    <th>Capital</th>
-    <th>Profit</th>
-    <th>Status</th>
-    <th>Action</th>
-  </tr>
-</thead>
-  <tbody id="table"></tbody>
-</table>
+<div id="grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:15px;"></div>
 
 <script>
 
@@ -151,55 +138,49 @@ function loadItems(){
   .then(r => r.json())
   .then(data => {
 
-  loadCharts(data);   
+    loadCharts(data);
 
-  const search = document.getElementById("search").value.toLowerCase();
-  const filter = document.getElementById("filter").value;
+    const search = document.getElementById("search").value.toLowerCase();
+    const filter = document.getElementById("filter").value;
 
-  let html = "";
+    let html = "";
 
     data.forEach(row => {
 
       const name = (row[2] || "").toLowerCase();
       const status = row[10];
 
-      const matchSearch = name.includes(search);
-      const matchFilter = (filter === "ALL") || (status === filter);
-
-      if(!matchSearch || !matchFilter) return;
-
-      const image = row[9]
-        ? `<img src="${row[9]}" width="60" height="60" style="object-fit:cover;border-radius:6px;">`
-        : "No Image";
+      if(!name.includes(search)) return;
+      if(filter !== "ALL" && status !== filter) return;
 
       const profit = Number(row[13]) || 0;
+      const profitColor = profit >= 0 ? "green" : "red";
 
-// choose color based on profit
-const profitColor = profit >= 0 ? "green" : "red";
+      const image = row[9]
+        ? `<img src="${row[9]}" style="width:100%; height:150px; object-fit:cover; border-radius:10px;">`
+        : "";
 
-html += `
-  <tr>
-    <td>${image}</td>
-    <td>${row[0]}</td>
-    <td>${row[2]}</td>
-    <td>${row[7]}</td>
+      html += `
+        <div style="border:1px solid #ddd; border-radius:10px; padding:10px;">
+          ${image}
+          <h3>${row[2]}</h3>
 
-    <td style="color:${profitColor}; font-weight:bold;">
-      ${profit}
-    </td>
+          <p>Capital: ${row[7]}</p>
+          <p style="color:${profitColor}; font-weight:bold;">
+            Profit: ${profit}
+          </p>
 
-    <td>${row[10]}</td>
+          <p>Status: ${status}</p>
 
-    <td>
-      ${row[10] === "ON HAND"
-        ? `<button onclick="markSold('${row[0]}')">Mark Sold</button>`
-        : "✔ Sold"}
-    </td>
-  </tr>
-`;
+          ${status === "ON HAND"
+            ? `<button onclick="markSold('${row[0]}')">Mark Sold</button>`
+            : "✔ Sold"}
+            <button onclick="editItem('${row[0]}')">Edit</button>
+        </div>
+      `;
     });
 
-    document.getElementById("table").innerHTML = html;
+    document.getElementById("grid").innerHTML = html;
   });
 }
 
@@ -336,6 +317,29 @@ loadItems();
     maintainAspectRatio: false
   }
 });
+}
+
+  function editItem(id){
+
+  const newName = prompt("New product name:");
+  const newPrice = prompt("New purchase amount:");
+
+  if(!newName || !newPrice) return;
+
+  fetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "editItem",
+      id: id,
+      productName: newName,
+      purchaseAmount: Number(newPrice)
+    })
+  })
+  .then(r => r.json())
+  .then(() => {
+    loadItems();
+    loadDashboard();
+  });
 }
 </script>
 
