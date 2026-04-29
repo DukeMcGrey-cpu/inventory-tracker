@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inventory Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -25,6 +26,35 @@
     button { padding: 5px 10px; cursor: pointer; }
 
     input { padding: 6px; margin: 5px 0; }
+
+    @media (max-width: 768px) {
+
+  body {
+    padding: 10px;
+  }
+
+  .card {
+    display: block;
+    margin: 10px 0;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  th, td {
+    padding: 6px;
+  }
+
+  input, select, button {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  canvas {
+    width: 100% !important;
+  }
+}
   </style>
 </head>
 
@@ -33,12 +63,13 @@
 <h1>Inventory Dashboard</h1>
 
 <!-- DASHBOARD -->
+<div style="display:flex; flex-wrap:wrap; gap:10px;">
 <div class="card">Total Capital: <span id="capital">0</span></div>
 <div class="card">Total Sales: <span id="sales">0</span></div>
 <div class="card">Total Profit: <span id="profit">0</span></div>
 <div class="card">On Hand: <span id="onhand">0</span></div>
 <div class="card">Sold: <span id="sold">0</span></div>
-
+</div>
 <hr>
 
 <!-- ADD PRODUCT -->
