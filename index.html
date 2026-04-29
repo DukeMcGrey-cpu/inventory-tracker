@@ -169,7 +169,7 @@ function loadItems(){
           <p style="color:${profitColor}; font-weight:bold;">
             Profit: ${profit}
           </p>
-
+          <p>Sold Price: ${row[12] || "-"}</p>
           <p>Status: ${status}</p>
 
           ${status === "ON HAND"
@@ -253,7 +253,9 @@ async function addItem(){
 // ================= MARK SOLD =================
 function markSold(id){
 
-  const soldAmount = prompt("Enter sold amount:");
+  const soldAmount = prompt("Enter SOLD price (how much you sold it for):");
+
+  if(!soldAmount) return;
 
   fetch(API, {
     method: "POST",
