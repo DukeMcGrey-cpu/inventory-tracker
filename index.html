@@ -136,105 +136,115 @@ button{
 <script>
 const API = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
 
-let profitChart=null;
-let statusChart=null;
-let monthlyChart=null;
-
-function safeFetch(url,options={}){
-  return fetch(url,options)
-    .then(async r=>{
-      const text = await r.text();
+/* SAFE FETCH */
+function safeFetch(url, options = {}){
+  return fetch(url, options)
+    .then(res => res.text())
+    .then(text => {
       try{
         return JSON.parse(text);
-      }catch(e){
-        console.error("RAW:",text);
+      }catch(err){
+        console.error("RAW RESPONSE:", text);
         return null;
       }
     });
 }
 
-function loadDashboard(){
-  safeFetch(API + "?action=getDashboard")
-  .then(d=>{
-    if(!d) return;
-    document.getElementById("capital").innerText = d.totalCapital;
-    document.getElementById("sales").innerText = d.totalSales;
-    document.getElementById("profit").innerText = d.totalProfit;
-    document.getElementById("onhand").innerText = d.onHand;
-    document.getElementById("sold").innerText = d.sold;
-  });
-}
-
-function loadItems(){
-  safeFetch(API + "?action=getItems")
-  .then(data=>{
-
-    if(!Array.isArray(data)) return;
-
-    renderCharts(data);
-
-    const search = document.getElementById("search").value.toLowerCase();
-    const filter = document.getElementById("filter").value;
-
-    let html = "";
-
-    data.forEach(row=>{
-
-      const id = row[0] || "";
-      const product = row[2] || "";
-      const capital = row[7] || 0;
-      const image = row[9] || "";
-      const status = row[10] || "ON HAND";
-      const soldPrice = row[12] || "";
-      const profit = Number(row[13]) || 0;
-
-      if(!product.toLowerCase().includes(search)) return;
-      if(filter !== "ALL" && status !== filter) return;
-
-     html += `
-<div class="item">
-  ${image ? `<img src="${image}">` : ""}
-  <h3>${product}</h3>
-
-  <p>Purchase: ₱${row[4]}</p>
-  <p>Shipping: ₱${row[5]}</p>
-  <p>Other Fees: ₱${row[6]}</p>
-  <p>Total Capital: ₱${capital}</p>
-  <p>Sold Price: ${soldPrice ? "₱"+soldPrice : "-"}</p>
-  <p class="${profit>=0 ? 'profit-pos':'profit-neg'}">Profit: ₱${profit}</p>
-  <p>Status: ${status}</p>
-
-  ${status === "ON HAND"
-    ? `<input type="number" id="sold-${id}" placeholder="Sold ₱">
-       <button class="small-btn" onclick="markSold('${id}')">Mark Sold</button>`
-    : `<button class="small-btn" onclick="editSold('${id}')">Edit Sold</button>`
-  }
-
-  <button class="small-btn" onclick="deleteItem('${id}')">Delete</button>
-</div>
-`;
-    });
-
-    document.getElementById("grid").innerHTML = html;
-  });
-}
-
+/* IMAGE TO BASE64 */
 function uploadImage(file){
-  return new Promise((resolve,reject)=>{
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
     reader.onload = function(event){
       resolve(event.target.result);
     };
 
-    reader.onerror = function(err){
-      reject(err);
+    reader.onerror = function(error){
+      reject(error);
     };
 
     reader.readAsDataURL(file);
   });
 }
 
+/* DASHBOARD */
+function loadDashboard(){
+  safeFetch(API + "?action=getDashboard").then(data => {
+    if(!data) return;
+
+    document.getElementById("capital").innerText = data.totalCapital || 0;
+    document.getElementById("sales").innerText = data.totalSales || 0;
+    document.getElementById("profit").innerText = data.totalProfit || 0;
+    document.getElementById("onhand").innerText = data.onHand || 0;
+  });
+}
+
+/* LOAD PRODUCTS */
+function loadItems(){
+
+  safeFetch(API + "?action=getItems").then(data => {
+
+    if(!Array.isArray(data)){
+      console.log("Invalid Items:", data);
+      return;
+    }
+
+    let html = "";
+
+    const searchVal = document.getElementById("search").value.toLowerCase();
+    const filterVal = document.getElementById("filter").value;
+
+    data.forEach(row => {
+
+      const id = row[0] || "";
+      const product = row[2] || "";
+      const purchase = Number(row[4]) || 0;
+      const shipping = Number(row[5]) || 0;
+      const other = Number(row[6]) || 0;
+      const capital = Number(row[7]) || 0;
+      const image = row[9] || "";
+      const status = row[10] || "ON HAND";
+      const soldPrice = row[12] || "";
+      const profit = Number(row[13]) || 0;
+
+      if(product.toLowerCase().indexOf(searchVal) === -1) return;
+      if(filterVal !== "ALL" && status !== filterVal) return;
+
+      html += `
+      <div class="item">
+        ${image ? `<img src="${image}">` : ""}
+        <h3>${product}</h3>
+
+        <p>Purchase: ₱${purchase}</p>
+        <p>Shipping: ₱${shipping}</p>
+        <p>Other Fees: ₱${other}</p>
+        <p>Total Capital: ₱${capital}</p>
+        <p>Sold Price: ${soldPrice ? "₱" + soldPrice : "-"}</p>
+        <p class="${profit >= 0 ? 'profit-pos' : 'profit-neg'}">Profit: ₱${profit}</p>
+        <p>Status: ${status}</p>
+
+        ${
+          status === "ON HAND"
+          ? `
+            <input type="number" id="sold-${id}" placeholder="Sold ₱">
+            <button class="small-btn" onclick="markSold('${id}')">Mark Sold</button>
+          `
+          : `
+            <button class="small-btn" onclick="editSold('${id}')">Edit Sold</button>
+          `
+        }
+
+        <button class="small-btn" onclick="editItem('${id}')">Edit Item</button>
+        <button class="small-btn" onclick="deleteItem('${id}')">Delete</button>
+      </div>
+      `;
+    });
+
+    document.getElementById("grid").innerHTML = html;
+  });
+}
+
+/* ADD PRODUCT */
 async function addItem(){
 
   const file = document.getElementById("image").files[0];
@@ -244,31 +254,39 @@ async function addItem(){
     photo = await uploadImage(file);
   }
 
-  safeFetch(API,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"addItem",
-      productName:document.getElementById("name").value,
-      purchaseAmount:Number(document.getElementById("price").value),
-      shippingFee:Number(document.getElementById("shipping").value),
-      otherFee:Number(document.getElementById("other").value),
-      quantity:1,
-      photoURL:photo
+  safeFetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "addItem",
+      productName: document.getElementById("name").value,
+      purchaseAmount: Number(document.getElementById("price").value),
+      shippingFee: Number(document.getElementById("shipping").value),
+      otherFee: Number(document.getElementById("other").value),
+      quantity: 1,
+      photoURL: photo
     })
-  }).then(()=>{
-    document.getElementById("name").value="";
-    document.getElementById("price").value="";
-    document.getElementById("shipping").value="";
-    document.getElementById("other").value="";
-    document.getElementById("image").value="";
-    loadItems();
+  }).then(() => {
+
+    document.getElementById("name").value = "";
+    document.getElementById("price").value = "";
+    document.getElementById("shipping").value = "";
+    document.getElementById("other").value = "";
+    document.getElementById("image").value = "";
+
     loadDashboard();
+    loadItems();
   });
 }
 
+/* MARK SOLD */
 function markSold(id){
-  const soldAmount = Number(document.getElementById("sold-"+id).value);
-  if(!soldAmount) return alert("Enter sold amount");
+
+  const soldAmount = Number(document.getElementById("sold-" + id).value);
+
+  if(!soldAmount){
+    alert("Enter sold amount");
+    return;
+  }
 
   safeFetch(API,{
     method:"POST",
@@ -283,8 +301,11 @@ function markSold(id){
   });
 }
 
+/* EDIT SOLD */
 function editSold(id){
+
   const newSold = prompt("Enter new sold amount:");
+
   if(!newSold) return;
 
   safeFetch(API,{
@@ -300,10 +321,13 @@ function editSold(id){
   });
 }
 
+/* EDIT PRODUCT */
 function editItem(id){
-  const newName = prompt("New product name:");
-  const newPrice = prompt("New purchase amount:");
-  if(!newName || !newPrice) return;
+
+  const newName = prompt("Enter new product name:");
+  const newPurchase = prompt("Enter new purchase amount:");
+
+  if(!newName || !newPurchase) return;
 
   safeFetch(API,{
     method:"POST",
@@ -311,7 +335,7 @@ function editItem(id){
       action:"editItem",
       id:id,
       productName:newName,
-      purchaseAmount:Number(newPrice)
+      purchaseAmount:Number(newPurchase)
     })
   }).then(()=>{
     loadDashboard();
@@ -319,7 +343,9 @@ function editItem(id){
   });
 }
 
+/* DELETE PRODUCT */
 function deleteItem(id){
+
   if(!confirm("Delete this item?")) return;
 
   safeFetch(API,{
@@ -334,60 +360,7 @@ function deleteItem(id){
   });
 }
 
-function renderCharts(data){
-
-  let totalProfit = 0;
-  let soldCount = 0;
-  let onHandCount = 0;
-  let monthly = {};
-
-  data.forEach(r=>{
-
-    totalProfit += Number(r[13]) || 0;
-
-    if(r[10] === "SOLD") soldCount++;
-    if(r[10] === "ON HAND") onHandCount++;
-
-    const d = r[11] ? new Date(r[11]) : null;
-
-    if(d && r[10] === "SOLD"){
-      const key = (d.getMonth()+1)+"/"+d.getFullYear();
-      monthly[key] = (monthly[key] || 0) + (Number(r[13]) || 0);
-    }
-  });
-
-  if(profitChart) profitChart.destroy();
-  if(statusChart) statusChart.destroy();
-  if(monthlyChart) monthlyChart.destroy();
-
-  profitChart = new Chart(document.getElementById("profitChart"),{
-    type:"bar",
-    data:{
-      labels:["Profit"],
-      datasets:[{data:[totalProfit]}]
-    }
-  });
-
-  statusChart = new Chart(document.getElementById("statusChart"),{
-    type:"pie",
-    data:{
-      labels:["On Hand","Sold"],
-      datasets:[{data:[onHandCount,soldCount]}]
-    }
-  });
-
-  monthlyChart = new Chart(document.getElementById("monthlyChart"),{
-    type:"line",
-    data:{
-      labels:Object.keys(monthly),
-      datasets:[{
-        label:"Monthly Profit",
-        data:Object.values(monthly)
-      }]
-    }
-  });
-}
-
+/* INITIAL LOAD */
 loadDashboard();
 loadItems();
 </script>
