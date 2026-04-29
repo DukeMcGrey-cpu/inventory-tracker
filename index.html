@@ -4,127 +4,232 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BuySell Inventory Pro</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    body{font-family:Arial,sans-serif;background:#f7f7f7;padding:20px;margin:0}
-    h1,h2{margin-bottom:10px}
-    .topbar,.formbox,.filters,.charts{background:#fff;padding:15px;border-radius:12px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
-    .card{background:#fafafa;border:1px solid #ddd;padding:15px;border-radius:10px;text-align:center}
-    input,select,button{padding:8px;border-radius:6px;border:1px solid #ccc;margin:4px}
-    button{cursor:pointer}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:15px}
-    .item{background:#fff;border-radius:12px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-    .item img{width:100%;height:160px;object-fit:cover;border-radius:10px}
-    .profit-pos{color:green;font-weight:bold}
-    .profit-neg{color:red;font-weight:bold}
-    canvas{max-width:400px!important;max-height:250px!important}
+    body{
+      font-family:Arial,sans-serif;
+      background:#f5f5f5;
+      margin:0;
+      padding:20px;
+    }
+
+    h1,h2{margin-bottom:10px;}
+
+    .box{
+      background:#fff;
+      padding:15px;
+      border-radius:12px;
+      margin-bottom:20px;
+      box-shadow:0 2px 8px rgba(0,0,0,.08);
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:10px;
+    }
+
+    .card{
+      background:#fafafa;
+      border:1px solid #ddd;
+      padding:15px;
+      border-radius:10px;
+      text-align:center;
+      font-size:18px;
+    }
+
+    input,select,button{
+      padding:8px;
+      margin:4px;
+      border-radius:6px;
+      border:1px solid #ccc;
+    }
+
+    button{cursor:pointer;}
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:15px;
+    }
+
+    .item{
+      background:#fff;
+      padding:12px;
+      border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,.08);
+    }
+
+    .item img{
+      width:100%;
+      height:170px;
+      object-fit:cover;
+      border-radius:10px;
+    }
+
+    .profit-pos{color:green;font-weight:bold;}
+    .profit-neg{color:red;font-weight:bold;}
+
+    canvas{
+      max-width:400px!important;
+      max-height:250px!important;
+      margin:15px;
+    }
   </style>
 </head>
 <body>
+
 <h1>BuySell Inventory Pro</h1>
-<div class="topbar"><div class="cards">
-<div class="card">Capital<br><span id="capital">0</span></div>
-<div class="card">Sales<br><span id="sales">0</span></div>
-<div class="card">Profit<br><span id="profit">0</span></div>
-<div class="card">On Hand<br><span id="onhand">0</span></div>
-<div class="card">Sold<br><span id="sold">0</span></div>
-</div></div>
-<div class="formbox">
-<h2>Add Product</h2>
-<input type="text" id="name" placeholder="Product Name">
-<input type="number" id="price" placeholder="Purchase Amount">
-<input type="file" id="image">
-<button onclick="addItem()">Add Item</button>
+
+<div class="box">
+  <div class="cards">
+    <div class="card">Capital<br><span id="capital">0</span></div>
+    <div class="card">Sales<br><span id="sales">0</span></div>
+    <div class="card">Profit<br><span id="profit">0</span></div>
+    <div class="card">On Hand<br><span id="onhand">0</span></div>
+    <div class="card">Sold<br><span id="sold">0</span></div>
+  </div>
 </div>
-<div class="charts">
-<h2>Analytics</h2>
-<canvas id="profitChart"></canvas>
-<canvas id="statusChart"></canvas>
-<canvas id="monthlyChart"></canvas>
+
+<div class="box">
+  <h2>Add Product</h2>
+  <input type="text" id="name" placeholder="Product Name">
+  <input type="number" id="price" placeholder="Purchase Amount">
+  <input type="file" id="image">
+  <button onclick="addItem()">Add Item</button>
 </div>
-<div class="filters">
-<h2>Inventory</h2>
-<input type="text" id="search" placeholder="Search product..." onkeyup="loadItems()">
-<select id="filter" onchange="loadItems()">
-<option value="ALL">All</option><option value="ON HAND">On Hand</option><option value="SOLD">Sold</option>
-</select>
+
+<div class="box">
+  <h2>Analytics</h2>
+  <canvas id="profitChart"></canvas>
+  <canvas id="statusChart"></canvas>
+  <canvas id="monthlyChart"></canvas>
 </div>
+
+<div class="box">
+  <h2>Inventory</h2>
+  <input type="text" id="search" placeholder="Search product..." onkeyup="loadItems()">
+  <select id="filter" onchange="loadItems()">
+    <option value="ALL">All</option>
+    <option value="ON HAND">On Hand</option>
+    <option value="SOLD">Sold</option>
+  </select>
+</div>
+
 <div id="grid" class="grid"></div>
+
 <script>
 const API = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
-let profitChart=null,statusChart=null,monthlyChart=null;
-function safeFetch(url,options={}){return fetch(url,options).then(async r=>{const text=await r.text();try{return JSON.parse(text)}catch(e){console.error(text);return null;}})}
-function loadDashboard(){safeFetch(API+'?action=getDashboard').then(d=>{if(!d)return;capital.innerText=d.totalCapital;sales.innerText=d.totalSales;profit.innerText=d.totalProfit;onhand.innerText=d.onHand;sold.innerText=d.sold;});}
-function loadItems(){safeFetch(API+'?action=getItems').then(data=>{if(!Array.isArray(data))return;renderCharts(data);const s=search.value.toLowerCase();const f=filter.value;let html='';data.forEach(row=>{const id=row[0]||'';const name=row[2]||'';const capitalVal=row[7]||0;const img=row[9]||'';const status=row[10]||'ON HAND';const soldPrice=row[12]||'';const profitVal=Number(row[13])||0;if(!name.toLowerCase().includes(s))return;if(f!=='ALL'&&status!==f)return;html+=`<div class="item">${img?`<img src="${img}">`:''}<h3>${name}</h3><p>Capital: ₱${capitalVal}</p><p>Sold Price: ${soldPrice?'₱'+soldPrice:'-'}</p><p class="${profitVal>=0?'profit-pos':'profit-neg'}">Profit: ₱${profitVal}</p><p>Status: ${status}</p>${status==='ON HAND'?`<input type="number" id="sold-${id}" placeholder="Sold ₱" style="width:80px;"><button onclick="markSold('${id}')">Mark Sold</button>`:`<button onclick="editSold('${id}')">Edit Sold</button>`}<button onclick="editItem('${id}')">Edit</button><button onclick="deleteItem('${id}')">Delete</button></div>`});grid.innerHTML=html;});}
+
+let profitChart=null;
+let statusChart=null;
+let monthlyChart=null;
+
+function safeFetch(url,options={}){
+  return fetch(url,options)
+    .then(async r=>{
+      const text = await r.text();
+      try{
+        return JSON.parse(text);
+      }catch(e){
+        console.error("RAW:",text);
+        return null;
+      }
+    });
+}
+
+function loadDashboard(){
+  safeFetch(API + "?action=getDashboard")
+  .then(d=>{
+    if(!d) return;
+    document.getElementById("capital").innerText = d.totalCapital;
+    document.getElementById("sales").innerText = d.totalSales;
+    document.getElementById("profit").innerText = d.totalProfit;
+    document.getElementById("onhand").innerText = d.onHand;
+    document.getElementById("sold").innerText = d.sold;
+  });
+}
+
+function loadItems(){
+  safeFetch(API + "?action=getItems")
+  .then(data=>{
+
+    if(!Array.isArray(data)) return;
+
+    renderCharts(data);
+
+    const search = document.getElementById("search").value.toLowerCase();
+    const filter = document.getElementById("filter").value;
+
+    let html = "";
+
+    data.forEach(row=>{
+
+      const id = row[0] || "";
+      const product = row[2] || "";
+      const capital = row[7] || 0;
+      const image = row[9] || "";
+      const status = row[10] || "ON HAND";
+      const soldPrice = row[12] || "";
+      const profit = Number(row[13]) || 0;
+
+      if(!product.toLowerCase().includes(search)) return;
+      if(filter !== "ALL" && status !== filter) return;
+
+      html += `
+        <div class="item">
+          ${image ? `<img src="${image}">` : ""}
+          <h3>${product}</h3>
+          <p>Capital: ₱${capital}</p>
+          <p>Sold Price: ${soldPrice ? "₱"+soldPrice : "-"}</p>
+          <p class="${profit>=0 ? 'profit-pos':'profit-neg'}">Profit: ₱${profit}</p>
+          <p>Status: ${status}</p>
+
+          ${status === "ON HAND"
+            ? `<input type="number" id="sold-${id}" placeholder="Sold ₱" style="width:80px;">
+               <button onclick="markSold('${id}')">Mark Sold</button>`
+            : `<button onclick="editSold('${id}')">Edit Sold</button>`
+          }
+
+          <button onclick="editItem('${id}')">Edit</button>
+          <button onclick="deleteItem('${id}')">Delete</button>
+        </div>
+      `;
+    });
+
+    document.getElementById("grid").innerHTML = html;
+  });
+}
+
 function uploadImage(file){
-
-  return new Promise((resolve, reject) => {
-
+  return new Promise((resolve,reject)=>{
     const reader = new FileReader();
 
     reader.onload = function(event){
+      resolve(event.target.result);
+    };
 
-      fetch(API, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "uploadPhoto",
-          fileName: file.name,
-          mimeType: file.type,
-          base64: event.target.result
-        })
-      })
-      .then(res => res.text())
-      .then(text => {
-
-        console.log("UPLOAD RAW RESPONSE:", text);
-
-        try{
-          const json = JSON.parse(text);
-          resolve(json.photoURL || "");
-        }catch(err){
-          console.error("Upload Parse Error:", text);
-          reject(err);
-        }
-
-      })
-      .catch(err => {
-        console.error("Upload Failed:", err);
-        reject(err);
-      });
+    reader.onerror = function(err){
+      reject(err);
     };
 
     reader.readAsDataURL(file);
   });
 }
-async function addItem(){
 
-  console.log("ADD ITEM CLICKED");
+async function addItem(){
 
   const file = document.getElementById("image").files[0];
   let photo = "";
 
-  try{
-
-    if(file){
-      console.log("IMAGE DETECTED:", file.name);
-      photo = await uploadImage(file);
-      console.log("PHOTO URL FROM DRIVE:", photo);
-    }else{
-      console.log("NO IMAGE SELECTED");
-    }
-
-  }catch(uploadErr){
-    console.error("IMAGE UPLOAD ERROR:", uploadErr);
-    alert("Image upload failed. Item will still be saved without photo.");
-    photo = "";
+  if(file){
+    photo = await uploadImage(file);
   }
 
-  console.log("NOW SENDING PRODUCT DATA");
-
   safeFetch(API,{
-    method:'POST',
+    method:"POST",
     body:JSON.stringify({
-      action:'addItem',
+      action:"addItem",
       productName:document.getElementById("name").value,
       purchaseAmount:Number(document.getElementById("price").value),
       shippingFee:0,
@@ -132,23 +237,139 @@ async function addItem(){
       quantity:1,
       photoURL:photo
     })
-  }).then((res)=>{
-    console.log("ADD ITEM RESPONSE:", res);
-
-    document.getElementById("name").value='';
-    document.getElementById("price").value='';
-    document.getElementById("image").value='';
-
+  }).then(()=>{
+    document.getElementById("name").value = "";
+    document.getElementById("price").value = "";
+    document.getElementById("image").value = "";
     loadDashboard();
     loadItems();
   });
 }
-function markSold(id){const soldAmount=Number(document.getElementById('sold-'+id).value);if(!soldAmount)return alert('Enter sold amount');safeFetch(API,{method:'POST',body:JSON.stringify({action:'markSold',id:id,soldAmount:soldAmount})}).then(()=>{loadDashboard();loadItems();});}
-function editSold(id){const newSold=prompt('Enter new sold amount');if(!newSold)return;safeFetch(API,{method:'POST',body:JSON.stringify({action:'editSold',id:id,soldAmount:Number(newSold)})}).then(()=>{loadDashboard();loadItems();});}
-function editItem(id){const newName=prompt('New Product Name');const newPrice=prompt('New Purchase Amount');if(!newName||!newPrice)return;safeFetch(API,{method:'POST',body:JSON.stringify({action:'editItem',id:id,productName:newName,purchaseAmount:Number(newPrice)})}).then(()=>{loadDashboard();loadItems();});}
-function deleteItem(id){if(!confirm('Delete this item?'))return;safeFetch(API,{method:'POST',body:JSON.stringify({action:'deleteItem',id:id})}).then(()=>{loadDashboard();loadItems();});}
-function renderCharts(data){let totalProfit=0,soldCount=0,onHandCount=0;let monthly={};data.forEach(r=>{totalProfit+=Number(r[13])||0;if(r[10]==='SOLD')soldCount++;if(r[10]==='ON HAND')onHandCount++;const d=r[11]?new Date(r[11]):null;if(d&&r[10]==='SOLD'){const key=(d.getMonth()+1)+'/'+d.getFullYear();monthly[key]=(monthly[key]||0)+(Number(r[13])||0);}});if(profitChart)profitChart.destroy();if(statusChart)statusChart.destroy();if(monthlyChart)monthlyChart.destroy();profitChart=new Chart(document.getElementById('profitChart'),{type:'bar',data:{labels:['Profit'],datasets:[{data:[totalProfit]}]}});statusChart=new Chart(document.getElementById('statusChart'),{type:'pie',data:{labels:['On Hand','Sold'],datasets:[{data:[onHandCount,soldCount]}]}});monthlyChart=new Chart(document.getElementById('monthlyChart'),{type:'line',data:{labels:Object.keys(monthly),datasets:[{label:'Monthly Profit',data:Object.values(monthly)}]}});}
-loadDashboard();loadItems();
+
+function markSold(id){
+  const soldAmount = Number(document.getElementById("sold-"+id).value);
+  if(!soldAmount) return alert("Enter sold amount");
+
+  safeFetch(API,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"markSold",
+      id:id,
+      soldAmount:soldAmount
+    })
+  }).then(()=>{
+    loadDashboard();
+    loadItems();
+  });
+}
+
+function editSold(id){
+  const newSold = prompt("Enter new sold amount:");
+  if(!newSold) return;
+
+  safeFetch(API,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"editSold",
+      id:id,
+      soldAmount:Number(newSold)
+    })
+  }).then(()=>{
+    loadDashboard();
+    loadItems();
+  });
+}
+
+function editItem(id){
+  const newName = prompt("New product name:");
+  const newPrice = prompt("New purchase amount:");
+  if(!newName || !newPrice) return;
+
+  safeFetch(API,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"editItem",
+      id:id,
+      productName:newName,
+      purchaseAmount:Number(newPrice)
+    })
+  }).then(()=>{
+    loadDashboard();
+    loadItems();
+  });
+}
+
+function deleteItem(id){
+  if(!confirm("Delete this item?")) return;
+
+  safeFetch(API,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"deleteItem",
+      id:id
+    })
+  }).then(()=>{
+    loadDashboard();
+    loadItems();
+  });
+}
+
+function renderCharts(data){
+
+  let totalProfit = 0;
+  let soldCount = 0;
+  let onHandCount = 0;
+  let monthly = {};
+
+  data.forEach(r=>{
+
+    totalProfit += Number(r[13]) || 0;
+
+    if(r[10] === "SOLD") soldCount++;
+    if(r[10] === "ON HAND") onHandCount++;
+
+    const d = r[11] ? new Date(r[11]) : null;
+
+    if(d && r[10] === "SOLD"){
+      const key = (d.getMonth()+1)+"/"+d.getFullYear();
+      monthly[key] = (monthly[key] || 0) + (Number(r[13]) || 0);
+    }
+  });
+
+  if(profitChart) profitChart.destroy();
+  if(statusChart) statusChart.destroy();
+  if(monthlyChart) monthlyChart.destroy();
+
+  profitChart = new Chart(document.getElementById("profitChart"),{
+    type:"bar",
+    data:{
+      labels:["Profit"],
+      datasets:[{data:[totalProfit]}]
+    }
+  });
+
+  statusChart = new Chart(document.getElementById("statusChart"),{
+    type:"pie",
+    data:{
+      labels:["On Hand","Sold"],
+      datasets:[{data:[onHandCount,soldCount]}]
+    }
+  });
+
+  monthlyChart = new Chart(document.getElementById("monthlyChart"),{
+    type:"line",
+    data:{
+      labels:Object.keys(monthly),
+      datasets:[{
+        label:"Monthly Profit",
+        data:Object.values(monthly)
+      }]
+    }
+  });
+}
+
+loadDashboard();
+loadItems();
 </script>
 </body>
 </html>
