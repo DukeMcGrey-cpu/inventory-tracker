@@ -175,7 +175,18 @@ function loadItems(){
 
           ${status === "ON HAND"
   ? `
-    <input type="number" id="sold-${row[0]}" placeholder="Sold Price" style="width:100%; padding:5px; margin:5px 0;">
+    <div style="display:flex; gap:5px; align-items:center;">
+  <input 
+    type="number" 
+    id="sold-${row[0]}" 
+    placeholder="₱"
+    style="width:70px; padding:4px; font-size:12px;"
+  >
+
+  <button onclick="markSold('${row[0]}')" style="padding:4px 8px;">
+    Sell
+  </button>
+</div>
 
     <button onclick="markSold('${row[0]}')">Mark Sold</button>
   `
