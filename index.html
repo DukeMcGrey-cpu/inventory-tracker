@@ -4,6 +4,12 @@
   <title>Inventory Dashboard</title>
 
   <style>
+    input, select {
+  padding: 8px;
+  margin: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
     body { font-family: Arial; padding: 20px; }
     .card { display: inline-block; padding: 10px 20px; margin: 10px; border: 1px solid #ccc; border-radius: 8px; }
 
@@ -40,6 +46,18 @@
 <button onclick="addItem()">Add Item</button>
 
 <hr>
+
+<h2>Inventory List</h2>
+
+<input type="text" id="search" placeholder="Search product..." onkeyup="loadItems()">
+
+<select id="filter" onchange="loadItems()">
+  <option value="ALL">All</option>
+  <option value="ON HAND">On Hand</option>
+  <option value="SOLD">Sold</option>
+</select>
+
+<br><br>
 
 <!-- TABLE -->
 <h2>Inventory List</h2>
@@ -79,13 +97,25 @@ function loadDashboard(){
 
 // ================= LOAD ITEMS =================
 function loadItems(){
+
   fetch(API + "?action=getItems")
   .then(r => r.json())
   .then(data => {
 
+    const search = document.getElementById("search").value.toLowerCase();
+    const filter = document.getElementById("filter").value;
+
     let html = "";
 
     data.forEach(row => {
+
+      const name = (row[2] || "").toLowerCase();
+      const status = row[10];
+
+      const matchSearch = name.includes(search);
+      const matchFilter = (filter === "ALL") || (status === filter);
+
+      if(!matchSearch || !matchFilter) return;
 
       const image = row[9]
         ? `<img src="${row[9]}" width="60" height="60" style="object-fit:cover;border-radius:6px;">`
