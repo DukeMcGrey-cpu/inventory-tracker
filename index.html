@@ -81,15 +81,16 @@
 
 <table>
   <thead>
-    <tr>
-      <th>Image</th>
-      <th>ID</th>
-      <th>Product</th>
-      <th>Capital</th>
-      <th>Status</th>
-      <th>Action</th>
-    </tr>
-  </thead>
+  <tr>
+    <th>Image</th>
+    <th>ID</th>
+    <th>Product</th>
+    <th>Capital</th>
+    <th>Profit</th>
+    <th>Status</th>
+    <th>Action</th>
+  </tr>
+</thead>
   <tbody id="table"></tbody>
 </table>
 
@@ -140,20 +141,31 @@ function loadItems(){
         ? `<img src="${row[9]}" width="60" height="60" style="object-fit:cover;border-radius:6px;">`
         : "No Image";
 
-      html += `
-        <tr>
-          <td>${image}</td>
-          <td>${row[0]}</td>
-          <td>${row[2]}</td>
-          <td>${row[7]}</td>
-          <td>${row[10]}</td>
-          <td>
-            ${row[10] === "ON HAND"
-              ? `<button onclick="markSold('${row[0]}')">Mark Sold</button>`
-              : "✔ Sold"}
-          </td>
-        </tr>
-      `;
+      const profit = Number(row[13]) || 0;
+
+// choose color based on profit
+const profitColor = profit >= 0 ? "green" : "red";
+
+html += `
+  <tr>
+    <td>${image}</td>
+    <td>${row[0]}</td>
+    <td>${row[2]}</td>
+    <td>${row[7]}</td>
+
+    <td style="color:${profitColor}; font-weight:bold;">
+      ${profit}
+    </td>
+
+    <td>${row[10]}</td>
+
+    <td>
+      ${row[10] === "ON HAND"
+        ? `<button onclick="markSold('${row[0]}')">Mark Sold</button>`
+        : "✔ Sold"}
+    </td>
+  </tr>
+`;
     });
 
     document.getElementById("table").innerHTML = html;
