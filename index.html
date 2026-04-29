@@ -99,7 +99,7 @@
 
 <script>
 
-const API = "YOUR_APPS_SCRIPT_URL_HERE";
+const API = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
 
 // ================= CHART INSTANCES =================
 let profitChartInstance = null;
@@ -122,8 +122,19 @@ function loadDashboard(){
 function loadItems(){
 
   fetch(API + "?action=getItems")
-  .then(r => r.json())
-  .then(data => {
+.then(async r => {
+
+  const text = await r.text();   // 👈 read raw response first
+
+  try {
+    return JSON.parse(text);     // try convert to JSON
+  } catch (e) {
+    console.error("API did NOT return JSON:", text);
+    return [];                   // prevent crash
+  }
+
+})
+.then(data => {
 
     if(Array.isArray(data)) {
   loadCharts(data);
