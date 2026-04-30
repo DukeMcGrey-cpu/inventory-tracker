@@ -94,11 +94,53 @@ button{
 .profit-pos{color:green;}
 .profit-neg{color:red;}
 
+    /* DARK MODE */
+.dark body{
+  background:#111;
+  color:white;
+}
+
+.dark .header,
+.dark .box,
+.dark .card,
+.dark .item{
+  background:#1e1e1e !important;
+  color:white !important;
+  box-shadow:none;
+}
+
+.dark input,
+.dark select{
+  background:#2b2b2b;
+  color:white;
+  border:1px solid #555;
+}
+
+.dark button{
+  background:#444;
+  color:white;
+}
+
+.dark #editModal div{
+  background:#1e1e1e !important;
+  color:white;
+}
   </style>
 </head>
 <body>
 
-<div class="header">📦 Inventory App</div>
+<div class="header" style="display:flex;justify-content:space-between;align-items:center;">
+  <span>📦 Inventory App</span>
+
+  <button onclick="toggleDarkMode()" style="
+    width:auto;
+    padding:6px 12px;
+    font-size:12px;
+    margin:0;
+  ">
+    🌙 Mode
+  </button>
+</div>
 
 <div class="container">
 
@@ -435,7 +477,27 @@ function saveEditItem(){
     loadItems();
   });
 }
+
+  function toggleDarkMode(){
+
+  document.documentElement.classList.toggle("dark");
+
+  if(document.documentElement.classList.contains("dark")){
+    localStorage.setItem("darkmode","on");
+  }else{
+    localStorage.setItem("darkmode","off");
+  }
+}
+
+function loadDarkMode(){
+  const saved = localStorage.getItem("darkmode");
+
+  if(saved === "on"){
+    document.documentElement.classList.add("dark");
+  }
+}
 /* INITIAL LOAD */
+loadDarkMode();
 loadDashboard();
 loadItems();
 </script>
