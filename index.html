@@ -57,108 +57,193 @@ button{padding:10px;width:100%;margin-top:5px;cursor:pointer}
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
-let items = [];
+const API='https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec';
+let activeCategory='ALL';
 
-/* SAFE FETCH */
-function safeFetch(url, options){
-  return fetch(url, options)
-    .then(r => r.text())
-    .then(t => {
-      try { return JSON.parse(t); }
-      catch(e){ console.log(t); return null; }
+/* SAFE FETCH (FIXED) */
+function safeFetch(url,o={}){
+  return fetch(url,o)
+    .then(r=>r.text())
+    .then(t=>{
+      try{return JSON.parse(t)}
+      catch(e){console.log("RAW:",t);return null;}
     });
 }
 
-/* IMAGE COMPRESS */
+/* IMAGE UPLOAD (UNCHANGED BUT SAFE) */
 function uploadImage(file){
-  return new Promise((resolve)=>{
-    const reader = new FileReader();
-    reader.onload = e => resolve(e.target.result);
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=e=>resolve(e.target.result);
+    reader.onerror=reject;
     reader.readAsDataURL(file);
   });
 }
 
-/* ADD ITEM */
+/* ADD ITEM (FIXED CRITICAL BUGS) */
 async function addItem(){
 
-  const file = document.getElementById("image").files[0];
-  let photo = "";
+  const file=document.getElementById('image').files[0];
+  let photo='';
 
   if(file){
-    photo = await uploadImage(file);
+    photo=await uploadImage(file);
   }
 
-  await safeFetch(API, {
+  await safeFetch(API,{
     method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({
-      action:"addItem",
-      productName: document.getElementById("name").value,
-      category: document.getElementById("category").value,
-      purchaseAmount: Number(document.getElementById("price").value),
-      shippingFee: Number(document.getElementById("shipping").value),
-      otherFee: Number(document.getElementById("other").value),
-      photoURL: photo
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      action:'addItem',
+      productName:document.getElementById('name').value,
+      category:document.getElementById('category').value,
+      purchaseAmount:Number(document.getElementById('price').value),
+      shippingFee:Number(document.getElementById('shipping').value),
+      otherFee:Number(document.getElementById('other').value),
+      quantity:1,
+      photoURL:photo
     })
   });
 
-  loadItems();
+  document.getElementById('name').value='';
+  document.getElementById('price').value='';
+  document.getElementById('shipping').value='';
+  document.getElementById('other').value='';
+  document.getElementById('image').value='';
+
   loadDashboard();
+  loadItems();
 }
 
-/* LOAD ITEMS */
+/* DASHBOARD (FIXED SOLD COUNT ISSUE) */
+function loadDashboard(){
+  safeFetch(API+'?action=getDashboard').then(d=>{
+    if(!d)return;
+
+    document.getElementById("capital").innerText=d.totalCapital||0;
+    document.getElementById("sales").innerText=d.totalSales||0;
+    document.getElementById("profit").innerText=d.totalProfit||0;
+    document.getElementById("onhand").innerText=d.onHand||0;
+    document.getElementById("sold").innerText=d.soldCount||0;
+  });
+}
+
+/* LOAD ITEMS (FIXED INDEX SAFETY) */
 function loadItems(){
-  safeFetch(API+"?action=getItems").then(data=>{
-    if(!Array.isArray(data)) return;
 
-    items = data;
+  safeFetch(API+'?action=getItems').then(data=>{
 
-    let html = "";
+    if(!Array.isArray(data))return;
 
-    data.forEach(r=>{
-      const id = r[0];
-      const name = r[2];
-      const category = r[3];
-      const image = r[9];
-      const status = r[10];
-      const capital = r[7];
-      const sold = r[12];
-      const profit = r[13];
+    let html='';
 
-      html += `
+    const searchVal=document.getElementById("search").value.toLowerCase();
+    const filterVal=document.getElementById("filter").value;
+
+    data.forEach(row=>{
+
+      const id=row[0];
+      const product=row[2]||"";
+      const category=row[3]||"";
+      const purchase=row[4]||0;
+      const shipping=row[5]||0;
+      const other=row[6]||0;
+      const capital=row[7]||0;
+      const image=row[9]||"";
+      const status=row[10]||"ON HAND";
+      const soldPrice=row[12]||"";
+      const profit=row[13]||0;
+
+      if(product.toLowerCase().indexOf(searchVal)===-1)return;
+      if(filterVal!=="ALL"&&status!==filterVal)return;
+      if(activeCategory!=="ALL"&&category!==activeCategory)return;
+
+      html+=`
       <div class="item">
-        ${image ? `<img src="${image}">` : ""}
+        ${image?`<img src="${image}">`:""}
         <div class="item-body">
-          <h3>${name}</h3>
+          <h3>${product}</h3>
           <p>${category}</p>
-          <p>Capital: ${capital}</p>
-          <p>Sold: ${sold || "-"}</p>
-          <p>Profit: ${profit}</p>
+          <p>Capital: ₱${capital}</p>
+          <p>Sold: ${soldPrice?("₱"+soldPrice):"-"}</p>
+          <p style="color:${profit>=0?'green':'red'}">Profit: ₱${profit}</p>
           <p>Status: ${status}</p>
+
+          ${
+            status==="ON HAND"
+            ? `<input id="sold-${id}" type="number" placeholder="Sold Amount">
+               <button onclick="markSold('${id}')">Mark Sold</button>`
+            : `<button onclick="editSold('${id}')">Edit Sold</button>`
+          }
+
         </div>
-      </div>
-      `;
+      </div>`;
     });
 
-    document.getElementById("grid").innerHTML = html;
+    document.getElementById("grid").innerHTML=html;
   });
 }
 
-/* DASHBOARD */
-function loadDashboard(){
-  safeFetch(API+"?action=getDashboard").then(d=>{
-    if(!d) return;
-    capital.innerText = d.totalCapital;
-    sales.innerText = d.totalSales;
-    profit.innerText = d.totalProfit;
-    onhand.innerText = d.onHand;
-    sold.innerText = d.soldCount;
+/* MARK SOLD (FIXED SAFE NUMBER) */
+async function markSold(id){
+
+  const amt=Number(document.getElementById("sold-"+id).value);
+
+  if(!amt)return;
+
+  await safeFetch(API,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      action:"markSold",
+      id:id,
+      soldAmount:amt
+    })
   });
+
+  loadDashboard();
+  loadItems();
 }
 
-loadItems();
-loadDashboard();
+/* EDIT SOLD */
+async function editSold(id){
+
+  const amt=prompt("Enter new sold amount");
+  if(!amt)return;
+
+  await safeFetch(API,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      action:"editSold",
+      id:id,
+      soldAmount:Number(amt)
+    })
+  });
+
+  loadDashboard();
+  loadItems();
+}
+
+/* DELETE */
+async function deleteItem(id){
+
+  if(!confirm("Delete item?"))return;
+
+  await safeFetch(API,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      action:"deleteItem",
+      id:id
+    })
+  });
+
+  loadDashboard();
+  loadItems();
+}
 </script>
 
 </body>
