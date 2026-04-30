@@ -2,231 +2,234 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BuySell Inventory Pro</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>BuySell Inventory Pro V2</title>
 
   <style>
     body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#f3f4f7;
-  transition:.3s;
-}
+      margin:0;
+      font-family:Arial,sans-serif;
+      background:#f3f4f7;
+      transition:.3s;
+    }
 
-.container{
-  padding:15px;
-}
+    .container{
+      padding:15px;
+    }
 
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:18px 20px;
-  background:#fff;
-  box-shadow:0 4px 15px rgba(0,0,0,.08);
-  position:sticky;
-  top:0;
-  z-index:100;
-}
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:18px 20px;
+      background:#fff;
+      box-shadow:0 4px 15px rgba(0,0,0,.08);
+      position:sticky;
+      top:0;
+      z-index:100;
+    }
 
-.topbar-left{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
+    .topbar-left{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
 
-.app-icon{
-  width:50px;
-  height:50px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:28px;
-  background:#f1f1f1;
-  border-radius:14px;
-}
+    .app-icon{
+      width:50px;
+      height:50px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:28px;
+      background:#f1f1f1;
+      border-radius:14px;
+    }
 
-.app-text h2{
-  margin:0;
-  font-size:20px;
-}
+    .app-text h2{
+      margin:0;
+      font-size:20px;
+    }
 
-.app-text p{
-  margin:0;
-  font-size:12px;
-  color:gray;
-}
+    .app-text p{
+      margin:0;
+      font-size:12px;
+      color:gray;
+    }
 
-.cards{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
-  gap:12px;
-  margin-top:15px;
-}
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+      gap:12px;
+      margin-top:15px;
+    }
 
-.card{
-  background:#fff;
-  border-radius:14px;
-  padding:15px;
-  text-align:center;
-  box-shadow:0 3px 10px rgba(0,0,0,.08);
-}
+    .card{
+      background:#fff;
+      border-radius:14px;
+      padding:15px;
+      text-align:center;
+      box-shadow:0 3px 10px rgba(0,0,0,.08);
+    }
 
-.card small{
-  display:block;
-  margin:6px 0;
-  color:gray;
-}
+    .card small{
+      display:block;
+      margin:6px 0;
+      color:gray;
+    }
 
-.box,.item,.modal-content{
-  background:#fff;
-  padding:15px;
-  border-radius:14px;
-  margin-top:15px;
-  box-shadow:0 3px 10px rgba(0,0,0,.08);
-}
+    .box,.item,.modal-content{
+      background:#fff;
+      padding:15px;
+      border-radius:14px;
+      margin-top:15px;
+      box-shadow:0 3px 10px rgba(0,0,0,.08);
+    }
 
-.form-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
+    .form-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
 
-.form-grid button{
-  grid-column:span 2;
-}
+    .form-grid button{
+      grid-column:span 2;
+    }
 
-input,select,button{
-  width:100%;
-  padding:10px;
-  box-sizing:border-box;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
+    input,select,button{
+      width:100%;
+      padding:10px;
+      box-sizing:border-box;
+      border-radius:8px;
+      border:1px solid #ccc;
+    }
 
-button{
-  background:#111;
-  color:#fff;
-  border:none;
-  cursor:pointer;
-}
+    button{
+      background:#111;
+      color:#fff;
+      border:none;
+      cursor:pointer;
+    }
 
-.grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:15px;
-  margin-top:15px;
-}
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:15px;
+      margin-top:15px;
+    }
 
-.item img{
-  width:100%;
-  height:180px;
-  object-fit:cover;
-  border-radius:10px;
-}
+    .item img{
+      width:100%;
+      height:180px;
+      object-fit:cover;
+      border-radius:10px;
+    }
 
-.category-tabs{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-top:15px;
-}
+    .category-tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:15px;
+    }
 
-#fabBtn{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  width:60px;
-  height:60px;
-  border-radius:50%;
-  font-size:30px;
-  z-index:999;
-}
+    #fabBtn{
+      position:fixed;
+      bottom:20px;
+      right:20px;
+      width:60px;
+      height:60px;
+      border-radius:50%;
+      font-size:30px;
+      z-index:999;
+    }
 
-.modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  justify-content:center;
-  align-items:center;
-  z-index:9999;
-}
+    .modal{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.5);
+      justify-content:center;
+      align-items:center;
+      z-index:9999;
+    }
 
-.cancel-btn{
-  background:gray;
-  margin-top:8px;
-}
+    .cancel-btn{
+      background:gray;
+      margin-top:8px;
+    }
 
-/* SWITCH */
-.switch{
-  position:relative;
-  width:50px;
-  height:24px;
-  display:inline-block;
-}
-.switch input{opacity:0;width:0;height:0;}
-.slider{
-  position:absolute;
-  inset:0;
-  cursor:pointer;
-  background:#ccc;
-  border-radius:30px;
-  transition:.3s;
-}
-.slider:before{
-  content:"";
-  position:absolute;
-  width:18px;
-  height:18px;
-  left:3px;
-  top:3px;
-  background:#fff;
-  border-radius:50%;
-  transition:.3s;
-}
-input:checked + .slider{
-  background:#111;
-}
-input:checked + .slider:before{
-  transform:translateX(26px);
-}
+    .switch{
+      position:relative;
+      width:50px;
+      height:24px;
+      display:inline-block;
+    }
 
-/* DARK MODE */
-body.dark{
-  background:#111;
-  color:white;
-}
-body.dark .topbar,
-body.dark .card,
-body.dark .box,
-body.dark .item,
-body.dark .modal-content{
-  background:#1e1e1e;
-  color:white;
-  box-shadow:none;
-}
-body.dark input,
-body.dark select{
-  background:#2b2b2b;
-  color:white;
-  border:1px solid #555;
-}
+    .switch input{opacity:0;width:0;height:0;}
 
-/* MOBILE */
-@media(max-width:768px){
-  .form-grid{
-    grid-template-columns:1fr;
-  }
-  .form-grid button{
-    grid-column:span 1;
-  }
-}
+    .slider{
+      position:absolute;
+      inset:0;
+      cursor:pointer;
+      background:#ccc;
+      border-radius:30px;
+      transition:.3s;
+    }
+
+    .slider:before{
+      content:"";
+      position:absolute;
+      width:18px;
+      height:18px;
+      left:3px;
+      top:3px;
+      background:#fff;
+      border-radius:50%;
+      transition:.3s;
+    }
+
+    input:checked + .slider{
+      background:#111;
+    }
+
+    input:checked + .slider:before{
+      transform:translateX(26px);
+    }
+
+    body.dark{
+      background:#111;
+      color:white;
+    }
+
+    body.dark .topbar,
+    body.dark .card,
+    body.dark .box,
+    body.dark .item,
+    body.dark .modal-content{
+      background:#1e1e1e;
+      color:white;
+      box-shadow:none;
+    }
+
+    body.dark input,
+    body.dark select{
+      background:#2b2b2b;
+      color:white;
+      border:1px solid #555;
+    }
+
+    @media(max-width:768px){
+      .form-grid{
+        grid-template-columns:1fr;
+      }
+
+      .form-grid button{
+        grid-column:span 1;
+      }
+    }
   </style>
 </head>
 <body>
 
-<!-- PREMIUM TOP BAR -->
 <div class="topbar">
   <div class="topbar-left">
     <div class="app-icon">📦</div>
@@ -246,7 +249,6 @@ body.dark select{
 
 <div class="container">
 
-  <!-- DASHBOARD CARDS -->
   <div class="cards">
     <div class="card">💸<small>Total Capital</small><h3 id="capital">₱0</h3></div>
     <div class="card">💰<small>Total Sales</small><h3 id="sales">₱0</h3></div>
@@ -255,7 +257,6 @@ body.dark select{
     <div class="card">✅<small>Sold</small><h3 id="sold">0</h3></div>
   </div>
 
-  <!-- FLOATING ADD FORM -->
   <div id="addFormBox" class="box" style="display:none;">
     <h3>Add Product</h3>
 
@@ -278,7 +279,6 @@ body.dark select{
     </div>
   </div>
 
-  <!-- SEARCH FILTER -->
   <div class="box">
     <input id="search" placeholder="Search product..." onkeyup="loadItems()">
 
@@ -289,7 +289,6 @@ body.dark select{
     </select>
   </div>
 
-  <!-- CATEGORY FILTER -->
   <div id="categoryTabs" class="category-tabs">
     <button onclick="setCategoryFilter('ALL')">All</button>
     <button onclick="setCategoryFilter('Gadget / Console')">Gadget / Console</button>
@@ -298,15 +297,12 @@ body.dark select{
     <button onclick="setCategoryFilter('Others')">Others</button>
   </div>
 
-  <!-- PRODUCT GRID -->
   <div id="grid" class="grid"></div>
 
 </div>
 
-<!-- FLOATING ADD BUTTON -->
 <button onclick="toggleAddForm()" id="fabBtn">+</button>
 
-<!-- EDIT MODAL -->
 <div id="editModal" class="modal">
   <div class="modal-content">
     <h3>Edit Product</h3>
@@ -329,48 +325,36 @@ body.dark select{
     <button onclick="closeEditModal()" class="cancel-btn">Cancel</button>
   </div>
 </div>
-<script>
-const API = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
 
+<script>
+const API = "PASTE YOUR DEPLOYED GOOGLE SCRIPT URL HERE";
 let activeCategory = "ALL";
 
-/* SAFE FETCH */
 function safeFetch(url, options = {}){
   return fetch(url, options)
     .then(res => res.text())
     .then(text => {
-      try{
-        return JSON.parse(text);
-      }catch(err){
-        console.log("RAW:", text);
-        return null;
-      }
+      try{return JSON.parse(text);}catch(err){console.log(text); return null;}
     });
 }
 
-/* IMAGE TO BASE64 */
 function uploadImage(file){
-  return new Promise((resolve, reject)=>{
+  return new Promise((resolve,reject)=>{
     const reader = new FileReader();
-
-    reader.onload = e => resolve(e.target.result);
-    reader.onerror = err => reject(err);
-
+    reader.onload = e=>resolve(e.target.result);
+    reader.onerror = err=>reject(err);
     reader.readAsDataURL(file);
   });
 }
 
-/* CATEGORY */
 function setCategoryFilter(cat){
   activeCategory = cat;
   loadItems();
 }
 
-/* DASHBOARD */
 function loadDashboard(){
   safeFetch(API + "?action=getDashboard").then(data=>{
     if(!data) return;
-
     document.getElementById("capital").innerText = "₱" + (data.totalCapital || 0);
     document.getElementById("sales").innerText = "₱" + (data.totalSales || 0);
     document.getElementById("profit").innerText = "₱" + (data.totalProfit || 0);
@@ -379,18 +363,15 @@ function loadDashboard(){
   });
 }
 
-/* LOAD PRODUCTS */
 function loadItems(){
   safeFetch(API + "?action=getItems").then(data=>{
     if(!Array.isArray(data)) return;
 
     const searchVal = document.getElementById("search").value.toLowerCase();
     const filterVal = document.getElementById("filter").value;
-
     let html = "";
 
     data.forEach(row=>{
-
       const id = row[0] || "";
       const product = row[2] || "";
       const category = row[3] || "";
@@ -422,30 +403,22 @@ function loadItems(){
 
         ${
           status === "ON HAND"
-          ? `
-            <input type="number" id="sold-${id}" placeholder="Sold Amount">
-            <button onclick="markSold('${id}')">Mark Sold</button>
-          `
-          : `
-            <button onclick="editSold('${id}')">Edit Sold</button>
-          `
+          ? `<input type="number" id="sold-${id}" placeholder="Sold Amount"><button onclick="markSold('${id}')">Mark Sold</button>`
+          : `<button onclick="editSold('${id}')">Edit Sold</button>`
         }
 
         <button onclick="openEditModal('${id}','${product}','${category}','${purchase}','${shipping}','${other}')">Edit</button>
         <button onclick="deleteItem('${id}')">Delete</button>
-      </div>
-      `;
+      </div>`;
     });
 
     document.getElementById("grid").innerHTML = html;
   });
 }
 
-/* ADD PRODUCT */
 async function addItem(){
   const file = document.getElementById("image").files[0];
   let photo = "";
-
   if(file) photo = await uploadImage(file);
 
   await safeFetch(API,{
@@ -462,87 +435,67 @@ async function addItem(){
     })
   });
 
-  document.getElementById("name").value = "";
-  document.getElementById("price").value = "";
-  document.getElementById("shipping").value = "";
-  document.getElementById("other").value = "";
-  document.getElementById("image").value = "";
+  document.getElementById("name").value="";
+  document.getElementById("price").value="";
+  document.getElementById("shipping").value="";
+  document.getElementById("other").value="";
+  document.getElementById("image").value="";
 
   loadDashboard();
   loadItems();
   toggleAddForm(true);
 }
 
-/* MARK SOLD */
 async function markSold(id){
   const soldAmount = Number(document.getElementById("sold-"+id).value);
-
-  if(!soldAmount){
-    alert("Enter sold amount");
-    return;
-  }
+  if(!soldAmount){alert("Enter sold amount"); return;}
 
   await safeFetch(API,{
     method:"POST",
-    body:JSON.stringify({
-      action:"markSold",
-      id:id,
-      soldAmount:soldAmount
-    })
+    body:JSON.stringify({action:"markSold",id:id,soldAmount:soldAmount})
   });
 
   loadDashboard();
   loadItems();
 }
 
-/* EDIT SOLD */
 async function editSold(id){
   const newSold = prompt("Enter new sold amount:");
   if(!newSold) return;
 
   await safeFetch(API,{
     method:"POST",
-    body:JSON.stringify({
-      action:"editSold",
-      id:id,
-      soldAmount:Number(newSold)
-    })
+    body:JSON.stringify({action:"editSold",id:id,soldAmount:Number(newSold)})
   });
 
   loadDashboard();
   loadItems();
 }
 
-/* DELETE */
 async function deleteItem(id){
   if(!confirm("Delete this item?")) return;
 
   await safeFetch(API,{
     method:"POST",
-    body:JSON.stringify({
-      action:"deleteItem",
-      id:id
-    })
+    body:JSON.stringify({action:"deleteItem",id:id})
   });
 
   loadDashboard();
   loadItems();
 }
 
-/* EDIT MODAL */
 function openEditModal(id,name,category,purchase,shipping,other){
-  document.getElementById("edit-id").value = id;
-  document.getElementById("edit-name").value = name;
-  document.getElementById("edit-category").value = category;
-  document.getElementById("edit-purchase").value = purchase;
-  document.getElementById("edit-shipping").value = shipping;
-  document.getElementById("edit-other").value = other;
-
-  document.getElementById("editModal").style.display = "flex";
+  document.getElementById("edit-id").value=id;
+  document.getElementById("edit-name").value=name;
+  document.getElementById("edit-category").value=category;
+  document.getElementById("edit-purchase").value=purchase;
+  document.getElementById("edit-shipping").value=shipping;
+  document.getElementById("edit-other").value=other;
+  document.getElementById("editModal").style.display="flex";
 }
 
 function closeEditModal(){
-  document.getElementById("editModal").style.display = "none";
+  document.getElementById("editModal").style.display="none";
 }
 
 async function saveEditItem(){
@@ -564,10 +517,8 @@ async function saveEditItem(){
   loadItems();
 }
 
-/* DARK MODE */
 function toggleDarkMode(){
   document.body.classList.toggle("dark");
-
   const isDark = document.body.classList.contains("dark");
   document.getElementById("darkSwitch").checked = isDark;
   localStorage.setItem("darkmode", isDark ? "on" : "off");
@@ -581,38 +532,16 @@ function loadDarkMode(){
   }
 }
 
-/* FLOATING FORM */
-function toggleAddForm(forceClose = false){
+function toggleAddForm(forceClose=false){
   const box = document.getElementById("addFormBox");
-
-  if(forceClose){
-    box.style.display = "none";
-    return;
-  }
-
+  if(forceClose){ box.style.display="none"; return; }
   box.style.display = box.style.display === "none" ? "block" : "none";
 }
 
-/* INITIALIZE */
 loadDarkMode();
 loadDashboard();
 loadItems();
 </script>
-  <button onclick="toggleAddForm()" id="fabBtn" style="
-position:fixed;
-bottom:20px;
-right:20px;
-width:60px;
-height:60px;
-border-radius:50%;
-font-size:28px;
-background:#111;
-color:#fff;
-border:none;
-box-shadow:0 4px 12px rgba(0,0,0,.3);
-z-index:999;
-">
-+
-</button>
+
 </body>
 </html>
