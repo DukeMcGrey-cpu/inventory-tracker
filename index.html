@@ -30,16 +30,28 @@ body{
 
 .cards{
   display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:12px;
 }
 
 .card{
-  background:#fff;
+  background:#ffffff;
+  border-radius:14px;
   padding:15px;
-  border-radius:12px;
   text-align:center;
-  box-shadow:0 2px 6px rgba(0,0,0,.08);
+  box-shadow:0 3px 10px rgba(0,0,0,.08);
+  font-size:22px;
+}
+
+.card small{
+  display:block;
+  font-size:12px;
+  margin:5px 0;
+}
+
+.card h3{
+  margin:0;
+  font-size:20px;
 }
 
 .box{
@@ -158,30 +170,66 @@ button{
     grid-column:span 1;
   }
 }
+    /* PREMIUM SWITCH */
+.switch{
+  position:relative;
+  display:inline-block;
+  width:50px;
+  height:24px;
+}
+
+.switch input{
+  opacity:0;
+  width:0;
+  height:0;
+}
+
+.slider{
+  position:absolute;
+  cursor:pointer;
+  top:0;left:0;right:0;bottom:0;
+  background:#ccc;
+  transition:.4s;
+  border-radius:24px;
+}
+
+.slider:before{
+  position:absolute;
+  content:"";
+  height:18px;
+  width:18px;
+  left:3px;
+  bottom:3px;
+  background:white;
+  transition:.4s;
+  border-radius:50%;
+}
+
+input:checked + .slider{
+  background:#111;
+}
+
+input:checked + .slider:before{
+  transform:translateX(26px);
+}
   </style>
 </head>
 <body>
 
-<div class="header" style="display:flex;justify-content:space-between;align-items:center;">
-  <span>📦 Inventory App</span>
-
-  <button onclick="toggleDarkMode()" style="
-    width:auto;
-    padding:6px 12px;
-    font-size:12px;
-    margin:0;
-  ">
-    🌙 Mode
-  </button>
+<label class="switch">
+  <input type="checkbox" onchange="toggleDarkMode()" id="darkSwitch">
+  <span class="slider"></span>
+</label>
 </div>
 
 <div class="container">
 
 <div class="cards">
-  <div class="card">Capital<br><b id="capital">0</b></div>
-  <div class="card">Sales<br><b id="sales">0</b></div>
-  <div class="card">Profit<br><b id="profit">0</b></div>
-  <div class="card">On Hand<br><b id="onhand">0</b></div>
+  <div class="card">💸<br><small>Total Capital</small><h3 id="capital">0</h3></div>
+  <div class="card">💰<br><small>Total Sales</small><h3 id="sales">0</h3></div>
+  <div class="card">📈<br><small>Total Profit</small><h3 id="profit">0</h3></div>
+  <div class="card">📦<br><small>On Hand</small><h3 id="onhand">0</h3></div>
+  <div class="card">✅<br><small>Sold</small><h3 id="sold">0</h3></div>
 </div>
 
 <div class="form-grid">
@@ -565,6 +613,17 @@ function loadDarkMode(){
 
   if(saved === "on"){
     document.documentElement.classList.add("dark");
+    document.getElementById("darkSwitch").checked = true;
+  }
+}
+
+  function toggleAddForm(){
+  const box = document.getElementById("addFormBox");
+
+  if(box.style.display === "none"){
+    box.style.display = "block";
+  }else{
+    box.style.display = "none";
   }
 }
 /* INITIAL LOAD */
@@ -572,5 +631,21 @@ loadDarkMode();
 loadDashboard();
 loadItems();
 </script>
+  <button onclick="toggleAddForm()" id="fabBtn" style="
+position:fixed;
+bottom:20px;
+right:20px;
+width:60px;
+height:60px;
+border-radius:50%;
+font-size:28px;
+background:#111;
+color:#fff;
+border:none;
+box-shadow:0 4px 12px rgba(0,0,0,.3);
+z-index:999;
+">
++
+</button>
 </body>
 </html>
