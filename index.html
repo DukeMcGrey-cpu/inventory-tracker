@@ -6,7 +6,125 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    
+    /* PREMIUM TOPBAR */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px 20px;
+  margin-bottom:20px;
+  border-radius:18px;
+  background:rgba(255,255,255,0.85);
+  backdrop-filter:blur(10px);
+  box-shadow:0 8px 25px rgba(0,0,0,0.08);
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.topbar-left{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.app-icon{
+  font-size:28px;
+  background:#f1f1f1;
+  width:50px;
+  height:50px;
+  border-radius:14px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.app-text h2{
+  margin:0;
+  font-size:20px;
+}
+
+.app-text p{
+  margin:0;
+  font-size:12px;
+  color:gray;
+}
+
+.topbar-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+    .switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #ccc;
+  transition: .4s;
+  border-radius: 50px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background: #333;
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+    .dark .topbar{
+  background:#1c1c1c;
+  color:white;
+  box-shadow:none;
+}
+
+.dark .app-icon{
+  background:#2a2a2a;
+}
+
+.dark .app-text p{
+  color:#bbb;
+}
+
+    @media(max-width:600px){
+  .topbar{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .topbar-right{
+    width:100%;
+    justify-content:flex-end;
+  }
+
+  .app-text h2{
+    font-size:17px;
+  }
+}
 body{
   margin:0;
   font-family:Arial;
@@ -216,10 +334,25 @@ input:checked + .slider:before{
 </head>
 <body>
 
-<label class="switch">
-  <input type="checkbox" onchange="toggleDarkMode()" id="darkSwitch">
-  <span class="slider"></span>
-</label>
+<div class="topbar">
+
+  <div class="topbar-left">
+    <div class="app-icon">📦</div>
+    <div class="app-text">
+      <h2>Inventory App</h2>
+      <p>Manage your products easily</p>
+    </div>
+  </div>
+
+  <div class="topbar-right">
+
+    <label class="switch">
+      <input type="checkbox" onchange="toggleDarkMode()" id="darkSwitch">
+      <span class="slider"></span>
+    </label>
+
+  </div>
+
 </div>
 
 <div class="container">
@@ -606,6 +739,12 @@ function saveEditItem(){
   }else{
     localStorage.setItem("darkmode","off");
   }
+}
+  function toggleDarkMode(){
+  document.body.classList.toggle("dark");
+
+  document.getElementById("darkSwitch").checked =
+    document.body.classList.contains("dark");
 }
 
 function loadDarkMode(){
