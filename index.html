@@ -6,19 +6,27 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    /* PREMIUM TOPBAR */
+    body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f3f4f7;
+  transition:.3s;
+}
+
+.container{
+  padding:15px;
+}
+
 .topbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:15px 20px;
-  margin-bottom:20px;
-  border-radius:18px;
-  background:rgba(255,255,255,0.85);
-  backdrop-filter:blur(10px);
-  box-shadow:0 8px 25px rgba(0,0,0,0.08);
-  flex-wrap:wrap;
-  gap:10px;
+  padding:18px 20px;
+  background:#fff;
+  box-shadow:0 4px 15px rgba(0,0,0,.08);
+  position:sticky;
+  top:0;
+  z-index:100;
 }
 
 .topbar-left{
@@ -28,14 +36,14 @@
 }
 
 .app-icon{
-  font-size:28px;
-  background:#f1f1f1;
   width:50px;
   height:50px;
-  border-radius:14px;
   display:flex;
-  justify-content:center;
   align-items:center;
+  justify-content:center;
+  font-size:28px;
+  background:#f1f1f1;
+  border-radius:14px;
 }
 
 .app-text h2{
@@ -49,150 +57,58 @@
   color:gray;
 }
 
-.topbar-right{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-    .switch {
-  position: relative;
-  display: inline-block;
-  width: 46px;
-  height: 24px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background: #ccc;
-  transition: .4s;
-  border-radius: 50px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  top: 3px;
-  background: white;
-  transition: .4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background: #333;
-}
-
-input:checked + .slider:before {
-  transform: translateX(22px);
-}
-
-    .dark .topbar{
-  background:#1c1c1c;
-  color:white;
-  box-shadow:none;
-}
-
-.dark .app-icon{
-  background:#2a2a2a;
-}
-
-.dark .app-text p{
-  color:#bbb;
-}
-
-    @media(max-width:600px){
-  .topbar{
-    flex-direction:column;
-    align-items:flex-start;
-  }
-
-  .topbar-right{
-    width:100%;
-    justify-content:flex-end;
-  }
-
-  .app-text h2{
-    font-size:17px;
-  }
-}
-body{
-  margin:0;
-  font-family:Arial;
-  background:#f2f2f2;
-}
-
-.header{
-  position:sticky;
-  top:0;
-  background:#fff;
-  padding:15px;
-  font-size:20px;
-  font-weight:bold;
-  box-shadow:0 2px 8px rgba(0,0,0,.1);
-  z-index:10;
-}
-
-.container{
-  padding:15px;
-}
-
 .cards{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
   gap:12px;
+  margin-top:15px;
 }
 
 .card{
-  background:#ffffff;
+  background:#fff;
   border-radius:14px;
   padding:15px;
   text-align:center;
   box-shadow:0 3px 10px rgba(0,0,0,.08);
-  font-size:22px;
 }
 
 .card small{
   display:block;
-  font-size:12px;
-  margin:5px 0;
+  margin:6px 0;
+  color:gray;
 }
 
-.card h3{
-  margin:0;
-  font-size:20px;
-}
-
-.box{
+.box,.item,.modal-content{
   background:#fff;
   padding:15px;
-  border-radius:12px;
+  border-radius:14px;
   margin-top:15px;
-  box-shadow:0 2px 6px rgba(0,0,0,.08);
+  box-shadow:0 3px 10px rgba(0,0,0,.08);
 }
 
-input,button,select{
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.form-grid button{
+  grid-column:span 2;
+}
+
+input,select,button{
   width:100%;
   padding:10px;
-  margin:5px 0;
+  box-sizing:border-box;
   border-radius:8px;
   border:1px solid #ccc;
-  font-size:14px;
 }
 
 button{
-  background:#007bff;
-  color:white;
+  background:#111;
+  color:#fff;
   border:none;
+  cursor:pointer;
 }
 
 .grid{
@@ -202,13 +118,6 @@ button{
   margin-top:15px;
 }
 
-.item{
-  background:#fff;
-  padding:12px;
-  border-radius:12px;
-  box-shadow:0 2px 6px rgba(0,0,0,.08);
-}
-
 .item img{
   width:100%;
   height:180px;
@@ -216,238 +125,215 @@ button{
   border-radius:10px;
 }
 
-.small-btn{
-  padding:8px;
-  margin-top:5px;
+.category-tabs{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:15px;
 }
 
-.profit-pos{color:green;}
-.profit-neg{color:red;}
+#fabBtn{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  font-size:30px;
+  z-index:999;
+}
 
-    /* DARK MODE */
-.dark body{
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+
+.cancel-btn{
+  background:gray;
+  margin-top:8px;
+}
+
+/* SWITCH */
+.switch{
+  position:relative;
+  width:50px;
+  height:24px;
+  display:inline-block;
+}
+.switch input{opacity:0;width:0;height:0;}
+.slider{
+  position:absolute;
+  inset:0;
+  cursor:pointer;
+  background:#ccc;
+  border-radius:30px;
+  transition:.3s;
+}
+.slider:before{
+  content:"";
+  position:absolute;
+  width:18px;
+  height:18px;
+  left:3px;
+  top:3px;
+  background:#fff;
+  border-radius:50%;
+  transition:.3s;
+}
+input:checked + .slider{
+  background:#111;
+}
+input:checked + .slider:before{
+  transform:translateX(26px);
+}
+
+/* DARK MODE */
+body.dark{
   background:#111;
   color:white;
 }
-
-.dark .header,
-.dark .box,
-.dark .card,
-.dark .item{
-  background:#1e1e1e !important;
-  color:white !important;
+body.dark .topbar,
+body.dark .card,
+body.dark .box,
+body.dark .item,
+body.dark .modal-content{
+  background:#1e1e1e;
+  color:white;
   box-shadow:none;
 }
-
-.dark input,
-.dark select{
+body.dark input,
+body.dark select{
   background:#2b2b2b;
   color:white;
   border:1px solid #555;
 }
 
-.dark button{
-  background:#444;
-  color:white;
-}
-
-.dark #editModal div{
-  background:#1e1e1e !important;
-  color:white;
-}
-    /* FORM GRID FIX */
-.form-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-
-.form-grid input,
-.form-grid select,
-.form-grid button{
-  width:100%;
-  box-sizing:border-box;
-  padding:10px;
-  margin:0;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:14px;
-}
-
-.form-grid button{
-  grid-column:span 2;
-}
-
-/* MOBILE STACK */
+/* MOBILE */
 @media(max-width:768px){
   .form-grid{
     grid-template-columns:1fr;
   }
-
   .form-grid button{
     grid-column:span 1;
   }
-}
-    /* PREMIUM SWITCH */
-.switch{
-  position:relative;
-  display:inline-block;
-  width:50px;
-  height:24px;
-}
-
-.switch input{
-  opacity:0;
-  width:0;
-  height:0;
-}
-
-.slider{
-  position:absolute;
-  cursor:pointer;
-  top:0;left:0;right:0;bottom:0;
-  background:#ccc;
-  transition:.4s;
-  border-radius:24px;
-}
-
-.slider:before{
-  position:absolute;
-  content:"";
-  height:18px;
-  width:18px;
-  left:3px;
-  bottom:3px;
-  background:white;
-  transition:.4s;
-  border-radius:50%;
-}
-
-input:checked + .slider{
-  background:#111;
-}
-
-input:checked + .slider:before{
-  transform:translateX(26px);
 }
   </style>
 </head>
 <body>
 
+<!-- PREMIUM TOP BAR -->
 <div class="topbar">
-
   <div class="topbar-left">
     <div class="app-icon">📦</div>
     <div class="app-text">
-      <h2>Inventory App</h2>
-      <p>Manage your products easily</p>
+      <h2>BuySell Inventory Pro</h2>
+      <p>Smart inventory monitoring dashboard</p>
     </div>
   </div>
 
   <div class="topbar-right">
-
     <label class="switch">
       <input type="checkbox" onchange="toggleDarkMode()" id="darkSwitch">
       <span class="slider"></span>
     </label>
-
   </div>
-
 </div>
 
 <div class="container">
 
-<div class="cards">
-  <div class="card">💸<br><small>Total Capital</small><h3 id="capital">0</h3></div>
-  <div class="card">💰<br><small>Total Sales</small><h3 id="sales">0</h3></div>
-  <div class="card">📈<br><small>Total Profit</small><h3 id="profit">0</h3></div>
-  <div class="card">📦<br><small>On Hand</small><h3 id="onhand">0</h3></div>
-  <div class="card">✅<br><small>Sold</small><h3 id="sold">0</h3></div>
+  <!-- DASHBOARD CARDS -->
+  <div class="cards">
+    <div class="card">💸<small>Total Capital</small><h3 id="capital">₱0</h3></div>
+    <div class="card">💰<small>Total Sales</small><h3 id="sales">₱0</h3></div>
+    <div class="card">📈<small>Total Profit</small><h3 id="profit">₱0</h3></div>
+    <div class="card">📦<small>On Hand</small><h3 id="onhand">0</h3></div>
+    <div class="card">✅<small>Sold</small><h3 id="sold">0</h3></div>
+  </div>
+
+  <!-- FLOATING ADD FORM -->
+  <div id="addFormBox" class="box" style="display:none;">
+    <h3>Add Product</h3>
+
+    <div class="form-grid">
+      <input type="text" id="name" placeholder="Product Name">
+
+      <select id="category">
+        <option value="Gadget / Console">Gadget / Console</option>
+        <option value="Phone">Phone</option>
+        <option value="Appliance">Appliance</option>
+        <option value="Others">Others</option>
+      </select>
+
+      <input type="number" id="price" placeholder="Purchase Amount">
+      <input type="number" id="shipping" placeholder="Shipping Fee">
+      <input type="number" id="other" placeholder="Other Fee">
+      <input type="file" id="image" accept="image/*">
+
+      <button onclick="addItem()">Add Product</button>
+    </div>
+  </div>
+
+  <!-- SEARCH FILTER -->
+  <div class="box">
+    <input id="search" placeholder="Search product..." onkeyup="loadItems()">
+
+    <select id="filter" onchange="loadItems()">
+      <option value="ALL">All Status</option>
+      <option value="ON HAND">On Hand</option>
+      <option value="SOLD">Sold</option>
+    </select>
+  </div>
+
+  <!-- CATEGORY FILTER -->
+  <div id="categoryTabs" class="category-tabs">
+    <button onclick="setCategoryFilter('ALL')">All</button>
+    <button onclick="setCategoryFilter('Gadget / Console')">Gadget / Console</button>
+    <button onclick="setCategoryFilter('Phone')">Phone</button>
+    <button onclick="setCategoryFilter('Appliance')">Appliance</button>
+    <button onclick="setCategoryFilter('Others')">Others</button>
+  </div>
+
+  <!-- PRODUCT GRID -->
+  <div id="grid" class="grid"></div>
+
 </div>
 
-<div class="form-grid">
+<!-- FLOATING ADD BUTTON -->
+<button onclick="toggleAddForm()" id="fabBtn">+</button>
 
-  <input type="text" id="name" placeholder="Product Name">
-
-  <select id="category">
-    <option value="Gadget / Console">Gadget / Console</option>
-    <option value="Phone">Phone</option>
-    <option value="Appliance">Appliance</option>
-    <option value="Others">Others</option>
-  </select>
-
-  <input type="number" id="price" placeholder="Purchase Amount">
-
-  <input type="number" id="shipping" placeholder="Shipping Fee">
-
-  <input type="number" id="other" placeholder="Other Fee">
-
-  <input type="file" id="image" accept="image/*">
-
-  <button onclick="addItem()">Add Product</button>
-
-</div>
-
-<div class="box">
-  <input id="search" placeholder="Search..." onkeyup="loadItems()">
-
-  <select id="filter" onchange="loadItems()">
-    <option value="ALL">All</option>
-    <option value="ON HAND">On Hand</option>
-    <option value="SOLD">Sold</option>
-  </select>
-</div>
-<div id="categoryTabs" style="margin-bottom:15px; display:flex; flex-wrap:wrap; gap:8px;">
-  <button onclick="setCategoryFilter('ALL')">All</button>
-  <button onclick="setCategoryFilter('Gadget / Console')">Gadget / Console</button>
-  <button onclick="setCategoryFilter('Phone')">Phone</button>
-  <button onclick="setCategoryFilter('Appliance')">Appliance</button>
-  <button onclick="setCategoryFilter('Others')">Others</button>
-</div>
-<div id="grid" class="grid"></div>
 <!-- EDIT MODAL -->
-<div id="editModal" style="
-display:none;
-position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:rgba(0,0,0,.5);
-justify-content:center;
-align-items:center;
-z-index:999;
-">
-
-  <div style="
-  background:#fff;
-  width:90%;
-  max-width:350px;
-  padding:20px;
-  border-radius:12px;
-  ">
-
+<div id="editModal" class="modal">
+  <div class="modal-content">
     <h3>Edit Product</h3>
 
     <input type="hidden" id="edit-id">
     <input type="text" id="edit-name" placeholder="Product Name">
+
     <select id="edit-category">
-  <option value="Gadget / Console">Gadget / Console</option>
-  <option value="Phone">Phone</option>
-  <option value="Appliance">Appliance</option>
-  <option value="Others">Others</option>
-</select>
+      <option value="Gadget / Console">Gadget / Console</option>
+      <option value="Phone">Phone</option>
+      <option value="Appliance">Appliance</option>
+      <option value="Others">Others</option>
+    </select>
+
     <input type="number" id="edit-purchase" placeholder="Purchase Amount">
     <input type="number" id="edit-shipping" placeholder="Shipping Fee">
     <input type="number" id="edit-other" placeholder="Other Fee">
 
     <button onclick="saveEditItem()">Save Changes</button>
-    <button onclick="closeEditModal()" style="background:gray;">Cancel</button>
-
+    <button onclick="closeEditModal()" class="cancel-btn">Cancel</button>
   </div>
 </div>
 <script>
 const API = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
+
 let activeCategory = "ALL";
-  
+
 /* SAFE FETCH */
 function safeFetch(url, options = {}){
   return fetch(url, options)
@@ -456,7 +342,7 @@ function safeFetch(url, options = {}){
       try{
         return JSON.parse(text);
       }catch(err){
-        console.error("RAW RESPONSE:", text);
+        console.log("RAW:", text);
         return null;
       }
     });
@@ -464,21 +350,17 @@ function safeFetch(url, options = {}){
 
 /* IMAGE TO BASE64 */
 function uploadImage(file){
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject)=>{
     const reader = new FileReader();
 
-    reader.onload = function(event){
-      resolve(event.target.result);
-    };
-
-    reader.onerror = function(error){
-      reject(error);
-    };
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = err => reject(err);
 
     reader.readAsDataURL(file);
   });
 }
-  /* CATEGORY FILTER */
+
+/* CATEGORY */
 function setCategoryFilter(cat){
   activeCategory = cat;
   loadItems();
@@ -486,32 +368,28 @@ function setCategoryFilter(cat){
 
 /* DASHBOARD */
 function loadDashboard(){
-  safeFetch(API + "?action=getDashboard").then(data => {
+  safeFetch(API + "?action=getDashboard").then(data=>{
     if(!data) return;
 
-    document.getElementById("capital").innerText = data.totalCapital || 0;
-    document.getElementById("sales").innerText = data.totalSales || 0;
-    document.getElementById("profit").innerText = data.totalProfit || 0;
+    document.getElementById("capital").innerText = "₱" + (data.totalCapital || 0);
+    document.getElementById("sales").innerText = "₱" + (data.totalSales || 0);
+    document.getElementById("profit").innerText = "₱" + (data.totalProfit || 0);
     document.getElementById("onhand").innerText = data.onHand || 0;
+    document.getElementById("sold").innerText = data.soldCount || 0;
   });
 }
 
 /* LOAD PRODUCTS */
 function loadItems(){
-
-  safeFetch(API + "?action=getItems").then(data => {
-
-    if(!Array.isArray(data)){
-      console.log("Invalid Items:", data);
-      return;
-    }
-
-    let html = "";
+  safeFetch(API + "?action=getItems").then(data=>{
+    if(!Array.isArray(data)) return;
 
     const searchVal = document.getElementById("search").value.toLowerCase();
     const filterVal = document.getElementById("filter").value;
 
-    data.forEach(row => {
+    let html = "";
+
+    data.forEach(row=>{
 
       const id = row[0] || "";
       const product = row[2] || "";
@@ -522,7 +400,7 @@ function loadItems(){
       const capital = Number(row[7]) || 0;
       const image = row[9] || "";
       const status = row[10] || "ON HAND";
-      const soldPrice = row[12] || "";
+      const soldPrice = Number(row[12]) || 0;
       const profit = Number(row[13]) || 0;
 
       if(product.toLowerCase().indexOf(searchVal) === -1) return;
@@ -534,35 +412,27 @@ function loadItems(){
         ${image ? `<img src="${image}">` : ""}
         <h3>${product}</h3>
         <p><b>Category:</b> ${category}</p>
-
         <p>Purchase: ₱${purchase}</p>
         <p>Shipping: ₱${shipping}</p>
         <p>Other Fees: ₱${other}</p>
         <p>Total Capital: ₱${capital}</p>
-        <p>Sold Price: ${soldPrice ? "₱" + soldPrice : "-"}</p>
-        <p class="${profit >= 0 ? 'profit-pos' : 'profit-neg'}">Profit: ₱${profit}</p>
+        <p>Sold Price: ${soldPrice ? "₱"+soldPrice : "-"}</p>
+        <p style="color:${profit >= 0 ? 'green':'red'};">Profit: ₱${profit}</p>
         <p>Status: ${status}</p>
 
         ${
           status === "ON HAND"
           ? `
-            <input type="number" id="sold-${id}" placeholder="Sold ₱">
-            <button class="small-btn" onclick="markSold('${id}')">Mark Sold</button>
+            <input type="number" id="sold-${id}" placeholder="Sold Amount">
+            <button onclick="markSold('${id}')">Mark Sold</button>
           `
           : `
-            <button class="small-btn" onclick="editSold('${id}')">Edit Sold</button>
+            <button onclick="editSold('${id}')">Edit Sold</button>
           `
         }
 
-        <button class="small-btn" onclick="openEditModal(
-'${id}',
-'${product}',
-'${category}',
-'${purchase}',
-'${shipping}',
-'${other}'
-)">Edit Item</button>
-        <button class="small-btn" onclick="deleteItem('${id}')">Delete</button>
+        <button onclick="openEditModal('${id}','${product}','${category}','${purchase}','${shipping}','${other}')">Edit</button>
+        <button onclick="deleteItem('${id}')">Delete</button>
       </div>
       `;
     });
@@ -573,123 +443,93 @@ function loadItems(){
 
 /* ADD PRODUCT */
 async function addItem(){
-
   const file = document.getElementById("image").files[0];
   let photo = "";
 
-  if(file){
-    photo = await uploadImage(file);
-  }
+  if(file) photo = await uploadImage(file);
 
-  safeFetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "addItem",
-      productName: document.getElementById("name").value,
-      category: document.getElementById("category").value,
-      purchaseAmount: Number(document.getElementById("price").value),
-      shippingFee: Number(document.getElementById("shipping").value),
-      otherFee: Number(document.getElementById("other").value),
-      quantity: 1,
-      photoURL: photo
+  await safeFetch(API,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"addItem",
+      productName:document.getElementById("name").value,
+      category:document.getElementById("category").value,
+      purchaseAmount:Number(document.getElementById("price").value),
+      shippingFee:Number(document.getElementById("shipping").value),
+      otherFee:Number(document.getElementById("other").value),
+      quantity:1,
+      photoURL:photo
     })
-  }).then(() => {
-
-    document.getElementById("name").value = "";
-    document.getElementById("price").value = "";
-    document.getElementById("shipping").value = "";
-    document.getElementById("other").value = "";
-    document.getElementById("image").value = "";
-
-    loadDashboard();
-    loadItems();
   });
+
+  document.getElementById("name").value = "";
+  document.getElementById("price").value = "";
+  document.getElementById("shipping").value = "";
+  document.getElementById("other").value = "";
+  document.getElementById("image").value = "";
+
+  loadDashboard();
+  loadItems();
+  toggleAddForm(true);
 }
 
 /* MARK SOLD */
-function markSold(id){
-
-  const soldAmount = Number(document.getElementById("sold-" + id).value);
+async function markSold(id){
+  const soldAmount = Number(document.getElementById("sold-"+id).value);
 
   if(!soldAmount){
     alert("Enter sold amount");
     return;
   }
 
-  safeFetch(API,{
+  await safeFetch(API,{
     method:"POST",
     body:JSON.stringify({
       action:"markSold",
       id:id,
       soldAmount:soldAmount
     })
-  }).then(()=>{
-    loadDashboard();
-    loadItems();
   });
+
+  loadDashboard();
+  loadItems();
 }
 
 /* EDIT SOLD */
-function editSold(id){
-
+async function editSold(id){
   const newSold = prompt("Enter new sold amount:");
-
   if(!newSold) return;
 
-  safeFetch(API,{
+  await safeFetch(API,{
     method:"POST",
     body:JSON.stringify({
       action:"editSold",
       id:id,
       soldAmount:Number(newSold)
     })
-  }).then(()=>{
-    loadDashboard();
-    loadItems();
   });
+
+  loadDashboard();
+  loadItems();
 }
 
-/* EDIT PRODUCT */
-function editItem(id){
-
-  const newName = prompt("Enter new product name:");
-  const newPurchase = prompt("Enter new purchase amount:");
-
-  if(!newName || !newPurchase) return;
-
-  safeFetch(API,{
-    method:"POST",
-    body:JSON.stringify({
-  action:"editItem",
-  id:id,
-  productName:name,
-  category: document.getElementById("edit-category").value,
-  purchaseAmount:purchase,
-  shippingFee:shipping,
-  otherFee:other
-})
-  }).then(()=>{
-    loadDashboard();
-    loadItems();
-  });
-}
-
-/* DELETE PRODUCT */
-function deleteItem(id){
-
+/* DELETE */
+async function deleteItem(id){
   if(!confirm("Delete this item?")) return;
 
-  safeFetch(API,{
+  await safeFetch(API,{
     method:"POST",
     body:JSON.stringify({
       action:"deleteItem",
       id:id
     })
-  }).then(()=>{
-    loadDashboard();
-    loadItems();
   });
+
+  loadDashboard();
+  loadItems();
 }
+
+/* EDIT MODAL */
 function openEditModal(id,name,category,purchase,shipping,other){
   document.getElementById("edit-id").value = id;
   document.getElementById("edit-name").value = name;
@@ -705,67 +545,55 @@ function closeEditModal(){
   document.getElementById("editModal").style.display = "none";
 }
 
-function saveEditItem(){
-
-  const id = document.getElementById("edit-id").value;
-  const name = document.getElementById("edit-name").value;
-  const purchase = Number(document.getElementById("edit-purchase").value);
-  const shipping = Number(document.getElementById("edit-shipping").value);
-  const other = Number(document.getElementById("edit-other").value);
-
-  safeFetch(API,{
+async function saveEditItem(){
+  await safeFetch(API,{
     method:"POST",
     body:JSON.stringify({
       action:"editItem",
-      id:id,
-      productName:name,
-      purchaseAmount:purchase,
-      shippingFee:shipping,
-      otherFee:other
+      id:document.getElementById("edit-id").value,
+      productName:document.getElementById("edit-name").value,
+      category:document.getElementById("edit-category").value,
+      purchaseAmount:Number(document.getElementById("edit-purchase").value),
+      shippingFee:Number(document.getElementById("edit-shipping").value),
+      otherFee:Number(document.getElementById("edit-other").value)
     })
-  }).then(()=>{
-    closeEditModal();
-    loadDashboard();
-    loadItems();
   });
+
+  closeEditModal();
+  loadDashboard();
+  loadItems();
 }
 
-  function toggleDarkMode(){
-
-  document.documentElement.classList.toggle("dark");
-
-  if(document.documentElement.classList.contains("dark")){
-    localStorage.setItem("darkmode","on");
-  }else{
-    localStorage.setItem("darkmode","off");
-  }
-}
-  function toggleDarkMode(){
+/* DARK MODE */
+function toggleDarkMode(){
   document.body.classList.toggle("dark");
 
-  document.getElementById("darkSwitch").checked =
-    document.body.classList.contains("dark");
+  const isDark = document.body.classList.contains("dark");
+  document.getElementById("darkSwitch").checked = isDark;
+  localStorage.setItem("darkmode", isDark ? "on" : "off");
 }
 
 function loadDarkMode(){
   const saved = localStorage.getItem("darkmode");
-
   if(saved === "on"){
-    document.documentElement.classList.add("dark");
+    document.body.classList.add("dark");
     document.getElementById("darkSwitch").checked = true;
   }
 }
 
-  function toggleAddForm(){
+/* FLOATING FORM */
+function toggleAddForm(forceClose = false){
   const box = document.getElementById("addFormBox");
 
-  if(box.style.display === "none"){
-    box.style.display = "block";
-  }else{
+  if(forceClose){
     box.style.display = "none";
+    return;
   }
+
+  box.style.display = box.style.display === "none" ? "block" : "none";
 }
-/* INITIAL LOAD */
+
+/* INITIALIZE */
 loadDarkMode();
 loadDashboard();
 loadItems();
