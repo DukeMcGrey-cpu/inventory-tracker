@@ -31,7 +31,7 @@
 <button onclick="toggleAddForm()" id="fabBtn">+</button>
 <div id="editModal" class="modal"><div class="modal-content"><input type="hidden" id="edit-id"><input id="edit-name" placeholder="Product Name"><select id="edit-category"><option>Gadget / Console</option><option>Phone</option><option>Appliance</option><option>Others</option></select><input id="edit-purchase" type="number" placeholder="Purchase Amount"><input id="edit-shipping" type="number" placeholder="Shipping Fee"><input id="edit-other" type="number" placeholder="Other Fee"><button onclick="saveEditItem()">Save Changes</button><button onclick="closeEditModal()">Cancel</button></div></div>
 <script>
-const API='PASTE YOUR DEPLOYED GOOGLE SCRIPT URL HERE'; let activeCategory='ALL';
+const API='https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec'; let activeCategory='ALL';
 function toast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2000)}
 function safeFetch(url,o={}){return fetch(url,o).then(r=>r.text()).then(t=>{try{return JSON.parse(t)}catch(e){return null}})}
 function uploadImage(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(file);})}
