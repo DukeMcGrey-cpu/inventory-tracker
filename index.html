@@ -132,7 +132,39 @@ button{
 </div>
 
 <div id="grid" class="grid"></div>
+<!-- EDIT MODAL -->
+<div id="editModal" style="
+display:none;
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,.5);
+justify-content:center;
+align-items:center;
+z-index:999;
+">
 
+  <div style="
+  background:#fff;
+  width:90%;
+  max-width:350px;
+  padding:20px;
+  border-radius:12px;
+  ">
+
+    <h3>Edit Product</h3>
+
+    <input type="hidden" id="edit-id">
+    <input type="text" id="edit-name" placeholder="Product Name">
+    <input type="number" id="edit-purchase" placeholder="Purchase Amount">
+    <input type="number" id="edit-shipping" placeholder="Shipping Fee">
+    <input type="number" id="edit-other" placeholder="Other Fee">
+
+    <button onclick="saveEditItem()">Save Changes</button>
+    <button onclick="closeEditModal()" style="background:gray;">Cancel</button>
+
+  </div>
+</div>
 <script>
 const API = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
 
@@ -234,7 +266,13 @@ function loadItems(){
           `
         }
 
-        <button class="small-btn" onclick="editItem('${id}')">Edit Item</button>
+        <button class="small-btn" onclick="openEditModal(
+'${id}',
+'${product}',
+'${purchase}',
+'${shipping}',
+'${other}'
+)">Edit Item</button>
         <button class="small-btn" onclick="deleteItem('${id}')">Delete</button>
       </div>
       `;
@@ -359,7 +397,44 @@ function deleteItem(id){
     loadItems();
   });
 }
+function openEditModal(id,name,purchase,shipping,other){
+  document.getElementById("edit-id").value = id;
+  document.getElementById("edit-name").value = name;
+  document.getElementById("edit-purchase").value = purchase;
+  document.getElementById("edit-shipping").value = shipping;
+  document.getElementById("edit-other").value = other;
 
+  document.getElementById("editModal").style.display = "flex";
+}
+
+function closeEditModal(){
+  document.getElementById("editModal").style.display = "none";
+}
+
+function saveEditItem(){
+
+  const id = document.getElementById("edit-id").value;
+  const name = document.getElementById("edit-name").value;
+  const purchase = Number(document.getElementById("edit-purchase").value);
+  const shipping = Number(document.getElementById("edit-shipping").value);
+  const other = Number(document.getElementById("edit-other").value);
+
+  safeFetch(API,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"editItem",
+      id:id,
+      productName:name,
+      purchaseAmount:purchase,
+      shippingFee:shipping,
+      otherFee:other
+    })
+  }).then(()=>{
+    closeEditModal();
+    loadDashboard();
+    loadItems();
+  });
+}
 /* INITIAL LOAD */
 loadDashboard();
 loadItems();
