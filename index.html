@@ -2,37 +2,78 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BuySell Inventory Pro V4</title>
+<title>BuySell Inventory Pro V3</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f5f7}
-.topbar{display:flex;justify-content:space-between;align-items:center;padding:15px;background:#fff;position:sticky;top:0;box-shadow:0 4px 10px rgba(0,0,0,.1)}
-.container{padding:15px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
-.card{background:#fff;padding:15px;border-radius:12px;text-align:center}
+/* ===== YOUR ORIGINAL V3 STYLE (UNCHANGED LOGICALLY) ===== */
+
+*{box-sizing:border-box;font-family:Arial}
+body{margin:0;background:#f4f5f7;transition:.3s;color:#111}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:18px 20px;
+  background:rgba(255,255,255,.9);
+  backdrop-filter:blur(10px);
+  position:sticky;top:0;
+  z-index:99;
+  box-shadow:0 4px 20px rgba(0,0,0,.08);
+}
+
+.app-icon{width:52px;height:52px;background:#eee;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px}
+
+.container{padding:15px;max-width:1200px;margin:auto}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+
+.card{background:#fff;padding:15px;border-radius:14px;text-align:center}
+
 .box{background:#fff;padding:15px;border-radius:12px;margin-top:10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;margin-top:15px}
+
+input,select,button{width:100%;padding:10px;margin:5px 0}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+
 .item{background:#fff;border-radius:12px;overflow:hidden}
-.item img{width:100%;height:200px;object-fit:cover}
+
+.item img{width:100%;height:180px;object-fit:cover}
+
 .item-body{padding:10px}
-button{padding:10px;width:100%;margin-top:5px;cursor:pointer}
+
+button{background:#111;color:#fff;border:none;border-radius:8px}
+
+.status{font-size:12px;padding:4px 8px;background:#111;color:#fff;border-radius:20px;display:inline-block}
+
 </style>
 </head>
 
 <body>
 
 <div class="topbar">
-  <h3>📦 Inventory V4</h3>
+  <div style="display:flex;gap:10px;align-items:center">
+    <div class="app-icon">📦</div>
+    <div>
+      <b>Inventory Pro</b><br>
+      <small>V3 System</small>
+    </div>
+  </div>
+
+  <label>
+    <input type="checkbox" onchange="toggleDarkMode()" id="darkSwitch">
+    🌙
+  </label>
 </div>
 
 <div class="container">
 
 <div class="cards">
-  <div class="card">Capital <div id="capital">0</div></div>
-  <div class="card">Sales <div id="sales">0</div></div>
-  <div class="card">Profit <div id="profit">0</div></div>
-  <div class="card">On Hand <div id="onhand">0</div></div>
-  <div class="card">Sold <div id="sold">0</div></div>
+  <div class="card">Capital <h3 id="capital">0</h3></div>
+  <div class="card">Sales <h3 id="sales">0</h3></div>
+  <div class="card">Profit <h3 id="profit">0</h3></div>
+  <div class="card">On Hand <h3 id="onhand">0</h3></div>
+  <div class="card">Sold <h3 id="sold">0</h3></div>
 </div>
 
 <div class="box">
@@ -43,13 +84,20 @@ button{padding:10px;width:100%;margin-top:5px;cursor:pointer}
     <option>Appliance</option>
     <option>Others</option>
   </select>
-
   <input id="price" type="number" placeholder="Purchase">
   <input id="shipping" type="number" placeholder="Shipping">
   <input id="other" type="number" placeholder="Other">
   <input id="image" type="file">
+  <button onclick="addItem()">Add</button>
+</div>
 
-  <button onclick="addItem()">Add Product</button>
+<div class="box">
+  <input id="search" placeholder="Search" onkeyup="loadItems()">
+  <select id="filter" onchange="loadItems()">
+    <option>ALL</option>
+    <option>ON HAND</option>
+    <option>SOLD</option>
+  </select>
 </div>
 
 <div id="grid" class="grid"></div>
@@ -57,193 +105,138 @@ button{padding:10px;width:100%;margin-top:5px;cursor:pointer}
 </div>
 
 <script>
-const API='https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec';
-let activeCategory='ALL';
 
-/* SAFE FETCH (FIXED) */
+const API = "https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec";
+let activeCategory = "ALL";
+
+/* SAFE FETCH */
 function safeFetch(url,o={}){
   return fetch(url,o)
     .then(r=>r.text())
-    .then(t=>{
-      try{return JSON.parse(t)}
-      catch(e){console.log("RAW:",t);return null;}
-    });
+    .then(t=>{try{return JSON.parse(t)}catch(e){return null}})
 }
 
-/* IMAGE UPLOAD (UNCHANGED BUT SAFE) */
+/* IMAGE */
 function uploadImage(file){
-  return new Promise((resolve,reject)=>{
-    const reader=new FileReader();
-    reader.onload=e=>resolve(e.target.result);
-    reader.onerror=reject;
-    reader.readAsDataURL(file);
+  return new Promise(res=>{
+    const r=new FileReader();
+    r.onload=e=>res(e.target.result);
+    r.readAsDataURL(file);
   });
 }
 
-/* ADD ITEM (FIXED CRITICAL BUGS) */
+/* ADD ITEM (FIXED) */
 async function addItem(){
 
-  const file=document.getElementById('image').files[0];
-  let photo='';
+  const file=document.getElementById("image").files[0];
+  let img="";
 
-  if(file){
-    photo=await uploadImage(file);
-  }
+  if(file) img = await uploadImage(file);
 
   await safeFetch(API,{
     method:"POST",
-    headers:{
-      "Content-Type":"application/json"
-    },
+    headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
-      action:'addItem',
-      productName:document.getElementById('name').value,
-      category:document.getElementById('category').value,
-      purchaseAmount:Number(document.getElementById('price').value),
-      shippingFee:Number(document.getElementById('shipping').value),
-      otherFee:Number(document.getElementById('other').value),
-      quantity:1,
-      photoURL:photo
+      action:"addItem",
+      productName:name.value,
+      category:category.value,
+      purchaseAmount:+price.value,
+      shippingFee:+shipping.value,
+      otherFee:+other.value,
+      photoURL:img
     })
   });
 
-  document.getElementById('name').value='';
-  document.getElementById('price').value='';
-  document.getElementById('shipping').value='';
-  document.getElementById('other').value='';
-  document.getElementById('image').value='';
-
-  loadDashboard();
   loadItems();
+  loadDashboard();
 }
 
-/* DASHBOARD (FIXED SOLD COUNT ISSUE) */
+/* DASHBOARD */
 function loadDashboard(){
-  safeFetch(API+'?action=getDashboard').then(d=>{
+  safeFetch(API+"?action=getDashboard").then(d=>{
     if(!d)return;
-
-    document.getElementById("capital").innerText=d.totalCapital||0;
-    document.getElementById("sales").innerText=d.totalSales||0;
-    document.getElementById("profit").innerText=d.totalProfit||0;
-    document.getElementById("onhand").innerText=d.onHand||0;
-    document.getElementById("sold").innerText=d.soldCount||0;
+    capital.innerText=d.totalCapital||0;
+    sales.innerText=d.totalSales||0;
+    profit.innerText=d.totalProfit||0;
+    onhand.innerText=d.onHand||0;
+    sold.innerText=d.soldCount||0;
   });
 }
 
-/* LOAD ITEMS (FIXED INDEX SAFETY) */
+/* ITEMS */
 function loadItems(){
-
-  safeFetch(API+'?action=getItems').then(data=>{
-
+  safeFetch(API+"?action=getItems").then(data=>{
     if(!Array.isArray(data))return;
 
-    let html='';
+    let html="";
 
-    const searchVal=document.getElementById("search").value.toLowerCase();
-    const filterVal=document.getElementById("filter").value;
+    data.forEach(r=>{
 
-    data.forEach(row=>{
-
-      const id=row[0];
-      const product=row[2]||"";
-      const category=row[3]||"";
-      const purchase=row[4]||0;
-      const shipping=row[5]||0;
-      const other=row[6]||0;
-      const capital=row[7]||0;
-      const image=row[9]||"";
-      const status=row[10]||"ON HAND";
-      const soldPrice=row[12]||"";
-      const profit=row[13]||0;
-
-      if(product.toLowerCase().indexOf(searchVal)===-1)return;
-      if(filterVal!=="ALL"&&status!==filterVal)return;
-      if(activeCategory!=="ALL"&&category!==activeCategory)return;
+      const id=r[0];
+      const name=r[2]||"";
+      const cat=r[3]||"";
+      const cap=r[7]||0;
+      const img=r[9]||"";
+      const status=r[10]||"ON HAND";
+      const sold=r[12]||0;
+      const profit=r[13]||0;
 
       html+=`
       <div class="item">
-        ${image?`<img src="${image}">`:""}
+        ${img?`<img src="${img}">`:``}
         <div class="item-body">
-          <h3>${product}</h3>
-          <p>${category}</p>
-          <p>Capital: ₱${capital}</p>
-          <p>Sold: ${soldPrice?("₱"+soldPrice):"-"}</p>
-          <p style="color:${profit>=0?'green':'red'}">Profit: ₱${profit}</p>
-          <p>Status: ${status}</p>
+          <span class="status">${status}</span>
+          <h3>${name}</h3>
+          <p>${cat}</p>
+          <p>Cap: ₱${cap}</p>
+          <p>Sold: ₱${sold}</p>
+          <p>Profit: ₱${profit}</p>
 
-          ${
-            status==="ON HAND"
-            ? `<input id="sold-${id}" type="number" placeholder="Sold Amount">
-               <button onclick="markSold('${id}')">Mark Sold</button>`
-            : `<button onclick="editSold('${id}')">Edit Sold</button>`
-          }
-
+          ${status==="ON HAND"
+          ? `<input id="sold-${id}" type="number">
+             <button onclick="markSold('${id}')">Sold</button>`
+          : `<button onclick="editSold('${id}')">Edit Sold</button>`}
         </div>
       </div>`;
     });
 
-    document.getElementById("grid").innerHTML=html;
+    grid.innerHTML=html;
   });
 }
 
-/* MARK SOLD (FIXED SAFE NUMBER) */
+/* SOLD */
 async function markSold(id){
-
-  const amt=Number(document.getElementById("sold-"+id).value);
-
+  const amt=+document.getElementById("sold-"+id).value;
   if(!amt)return;
 
   await safeFetch(API,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      action:"markSold",
-      id:id,
-      soldAmount:amt
-    })
+    body:JSON.stringify({action:"markSold",id,soldAmount:amt})
   });
 
-  loadDashboard();
   loadItems();
+  loadDashboard();
 }
 
-/* EDIT SOLD */
 async function editSold(id){
-
-  const amt=prompt("Enter new sold amount");
+  const amt=prompt("New sold");
   if(!amt)return;
 
   await safeFetch(API,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      action:"editSold",
-      id:id,
-      soldAmount:Number(amt)
-    })
+    body:JSON.stringify({action:"editSold",id,soldAmount:+amt})
   });
 
-  loadDashboard();
   loadItems();
+  loadDashboard();
 }
 
-/* DELETE */
-async function deleteItem(id){
+/* INIT */
+loadItems();
+loadDashboard();
 
-  if(!confirm("Delete item?"))return;
-
-  await safeFetch(API,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      action:"deleteItem",
-      id:id
-    })
-  });
-
-  loadDashboard();
-  loadItems();
-}
 </script>
 
 </body>
