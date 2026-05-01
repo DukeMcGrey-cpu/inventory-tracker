@@ -417,22 +417,32 @@
     }
 
     function safeFetch(url, o = {}) {
-      return fetch(url, o)
-        .then(r => r.text())
-        .then(t => {
-          try { return JSON.parse(t); }
-          catch (e) { return null; }
-        });
-    }
+  if (o.method === 'POST') {
+    o.headers = { 'Content-Type': 'application/json' };
+  }
+  return fetch(url, o)
+    .then(r => r.text())
+    .then(t => { try { return JSON.parse(t); } catch(e) { return null; }});
+}
 
-    function uploadImage(file) {
-      return new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = e => res(e.target.result);
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
-    }
+    // ✅ Replace your uploadImage() with this
+function uploadImage(file) {
+  return new Promise((res) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const MAX = 800;
+      let w = img.width, h = img.height;
+      if (w > MAX) { h = h * MAX / w; w = MAX; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      res(canvas.toDataURL('image/jpeg', 0.7)); // 70% quality
+    };
+    img.src = url;
+  });
+}
 
     function setCategoryFilter(cat) {
       activeCategory = cat;
@@ -516,7 +526,7 @@
         method: 'POST',
         body: JSON.stringify({
           action: 'addItem',
-          productName: name.value,
+          productName: document.getElementById('name').value,
           category: category.value,
           purchaseAmount: +price.value,
           shippingFee: +shipping.value,
