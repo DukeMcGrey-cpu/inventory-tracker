@@ -138,112 +138,47 @@ body.dark .category-tabs button{background:#2a2a2a;color:#fff;border:1px solid #
 </div>
 
 <script>
-const API='https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec';
-let activeCategory='ALL';
+const API = 'https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec';
+let activeCategory = 'ALL';
 
+/* ---------------- TOAST ---------------- */
 function toast(msg){
- const t=document.getElementById('toast');
- t.innerText=msg;
- t.style.display='block';
- setTimeout(()=>t.style.display='none',2000);
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.style.display = 'block';
+  setTimeout(()=>t.style.display='none',2000);
 }
 
-function safeFetch(url,o={}){
- return fetch(url,o)
- .then(r=>r.text())
- .then(t=>{
-   console.log("RAW SERVER:",t);
-   try{return JSON.parse(t)}catch(e){return null}
- });
-}
-
-function uploadImage(file){
- return new Promise((resolve,reject)=>{
-   const reader=new FileReader();
-   reader.onload=function(e){
-     const img=new Image();
-     img.onload=function(){
-       const canvas=document.createElement("canvas");
-       const ctx=canvas.getContext("2d");
-       let width=img.width;
-       let height=img.height;
-       const max=900;
-
-       if(width>height){
-         if(width>max){
-           height*=max/width;
-           width=max;
-         }
-       }else{
-         if(height>max){
-           width*=max/height;
-           height=max;
-         }
-       }
-
-       canvas.width=width;
-       canvas.height=height;
-       ctx.drawImage(img,0,0,width,height);
-       resolve(canvas.toDataURL("image/jpeg",0.65));
-     };
-     img.src=e.target.result;
-   };
-   reader.onerror=reject;
-   reader.readAsDataURL(file);
- });
-}
-  <script>
-const API='https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec';
-let activeCategory='ALL';
-
-/* =========================
-   TOAST MESSAGE
-========================= */
-function toast(msg){
-  const t=document.getElementById('toast');
-  t.innerText=msg;
-  t.style.display='block';
-  setTimeout(()=>t.style.display='none',2500);
-}
-
-/* =========================
-   SAFE FETCH (GET + POST)
-========================= */
+/* ---------------- SAFE FETCH FIXED ---------------- */
 async function safeFetch(url, options={}){
   try{
-    const res = await fetch(url,{
-      method: options.method || "GET",
+    const response = await fetch(url,{
+      method: options.method || 'GET',
       headers:{
-        "Content-Type":"text/plain;charset=utf-8"
+        'Content-Type':'text/plain;charset=utf-8'
       },
       body: options.body || null
     });
 
-    const text = await res.text();
-
-    console.log("SERVER RAW RESPONSE:", text);
+    const txt = await response.text();
+    console.log("SERVER RESPONSE:", txt);
 
     try{
-      return JSON.parse(text);
-    }catch(err){
-      return {
-        status:"error",
-        message:"Invalid JSON from server: " + text
-      };
+      return JSON.parse(txt);
+    }catch(e){
+      console.error("JSON PARSE ERROR:", txt);
+      toast("Server returned invalid response");
+      return null;
     }
 
   }catch(err){
     console.error("FETCH ERROR:", err);
-    return {
-      status:"error",
-      message:err.toString()
-    };
+    toast("Connection error");
+    return null;
   }
 }
 
-/* =========================
-   COMPRESS IMAGE
-========================= */
+/* ---------------- IMAGE COMPRESSOR ---------------- */
 function uploadImage(file){
   return new Promise((resolve,reject)=>{
 
@@ -260,140 +195,117 @@ function uploadImage(file){
 
         let width = img.width;
         let height = img.height;
-
-        const maxSize = 700;
+        const max = 700;
 
         if(width > height){
-          if(width > maxSize){
-            height *= maxSize / width;
-            width = maxSize;
+          if(width > max){
+            height = height * (max/width);
+            width = max;
           }
         }else{
-          if(height > maxSize){
-            width *= maxSize / height;
-            height = maxSize;
+          if(height > max){
+            width = width * (max/height);
+            height = max;
           }
         }
 
         canvas.width = width;
         canvas.height = height;
-
         ctx.drawImage(img,0,0,width,height);
 
         const compressed = canvas.toDataURL("image/jpeg",0.55);
-
-        console.log("IMAGE COMPRESSED SUCCESS");
-
         resolve(compressed);
       };
 
-      img.onerror = function(){
-        reject("Image load failed");
-      };
-
+      img.onerror = reject;
       img.src = e.target.result;
     };
 
-    reader.onerror = function(){
-      reject("FileReader failed");
-    };
-
+    reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 }
 
-/* =========================
-   CATEGORY FILTER
-========================= */
+/* ---------------- CATEGORY FILTER ---------------- */
 function setCategoryFilter(cat){
-  activeCategory=cat;
+  activeCategory = cat;
   loadItems();
 }
 
-/* =========================
-   LOAD DASHBOARD
-========================= */
+/* ---------------- DASHBOARD ---------------- */
 async function loadDashboard(){
-  const d = await safeFetch(API+'?action=getDashboard');
+  const d = await safeFetch(API + '?action=getDashboard');
+  if(!d) return;
 
-  if(!d || d.status==="error") return;
-
-  capital.innerText='₱'+(d.totalCapital||0);
-  sales.innerText='₱'+(d.totalSales||0);
-  profit.innerText='₱'+(d.totalProfit||0);
-  onhand.innerText=d.onHand||0;
-  sold.innerText=d.soldCount||0;
+  capital.innerText = '₱' + (d.totalCapital || 0);
+  sales.innerText = '₱' + (d.totalSales || 0);
+  profit.innerText = '₱' + (d.totalProfit || 0);
+  onhand.innerText = d.onHand || 0;
+  sold.innerText = d.soldCount || 0;
 }
 
-/* =========================
-   LOAD ITEMS
-========================= */
+/* ---------------- LOAD ITEMS ---------------- */
 async function loadItems(){
-
-  const data = await safeFetch(API+'?action=getItems');
-
+  const data = await safeFetch(API + '?action=getItems');
   if(!Array.isArray(data)) return;
 
-  let html='';
-  const s=search.value.toLowerCase();
-  const f=filter.value;
+  let html = '';
+  const s = search.value.toLowerCase();
+  const f = filter.value;
 
   data.forEach(r=>{
 
-    const id=r[0]||'';
-    const p=r[2]||'';
-    const c=r[3]||'';
-    const cap=+r[7]||0;
-    const img=r[9]||'';
-    const st=r[10]||'ON HAND';
-    const soldp=+r[12]||0;
-    const pro=+r[13]||0;
+    const id = r[0] || '';
+    const p = r[2] || '';
+    const c = r[3] || '';
+    const cap = Number(r[7]) || 0;
+    const img = r[9] || '';
+    const st = r[10] || 'ON HAND';
+    const soldp = Number(r[12]) || 0;
+    const pro = Number(r[13]) || 0;
 
-    if(p.toLowerCase().indexOf(s)===-1) return;
-    if(f!=='ALL' && st!==f) return;
-    if(activeCategory!=='ALL' && c!==activeCategory) return;
+    if(p.toLowerCase().indexOf(s) === -1) return;
+    if(f !== 'ALL' && st !== f) return;
+    if(activeCategory !== 'ALL' && c !== activeCategory) return;
 
     html += `
-    <div class='item'>
-      <span class='status-pill'>${st}</span>
-      ${img ? `<img src="${img}">` : ''}
-      <div class='item-body'>
-        <h3>${p}</h3>
-        <p>${c}</p>
-        <p>Capital: ₱${cap}</p>
-        <p>Sold: ${soldp ? '₱'+soldp : '-'}</p>
-        <p style='color:${pro>=0?'green':'red'}'>Profit: ₱${pro}</p>
+      <div class='item'>
+        <span class='status-pill'>${st}</span>
+        ${img ? `<img src="${img}">` : ''}
+        <div class='item-body'>
+          <h3>${p}</h3>
+          <p>${c}</p>
+          <p>Capital: ₱${cap}</p>
+          <p>Sold: ${soldp ? '₱'+soldp : '-'}</p>
+          <p style="color:${pro>=0?'limegreen':'red'}">Profit: ₱${pro}</p>
 
-        ${st==='ON HAND'
-          ? `<input id='sold-${id}' type='number' placeholder='Sold Amount'>
-             <button class='full-btn' onclick="markSold('${id}')">Mark Sold</button>`
-          : `<button class='full-btn' onclick="editSold('${id}')">Edit Sold</button>`
-        }
+          ${st==='ON HAND'
+            ? `<input id="sold-${id}" type="number" placeholder="Sold Amount">
+               <button class="full-btn" onclick="markSold('${id}')">Mark Sold</button>`
+            : `<button class="full-btn" onclick="editSold('${id}')">Edit Sold</button>`
+          }
 
-        <div class='action-row'>
-          <button onclick="openEditModal('${id}')">Edit</button>
-          <button onclick="deleteItem('${id}')">Delete</button>
+          <div class="action-row">
+            <button onclick="openEditModal('${id}')">Edit</button>
+            <button onclick="deleteItem('${id}')">Delete</button>
+          </div>
         </div>
       </div>
-    </div>`;
+    `;
   });
 
   grid.innerHTML = html;
 }
 
-/* =========================
-   ADD ITEM (FULL FIX)
-========================= */
+/* ---------------- ADD ITEM MASTER FIX ---------------- */
 async function addItem(){
-
-  console.log("ADD ITEM START");
 
   if(!name.value.trim()) return toast("Enter product name");
   if(!price.value) return toast("Enter purchase amount");
 
-  const btn = document.querySelector("#addFormBox button");
-  btn.disabled = true;
-  btn.innerText = "Saving...";
+  const addBtn = document.querySelector("#addFormBox button");
+  addBtn.disabled = true;
+  addBtn.innerText = "Saving...";
 
   try{
 
@@ -401,33 +313,30 @@ async function addItem(){
     const file = image.files[0];
 
     if(file){
-      console.log("Compressing image...");
+      toast("Compressing image...");
       photo = await uploadImage(file);
-      console.log("Image compressed done");
     }
 
-    const payload = {
-      action:'addItem',
-      productName:name.value.trim(),
-      category:category.value,
-      purchaseAmount:Number(price.value)||0,
-      shippingFee:Number(shipping.value)||0,
-      otherFee:Number(other.value)||0,
-      quantity:1,
-      photoURL:photo
-    };
-
-    console.log("POST PAYLOAD:", payload);
+    toast("Sending item...");
 
     const res = await safeFetch(API,{
       method:'POST',
-      body:JSON.stringify(payload)
+      body:JSON.stringify({
+        action:'addItem',
+        productName:name.value.trim(),
+        category:category.value,
+        purchaseAmount:Number(price.value)||0,
+        shippingFee:Number(shipping.value)||0,
+        otherFee:Number(other.value)||0,
+        quantity:1,
+        photoURL:photo
+      })
     });
 
-    console.log("POST RESULT:", res);
+    console.log("ADD RESPONSE:", res);
 
     if(!res || res.status !== "success"){
-      toast("Backend Error: " + (res.message || "Unknown"));
+      toast("Failed to add item");
       return;
     }
 
@@ -440,26 +349,24 @@ async function addItem(){
     toast("Product Added Successfully");
 
     toggleAddForm(true);
-    loadDashboard();
-    loadItems();
+    await loadDashboard();
+    await loadItems();
 
   }catch(err){
-    console.error(err);
-    toast("Add Item Failed");
+    console.error("ADD ITEM ERROR:", err);
+    toast("Add item failed");
   }
 
-  btn.disabled = false;
-  btn.innerText = "Add Product";
+  addBtn.disabled = false;
+  addBtn.innerText = "Add Product";
 }
 
-/* =========================
-   MARK SOLD
-========================= */
+/* ---------------- MARK SOLD ---------------- */
 async function markSold(id){
-  const amt = +document.getElementById('sold-'+id).value;
+  const amt = Number(document.getElementById('sold-'+id).value);
   if(!amt) return toast("Enter sold amount");
 
-  await safeFetch(API,{
+  const res = await safeFetch(API,{
     method:'POST',
     body:JSON.stringify({
       action:'markSold',
@@ -468,39 +375,39 @@ async function markSold(id){
     })
   });
 
-  toast("Marked as Sold");
-  loadDashboard();
-  loadItems();
+  if(res){
+    toast("Marked as sold");
+    loadDashboard();
+    loadItems();
+  }
 }
 
-/* =========================
-   EDIT SOLD
-========================= */
+/* ---------------- EDIT SOLD ---------------- */
 async function editSold(id){
   const amt = prompt("Enter new sold amount");
   if(!amt) return;
 
-  await safeFetch(API,{
+  const res = await safeFetch(API,{
     method:'POST',
     body:JSON.stringify({
       action:'editSold',
       id:id,
-      soldAmount:+amt
+      soldAmount:Number(amt)
     })
   });
 
-  toast("Sold Updated");
-  loadDashboard();
-  loadItems();
+  if(res){
+    toast("Sold updated");
+    loadDashboard();
+    loadItems();
+  }
 }
 
-/* =========================
-   DELETE ITEM
-========================= */
+/* ---------------- DELETE ITEM ---------------- */
 async function deleteItem(id){
-  if(!confirm("Delete item?")) return;
+  if(!confirm("Delete this item?")) return;
 
-  await safeFetch(API,{
+  const res = await safeFetch(API,{
     method:'POST',
     body:JSON.stringify({
       action:'deleteItem',
@@ -508,91 +415,86 @@ async function deleteItem(id){
     })
   });
 
-  toast("Item Deleted");
-  loadDashboard();
-  loadItems();
+  if(res){
+    toast("Item deleted");
+    loadDashboard();
+    loadItems();
+  }
 }
 
-/* =========================
-   OPEN EDIT MODAL
-========================= */
+/* ---------------- OPEN EDIT MODAL ---------------- */
 async function openEditModal(id){
-  const data = await safeFetch(API+'?action=getItems');
-  const item = data.find(r=>r[0]==id);
+  const data = await safeFetch(API + '?action=getItems');
+  const item = data.find(r => r[0] == id);
   if(!item) return;
 
-  document.getElementById('edit-id').value=item[0];
-  document.getElementById('edit-name').value=item[2];
-  document.getElementById('edit-category').value=item[3];
-  document.getElementById('edit-purchase').value=item[4];
-  document.getElementById('edit-shipping').value=item[5];
-  document.getElementById('edit-other').value=item[6];
+  document.getElementById('edit-id').value = item[0];
+  document.getElementById('edit-name').value = item[2];
+  document.getElementById('edit-category').value = item[3];
+  document.getElementById('edit-purchase').value = item[4];
+  document.getElementById('edit-shipping').value = item[5];
+  document.getElementById('edit-other').value = item[6];
 
-  editModal.style.display='flex';
+  editModal.style.display = 'flex';
 }
 
 function closeEditModal(){
-  editModal.style.display='none';
+  editModal.style.display = 'none';
 }
 
-/* =========================
-   SAVE EDIT
-========================= */
+/* ---------------- SAVE EDIT ITEM ---------------- */
 async function saveEditItem(){
-
-  await safeFetch(API,{
+  const res = await safeFetch(API,{
     method:'POST',
     body:JSON.stringify({
       action:'editItem',
       id:document.getElementById('edit-id').value,
       productName:document.getElementById('edit-name').value,
       category:document.getElementById('edit-category').value,
-      purchaseAmount:+document.getElementById('edit-purchase').value,
-      shippingFee:+document.getElementById('edit-shipping').value,
-      otherFee:+document.getElementById('edit-other').value
+      purchaseAmount:Number(document.getElementById('edit-purchase').value)||0,
+      shippingFee:Number(document.getElementById('edit-shipping').value)||0,
+      otherFee:Number(document.getElementById('edit-other').value)||0
     })
   });
 
-  toast("Item Updated");
-  closeEditModal();
-  loadDashboard();
-  loadItems();
-}
-
-/* =========================
-   DARK MODE
-========================= */
-function toggleDarkMode(){
-  document.body.classList.toggle('dark');
-  const d=document.body.classList.contains('dark');
-  darkSwitch.checked=d;
-  localStorage.setItem('darkmode',d?'on':'off');
-}
-
-function loadDarkMode(){
-  if(localStorage.getItem('darkmode')==='on'){
-    document.body.classList.add('dark');
-    darkSwitch.checked=true;
+  if(res){
+    toast("Item updated");
+    closeEditModal();
+    loadDashboard();
+    loadItems();
   }
 }
 
-/* =========================
-   FLOAT ADD FORM
-========================= */
+/* ---------------- DARK MODE ---------------- */
+function toggleDarkMode(){
+  document.body.classList.toggle('dark');
+  const d = document.body.classList.contains('dark');
+  darkSwitch.checked = d;
+  localStorage.setItem('darkmode', d ? 'on' : 'off');
+}
+
+function loadDarkMode(){
+  if(localStorage.getItem('darkmode') === 'on'){
+    document.body.classList.add('dark');
+    darkSwitch.checked = true;
+  }
+}
+
+/* ---------------- ADD FORM ---------------- */
 function toggleAddForm(force=false){
   if(force){
     addFormBox.style.display='none';
     return;
   }
-
-  addFormBox.style.display =
-    addFormBox.style.display==='none' ? 'block' : 'none';
+  addFormBox.style.display = addFormBox.style.display==='none' ? 'block' : 'none';
 }
 
-/* =========================
-   INITIALIZE
-========================= */
+/* ---------------- START ---------------- */
 loadDarkMode();
 loadDashboard();
 loadItems();
 </script>
+
+</body>
+</html>
+
