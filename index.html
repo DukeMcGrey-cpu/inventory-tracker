@@ -168,23 +168,27 @@
 
     // FIX: compress image before sending to avoid Apps Script payload limit
     function uploadImage(file) {
-      return new Promise((res) => {
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        img.onload = () => {
-          const MAX = 800;
-          let w = img.width, h = img.height;
-          if (w > MAX) { h = h * MAX / w; w = MAX; }
-          const canvas = document.createElement('canvas');
-          canvas.width = w;
-          canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          URL.revokeObjectURL(url);
-          res(canvas.toDataURL('image/jpeg', 0.7));
-        };
-        img.src = url;
-      });
-    }
+  return new Promise((res) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = h * MAX / w; w = MAX; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        res(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.onerror = () => res(''); // ✅ if canvas fails, skip image and continue
+      img.src = e.target.result;
+    };
+    reader.onerror = () => res(''); // ✅ if file read fails, skip image and continue
+    reader.readAsDataURL(file);
+  });
+}
 
     function setCategoryFilter(cat) {
       activeCategory = cat;
