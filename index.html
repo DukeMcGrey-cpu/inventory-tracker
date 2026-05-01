@@ -35,15 +35,125 @@ const API='https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_
 /* IMAGE STORAGE OPTIMIZATION READY: use backend Google Drive hosted URLs instead of base64 */ let activeCategory='ALL';
 function toast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2000)}
 function safeFetch(url,o={}){return fetch(url,o).then(r=>r.text()).then(t=>{try{return JSON.parse(t)}catch(e){return null}})}
-function uploadImage(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(file);})}
+function uploadImage(file){
+  return new Promise((resolve,reject)=>{
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+      const img = new Image();
+
+      img.onload = function(){
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        let width = img.width;
+        let height = img.height;
+
+        const maxSize = 900;
+
+        if(width > height){
+          if(width > maxSize){
+            height *= maxSize / width;
+            width = maxSize;
+          }
+        }else{
+          if(height > maxSize){
+            width *= maxSize / height;
+            height = maxSize;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        ctx.drawImage(img,0,0,width,height);
+
+        const compressed = canvas.toDataURL("image/jpeg",0.65);
+
+        resolve(compressed);
+      };
+
+      img.src = e.target.result;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 function setCategoryFilter(cat){activeCategory=cat;loadItems()}
 function loadDashboard(){safeFetch(API+'?action=getDashboard').then(d=>{if(!d)return;capital.innerText='₱'+(d.totalCapital||0);sales.innerText='₱'+(d.totalSales||0);profit.innerText='₱'+(d.totalProfit||0);onhand.innerText=d.onHand||0;sold.innerText=d.soldCount||0;})}
-function loadItems(){safeFetch(API+'?action=getItems').then(data=>{if(!Array.isArray(data))return;let html='';const s=search.value.toLowerCase(),f=filter.value;data.forEach(r=>{const id=r[0]||'',p=r[2]||'',c=r[3]||'',pu=+r[4]||0,sh=+r[5]||0,o=+r[6]||0,cap=+r[7]||0,img=r[9]||'',st=r[10]||'ON HAND',soldp=+r[12]||0,pro=+r[13]||0;if(p.toLowerCase().indexOf(s)===-1)return;if(f!=='ALL'&&st!==f)return;if(activeCategory!=='ALL'&&c!==activeCategory)return;html+=`<div class='item'><span class='status-pill'>${st}</span>${img?`<img src='${img}'>`:''}<div class='item-body'><h3>${p}</h3><p>${c}</p><p>Capital: ₱${cap}</p><p>Sold: ${soldp?('₱'+soldp):'-'}</p><p style='color:${pro>=0?'green':'red'}'>Profit: ₱${pro}</p>${st==='ON HAND'?`<input id='sold-${id}' type='number' placeholder='Sold Amount'><button class='full-btn' onclick="markSold('${id}')">Mark Sold</button>`:`<button class='full-btn' onclick="editSold('${id}')">Edit Sold</button>`}<div class='action-row'><button onclick="openEditModal('${id}','${p}','${c}','${pu}','${sh}','${o}')">Edit</button><button onclick="deleteItem('${id}')">Delete</button></div></div></div>`});grid.innerHTML=html})}
-async function addItem(){const file=image.files[0];let photo='';if(file)photo=await uploadImage(file);await safeFetch(API,{method:'POST',body:JSON.stringify({action:'addItem',productName:name.value,category:category.value,purchaseAmount:+price.value,shippingFee:+shipping.value,otherFee:+other.value,quantity:1,photoURL:photo})});name.value=price.value=shipping.value=other.value=image.value='';toast('Product Added');loadDashboard();loadItems();toggleAddForm(true)}
+function loadItems(){safeFetch(API+'?action=getItems').then(data=>{if(!Array.isArray(data))return;let html='';const s=search.value.toLowerCase(),f=filter.value;data.forEach(r=>{const id=r[0]||'',p=r[2]||'',c=r[3]||'',pu=+r[4]||0,sh=+r[5]||0,o=+r[6]||0,cap=+r[7]||0,img=r[9]||'',st=r[10]||'ON HAND',soldp=+r[12]||0,pro=+r[13]||0;if(p.toLowerCase().indexOf(s)===-1)return;if(f!=='ALL'&&st!==f)return;if(activeCategory!=='ALL'&&c!==activeCategory)return;html+=`<div class='item'><span class='status-pill'>${st}</span>${img?`<img src='${img}'>`:''}<div class='item-body'><h3>${p}</h3><p>${c}</p><p>Capital: ₱${cap}</p><p>Sold: ${soldp?('₱'+soldp):'-'}</p><p style='color:${pro>=0?'green':'red'}'>Profit: ₱${pro}</p>${st==='ON HAND'?`<input id='sold-${id}' type='number' placeholder='Sold Amount'><button class='full-btn' onclick="markSold('${id}')">Mark Sold</button>`:`<button class='full-btn' onclick="editSold('${id}')">Edit Sold</button>`}<div class='action-row'><button onclick="openEditModal('${id}')">Edit</button><button onclick="deleteItem('${id}')">Delete</button></div></div></div>`});grid.innerHTML=html})}
+async function addItem(){
+
+  if(!name.value.trim()) return toast("Enter product name");
+  if(!price.value) return toast("Enter purchase amount");
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerText = "Saving...";
+
+  try{
+
+    const file = image.files[0];
+    let photo = "";
+
+    if(file){
+      photo = await uploadImage(file);
+    }
+
+    await safeFetch(API,{
+      method:'POST',
+      body:JSON.stringify({
+        action:'addItem',
+        productName:name.value,
+        category:category.value,
+        purchaseAmount:+price.value,
+        shippingFee:+shipping.value,
+        otherFee:+other.value,
+        quantity:1,
+        photoURL:photo
+      })
+    });
+
+    name.value='';
+    price.value='';
+    shipping.value='';
+    other.value='';
+    image.value='';
+
+    toast('Product Added');
+    loadDashboard();
+    loadItems();
+    toggleAddForm(true);
+
+  }finally{
+    btn.disabled = false;
+    btn.innerText = "Add Product";
+  }
+}
 async function markSold(id){const amt=+document.getElementById('sold-'+id).value;if(!amt)return toast('Enter sold amount');await safeFetch(API,{method:'POST',body:JSON.stringify({action:'markSold',id:id,soldAmount:amt})});toast('Marked as Sold');loadDashboard();loadItems()}
 async function editSold(id){const amt=prompt('Enter new sold amount');if(!amt)return;await safeFetch(API,{method:'POST',body:JSON.stringify({action:'editSold',id:id,soldAmount:+amt})});toast('Sold Updated');loadDashboard();loadItems()}
 async function deleteItem(id){if(!confirm('Delete item?'))return;await safeFetch(API,{method:'POST',body:JSON.stringify({action:'deleteItem',id:id})});toast('Item Deleted');loadDashboard();loadItems()}
-function openEditModal(id,n,c,p,s,o){document.getElementById('edit-id').value=id;document.getElementById('edit-name').value=n;document.getElementById('edit-category').value=c;document.getElementById('edit-purchase').value=p;document.getElementById('edit-shipping').value=s;document.getElementById('edit-other').value=o;editModal.style.display='flex'}
+function openEditModal(id){
+
+  safeFetch(API + '?action=getItems').then(data=>{
+
+    const item = data.find(r => r[0] == id);
+    if(!item) return;
+
+    document.getElementById('edit-id').value = item[0];
+    document.getElementById('edit-name').value = item[2];
+    document.getElementById('edit-category').value = item[3];
+    document.getElementById('edit-purchase').value = item[4];
+    document.getElementById('edit-shipping').value = item[5];
+    document.getElementById('edit-other').value = item[6];
+
+    editModal.style.display = 'flex';
+  });
+}
 function closeEditModal(){editModal.style.display='none'}
 async function saveEditItem(){await safeFetch(API,{method:'POST',body:JSON.stringify({action:'editItem',id:document.getElementById('edit-id').value,productName:document.getElementById('edit-name').value,category:document.getElementById('edit-category').value,purchaseAmount:+document.getElementById('edit-purchase').value,shippingFee:+document.getElementById('edit-shipping').value,otherFee:+document.getElementById('edit-other').value})});toast('Item Updated');closeEditModal();loadDashboard();loadItems()}
 function toggleDarkMode(){document.body.classList.toggle('dark');const d=document.body.classList.contains('dark');darkSwitch.checked=d;localStorage.setItem('darkmode',d?'on':'off')}
