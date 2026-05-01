@@ -2,170 +2,165 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BuySell Inventory Pro V3</title>
+    <title>BuySell Inventory Pro V3 Ultra</title>
     <style>
-        *{box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif}
+        *{box-sizing:border-box;font-family:'Segoe UI',sans-serif}
         body{margin:0;background:#f4f5f7;color:#111;transition:.3s}
-        .topbar{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);box-shadow:0 2px 10px rgba(0,0,0,0.05);position:sticky;top:0;z-index:99}
         .container{padding:15px;max-width:1100px;margin:auto}
-        .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
-        .card{background:#fff;padding:15px;border-radius:15px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
-        .card h3{margin:5px 0 0;font-size:1.1rem}
-        .card small{color:gray;font-size:0.75rem;text-transform:uppercase}
-        .box{background:#fff;padding:20px;border-radius:15px;box-shadow:0 4px 12px rgba(0,0,0,0.05);margin-bottom:20px}
-        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-        .form-grid button{grid-column:span 2;background:#111;color:#fff;border:none;padding:12px;border-radius:8px;font-weight:bold}
-        input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;outline:none}
-        .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-        .item{background:#fff;border-radius:15px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.05);position:relative}
-        .item img{width:100%;height:200px;object-fit:cover;background:#eee}
+        .topbar{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:#fff;position:sticky;top:0;z-index:99;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+        .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:20px}
+        .card{background:#fff;padding:15px;border-radius:15px;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,0.05)}
+        .box{background:#fff;padding:15px;border-radius:15px;margin-bottom:20px;box-shadow:0 4px 10px rgba(0,0,0,0.05)}
+        .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:15px}
+        .item{background:#fff;border-radius:15px;overflow:hidden;position:relative;box-shadow:0 4px 10px rgba(0,0,0,0.05)}
+        .item img{width:100%;height:180px;object-fit:cover;background:#f0f0f0}
         .item-body{padding:15px}
-        .status-pill{position:absolute;top:10px;right:10px;padding:4px 10px;background:#111;color:#fff;border-radius:20px;font-size:0.7rem}
-        .action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-        #fabBtn{position:fixed;bottom:25px;right:25px;width:60px;height:60px;border-radius:50%;background:#111;color:#fff;font-size:30px;border:none;box-shadow:0 5px 15px rgba(0,0,0,0.3);z-index:100;cursor:pointer}
-        .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 20px;border-radius:30px;display:none;z-index:1000}
-        body.dark{background:#1a1a1a;color:#fff}
-        body.dark .card, body.dark .box, body.dark .item, body.dark .topbar{background:#252525;color:#fff}
-        body.dark input, body.dark select{background:#333;border-color:#444;color:#fff}
-        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;justify-content:center;align-items:center}
+        .status-pill{position:absolute;top:10px;right:10px;padding:4px 10px;background:#111;color:#fff;border-radius:20px;font-size:11px}
+        input, select, button{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:1px solid #ddd}
+        button{background:#111;color:#fff;border:none;font-weight:bold;cursor:pointer}
+        .action-row{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+        #fabBtn{position:fixed;bottom:20px;right:20px;width:55px;height:55px;border-radius:50%;font-size:24px;z-index:100}
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:center}
         .modal-content{background:#fff;padding:20px;border-radius:15px;width:90%;max-width:400px}
-        body.dark .modal-content{background:#252525}
+        .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 20px;border-radius:20px;display:none;z-index:2000}
+        body.dark{background:#121212;color:#eee}
+        body.dark .topbar, body.dark .card, body.dark .box, body.dark .item, body.dark .modal-content{background:#1e1e1e;color:#eee}
     </style>
 </head>
 <body>
     <div id="toast" class="toast"></div>
     <div class="topbar">
-        <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:24px">📦</span>
-            <div><h4 style="margin:0">BuySell Pro</h4><small style="color:gray">Inventory V3</small></div>
-        </div>
-        <button onclick="toggleDarkMode()" style="background:none;border:none;font-size:20px;cursor:pointer">🌓</button>
+        <b>📦 BuySell Pro</b>
+        <button onclick="document.body.classList.toggle('dark')" style="width:auto;background:none;color:inherit">🌓</button>
     </div>
 
     <div class="container">
         <div class="cards">
-            <div class="card"><small>Capital</small><h3 id="dash-cap">₱0</h3></div>
-            <div class="card"><small>Sales</small><h3 id="dash-sales">₱0</h3></div>
-            <div class="card"><small>Profit</small><h3 id="dash-profit">₱0</h3></div>
-            <div class="card"><small>Stock</small><h3 id="dash-stock">0</h3></div>
+            <div class="card"><small>Capital</small><h4 id="d-cap">₱0</h4></div>
+            <div class="card"><small>Sales</small><h4 id="d-sales">₱0</h4></div>
+            <div class="card"><small>Profit</small><h4 id="d-profit">₱0</h4></div>
+            <div class="card"><small>Stock</small><h4 id="d-stock">0</h4></div>
         </div>
 
-        <div id="addForm" class="box" style="display:none">
-            <div class="form-grid">
-                <input id="p-name" placeholder="Product Name">
-                <select id="p-cat">
-                    <option>Gadget</option><option>Phone</option><option>Appliance</option><option>Others</option>
-                </select>
-                <input id="p-price" type="number" placeholder="Buy Price">
-                <input id="p-ship" type="number" placeholder="Shipping">
-                <input id="p-other" type="number" placeholder="Other Fees">
-                <input id="p-img" type="file" accept="image/*">
-                <button onclick="saveProduct()">ADD PRODUCT</button>
-            </div>
+        <div id="addBox" class="box" style="display:none">
+            <input id="n" placeholder="Product Name">
+            <select id="c"><option>Gadget</option><option>Phone</option><option>Appliance</option></select>
+            <input id="p" type="number" placeholder="Buy Price">
+            <input id="s" type="number" placeholder="Shipping">
+            <input id="o" type="number" placeholder="Other">
+            <input id="img" type="file">
+            <button onclick="saveItem()">Save Product</button>
         </div>
 
-        <div class="box">
-            <input id="search" placeholder="Search products..." onkeyup="renderItems()">
-        </div>
-
+        <div class="box"><input id="search" placeholder="Search..." onkeyup="render()"></div>
         <div id="grid" class="grid"></div>
     </div>
 
-    <button id="fabBtn" onclick="document.getElementById('addForm').style.display = (document.getElementById('addForm').style.display === 'none' ? 'block' : 'none')">+</button>
+    <button id="fabBtn" onclick="toggleAdd()">+</button>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Item</h3>
+            <input type="hidden" id="e-id">
+            <input id="e-n" placeholder="Name">
+            <input id="e-p" type="number" placeholder="Buy Price">
+            <input id="e-s" type="number" placeholder="Shipping">
+            <input id="e-o" type="number" placeholder="Other">
+            <button onclick="updateItem()">Update</button>
+            <button onclick="closeModal()" style="background:#eee;color:#333">Cancel</button>
+        </div>
+    </div>
 
     <script>
-        const API = 'https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec'; // PASTE YOUR URL HERE
+        const API = 'https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec';
         let items = [];
 
-        function toast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg; t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
+        function toast(m){const t=document.getElementById('toast');t.innerText=m;t.style.display='block';setTimeout(()=>t.style.display='none',2000)}
+        function toggleAdd(){const b=document.getElementById('addBox');b.style.display=b.style.display==='none'?'block':'none'}
+        function closeModal(){document.getElementById('editModal').style.display='none'}
+
+        async function load(){
+            const [d, i] = await Promise.all([
+                fetch(API+'?action=getDashboard').then(r=>r.json()),
+                fetch(API+'?action=getItems').then(r=>r.json())
+            ]);
+            document.getElementById('d-cap').innerText='₱'+d.totalCapital;
+            document.getElementById('d-sales').innerText='₱'+d.totalSales;
+            document.getElementById('d-profit').innerText='₱'+d.totalProfit;
+            document.getElementById('d-stock').innerText=d.onHand;
+            items = i; render();
         }
 
-        async function fetchData() {
-            const resDash = await fetch(API + '?action=getDashboard');
-            const d = await resDash.json();
-            document.getElementById('dash-cap').innerText = '₱' + d.totalCapital;
-            document.getElementById('dash-sales').innerText = '₱' + d.totalSales;
-            document.getElementById('dash-profit').innerText = '₱' + d.totalProfit;
-            document.getElementById('dash-stock').innerText = d.onHand;
-
-            const resItems = await fetch(API + '?action=getItems');
-            items = await resItems.json();
-            renderItems();
-        }
-
-        function renderItems() {
-            const query = document.getElementById('search').value.toLowerCase();
-            let html = '';
-            items.forEach(item => {
-                if (!item[2].toLowerCase().includes(query)) return;
-                const profitColor = item[13] >= 0 ? 'green' : 'red';
-                html += `
-                <div class="item">
-                    <span class="status-pill">${item[10]}</span>
-                    <img src="${item[9] || 'https://via.placeholder.com/200'}">
+        function render(){
+            const q = document.getElementById('search').value.toLowerCase();
+            let h = '';
+            items.forEach(it => {
+                if(!it[2].toLowerCase().includes(q)) return;
+                h += `<div class="item">
+                    <span class="status-pill">${it[10]}</span>
+                    <img src="${it[9] || 'https://via.placeholder.com/150'}">
                     <div class="item-body">
-                        <h4 style="margin:0">${item[2]}</h4>
-                        <small style="color:gray">${item[3]}</small>
-                        <p style="margin:10px 0 5px;font-size:0.9rem">Capital: ₱${item[7]}</p>
-                        ${item[10] === 'ON HAND' ? 
-                            `<input type="number" id="sold-${item[0]}" placeholder="Sold Price" style="margin-top:10px">
-                             <button onclick="markSold('${item[0]}')" style="width:100%;margin-top:5px;background:#111;color:#fff;border:none;padding:8px;border-radius:5px">Mark Sold</button>` :
-                            `<p style="margin:5px 0;font-weight:bold">Sold: ₱${item[12]}</p>
-                             <p style="margin:0;color:${profitColor}">Profit: ₱${item[13]}</p>`
+                        <b>${it[2]}</b><br><small>${it[3]}</small>
+                        <p>Capital: ₱${it[7]}</p>
+                        ${it[10]==='ON HAND' ? 
+                            `<input type="number" id="s-${it[0]}" placeholder="Sold Price">
+                             <button onclick="sell('${it[0]}')">Mark Sold</button>` :
+                            `<p>Sold: ₱${it[12]} | <span style="color:${it[13]>=0?'green':'red'}">Profit: ₱${it[13]}</span></p>
+                             <button onclick="reSell('${it[0]}','${it[12]}')" style="background:#444">Edit Sold Price</button>`
                         }
                         <div class="action-row">
-                            <button onclick="deleteItem('${item[0]}')" style="background:#ff4d4d;color:#fff;border:none;padding:5px;border-radius:5px">Delete</button>
+                            <button onclick="openEdit('${it[0]}','${it[2]}','${it[4]}','${it[5]}','${it[6]}')" style="background:#666">Edit Info</button>
+                            <button onclick="del('${it[0]}')" style="background:#d9534f">Del</button>
                         </div>
                     </div>
                 </div>`;
             });
-            document.getElementById('grid').innerHTML = html;
+            document.getElementById('grid').innerHTML = h;
         }
 
-        async function saveProduct() {
-            const file = document.getElementById('p-img').files[0];
-            let base64 = "";
-            if (file) {
-                const reader = new FileReader();
-                base64 = await new Promise(r => { reader.onload = e => r(e.target.result); reader.readAsDataURL(file); });
-            }
-
-            const data = {
-                action: 'addItem',
-                productName: document.getElementById('p-name').value,
-                category: document.getElementById('p-cat').value,
-                purchaseAmount: document.getElementById('p-price').value,
-                shippingFee: document.getElementById('p-ship').value,
-                otherFee: document.getElementById('p-other').value,
-                photoURL: base64
-            };
-
+        async function saveItem(){
+            const f = document.getElementById('img').files[0];
+            let b64 = ""; if(f) b64 = await new Promise(r=>{const rd=new FileReader();rd.onload=e=>r(e.target.result);rd.readAsDataURL(f)});
             toast("Saving...");
-            await fetch(API, { method: 'POST', body: JSON.stringify(data) });
-            toast("Saved!");
-            document.getElementById('addForm').style.display = 'none';
-            fetchData();
+            await fetch(API,{method:'POST',body:JSON.stringify({
+                action:'addItem', productName:document.getElementById('n').value, 
+                category:document.getElementById('c').value, purchaseAmount:document.getElementById('p').value,
+                shippingFee:document.getElementById('s').value, otherFee:document.getElementById('o').value, photoURL:b64
+            })});
+            toggleAdd(); load();
         }
 
-        async function markSold(id) {
-            const amt = document.getElementById('sold-' + id).value;
-            if(!amt) return toast("Enter price");
-            await fetch(API, { method: 'POST', body: JSON.stringify({action: 'markSold', id: id, soldAmount: amt}) });
-            fetchData();
+        function openEdit(id,n,p,s,o){
+            document.getElementById('e-id').value=id; document.getElementById('e-n').value=n;
+            document.getElementById('e-p').value=p; document.getElementById('e-s').value=s;
+            document.getElementById('e-o').value=o; document.getElementById('editModal').style.display='flex';
         }
 
-        async function deleteItem(id) {
-            if(!confirm("Delete?")) return;
-            await fetch(API, { method: 'POST', body: JSON.stringify({action: 'deleteItem', id: id}) });
-            fetchData();
+        async function updateItem(){
+            await fetch(API,{method:'POST',body:JSON.stringify({
+                action:'editItem', id:document.getElementById('e-id').value,
+                productName:document.getElementById('e-n').value, category:'Gadget',
+                purchaseAmount:document.getElementById('e-p').value, shippingFee:document.getElementById('e-s').value,
+                otherFee:document.getElementById('e-o').value
+            })});
+            closeModal(); load();
         }
 
-        function toggleDarkMode() { document.body.classList.toggle('dark'); }
-        
-        fetchData();
+        async function sell(id){
+            const a = document.getElementById('s-'+id).value; if(!a) return toast("Enter price");
+            await fetch(API,{method:'POST',body:JSON.stringify({action:'markSold',id,soldAmount:a})});
+            load();
+        }
+
+        async function reSell(id, old){
+            const a = prompt("New Sold Price?", old); if(!a) return;
+            await fetch(API,{method:'POST',body:JSON.stringify({action:'editSold',id,soldAmount:a})});
+            load();
+        }
+
+        async function del(id){ if(confirm("Delete?")) { await fetch(API,{method:'POST',body:JSON.stringify({action:'deleteItem',id})}); load(); } }
+
+        load();
     </script>
 </body>
 </html>
