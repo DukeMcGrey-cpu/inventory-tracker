@@ -177,13 +177,7 @@ async function addItem() {
 
   toast('Adding product...');
 
-  let photo = '';
-  try {
-    if (file) photo = await uploadImage(file);
-  } catch(e) {
-    photo = '';
-  }
-
+  // Step 1 — Add product without image first
   const result = await safeFetch(API, {
     method: 'POST',
     body: JSON.stringify({
@@ -194,13 +188,35 @@ async function addItem() {
       shippingFee: +shippingVal,
       otherFee: +otherVal,
       quantity: 1,
-      photoURL: photo
+      photoURL: ''   // always empty on first save
     })
   });
 
-  // ✅ Now actually check if Apps Script confirmed success
   if (!result || result.status !== 'success') {
-    return toast('Failed to save. Check your Apps Script deployment.');
+    return toast('Failed to save product. Try again.');
+  }
+
+  const newId = result.id;
+
+  // Step 2 — Upload image separately if one was selected
+  if (file) {
+    toast('Uploading image...');
+    try {
+      const photo = await uploadImage(file);
+      if (photo) {
+        await safeFetch(API, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'uploadImage',
+            id: newId,
+            photoURL: photo
+          })
+        });
+      }
+    } catch(e) {
+      // Image failed but product was already saved — that's fine
+      toast('Product saved, image upload failed.');
+    }
   }
 
   document.getElementById('name').value = '';
