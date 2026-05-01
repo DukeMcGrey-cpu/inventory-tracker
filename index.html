@@ -154,18 +154,66 @@
     }
 
     // FIX: use text/plain to avoid CORS preflight issues with Apps Script
-    function safeFetch(url, o = {}) {
-      if (o.method === 'POST') {
-        o.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
-      }
-      return fetch(url, o)
-        .then(r => r.text())
-        .then(t => {
-          try { return JSON.parse(t); }
-          catch (e) { return null; }
-        });
-    }
+    // Remove Content-Type header — Apps Script handles plain fetch POST fine without it
+function safeFetch(url, o = {}) {
+  return fetch(url, o)
+    .then(r => r.text())
+    .then(t => {
+      try { return JSON.parse(t); }
+      catch (e) { return null; }
+    });
+}
 
+async function addItem() {
+  const nameVal = document.getElementById('name').value;
+  if (!nameVal) return toast('Enter product name');
+
+  const categoryVal = document.getElementById('category').value;
+  const priceVal = document.getElementById('price').value;
+  const shippingVal = document.getElementById('shipping').value;
+  const otherVal = document.getElementById('other').value;
+  const imageEl = document.getElementById('image');
+  const file = imageEl.files[0];
+
+  toast('Adding product...');
+
+  let photo = '';
+  try {
+    if (file) photo = await uploadImage(file);
+  } catch(e) {
+    photo = '';
+  }
+
+  const result = await safeFetch(API, {
+    method: 'POST',
+    body: JSON.stringify({
+      action: 'addItem',
+      productName: nameVal,
+      category: categoryVal,
+      purchaseAmount: +priceVal,
+      shippingFee: +shippingVal,
+      otherFee: +otherVal,
+      quantity: 1,
+      photoURL: photo
+    })
+  });
+
+  // ✅ Now actually check if Apps Script confirmed success
+  if (!result || result.status !== 'success') {
+    return toast('Failed to save. Check your Apps Script deployment.');
+  }
+
+  document.getElementById('name').value = '';
+  document.getElementById('price').value = '';
+  document.getElementById('shipping').value = '';
+  document.getElementById('other').value = '';
+  imageEl.value = '';
+
+  toast('Product Added!');
+  loadDashboard();
+  loadItems();
+  toggleAddForm(true);
+}
     // FIX: compress image before sending to avoid Apps Script payload limit
     function uploadImage(file) {
   return new Promise((res) => {
