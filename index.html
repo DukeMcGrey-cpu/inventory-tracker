@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BuySell Inventory Pro V4.5</title>
+<title>BuySell Inventory Pro Enterprise</title>
 
 <style>
 *{box-sizing:border-box;font-family:Arial,sans-serif}
@@ -64,7 +64,6 @@ body.dark .category-tabs button{background:#2a2a2a;color:#fff;border:1px solid #
 <p>Enterprise Mobile Dashboard</p>
 </div>
 </div>
-
 <label class="switch">
 <input type="checkbox" onchange="toggleDarkMode()" id="darkSwitch">
 <span class="slider"></span>
@@ -94,7 +93,7 @@ body.dark .category-tabs button{background:#2a2a2a;color:#fff;border:1px solid #
 <input id="shipping" type="number" placeholder="Shipping Fee">
 <input id="other" type="number" placeholder="Other Fee">
 <input id="image" type="file" accept="image/*">
-<button onclick="addItem()">Add Product</button>
+<button onclick="addItem(this)">Add Product</button>
 </div>
 </div>
 
@@ -143,145 +142,251 @@ const API='https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_
 let activeCategory='ALL';
 
 function toast(msg){
+ const t=document.getElementById('toast');
+ t.innerText=msg;
+ t.style.display='block';
+ setTimeout(()=>t.style.display='none',2000);
+}
+
+function safeFetch(url,o={}){
+ return fetch(url,o)
+ .then(r=>r.text())
+ .then(t=>{
+   console.log("RAW SERVER:",t);
+   try{return JSON.parse(t)}catch(e){return null}
+ });
+}
+
+function uploadImage(file){
+ return new Promise((resolve,reject)=>{
+   const reader=new FileReader();
+   reader.onload=function(e){
+     const img=new Image();
+     img.onload=function(){
+       const canvas=document.createElement("canvas");
+       const ctx=canvas.getContext("2d");
+       let width=img.width;
+       let height=img.height;
+       const max=900;
+
+       if(width>height){
+         if(width>max){
+           height*=max/width;
+           width=max;
+         }
+       }else{
+         if(height>max){
+           width*=max/height;
+           height=max;
+         }
+       }
+
+       canvas.width=width;
+       canvas.height=height;
+       ctx.drawImage(img,0,0,width,height);
+       resolve(canvas.toDataURL("image/jpeg",0.65));
+     };
+     img.src=e.target.result;
+   };
+   reader.onerror=reject;
+   reader.readAsDataURL(file);
+ });
+}
+  <script>
+const API='https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec';
+let activeCategory='ALL';
+
+/* =========================
+   TOAST MESSAGE
+========================= */
+function toast(msg){
   const t=document.getElementById('toast');
   t.innerText=msg;
   t.style.display='block';
-  setTimeout(()=>t.style.display='none',2000);
+  setTimeout(()=>t.style.display='none',2500);
 }
 
-async function safeFetch(url, options = {}) {
+/* =========================
+   SAFE FETCH (GET + POST)
+========================= */
+async function safeFetch(url, options={}){
   try{
-    const response = await fetch(url,{
-      ...options,
+    const res = await fetch(url,{
+      method: options.method || "GET",
       headers:{
         "Content-Type":"text/plain;charset=utf-8"
-      }
+      },
+      body: options.body || null
     });
 
-    const text = await response.text();
-    console.log("SERVER:", text);
+    const text = await res.text();
+
+    console.log("SERVER RAW RESPONSE:", text);
 
     try{
       return JSON.parse(text);
     }catch(err){
-      return null;
+      return {
+        status:"error",
+        message:"Invalid JSON from server: " + text
+      };
     }
+
   }catch(err){
-    console.log(err);
-    toast("Connection Error");
-    return null;
+    console.error("FETCH ERROR:", err);
+    return {
+      status:"error",
+      message:err.toString()
+    };
   }
 }
 
+/* =========================
+   COMPRESS IMAGE
+========================= */
 function uploadImage(file){
   return new Promise((resolve,reject)=>{
+
     const reader = new FileReader();
 
     reader.onload = function(e){
+
       const img = new Image();
 
       img.onload = function(){
+
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
 
         let width = img.width;
         let height = img.height;
-        const max = 900;
+
+        const maxSize = 700;
 
         if(width > height){
-          if(width > max){
-            height *= max / width;
-            width = max;
+          if(width > maxSize){
+            height *= maxSize / width;
+            width = maxSize;
           }
         }else{
-          if(height > max){
-            width *= max / height;
-            height = max;
+          if(height > maxSize){
+            width *= maxSize / height;
+            height = maxSize;
           }
         }
 
         canvas.width = width;
         canvas.height = height;
+
         ctx.drawImage(img,0,0,width,height);
 
-        resolve(canvas.toDataURL("image/jpeg",0.65));
+        const compressed = canvas.toDataURL("image/jpeg",0.55);
+
+        console.log("IMAGE COMPRESSED SUCCESS");
+
+        resolve(compressed);
+      };
+
+      img.onerror = function(){
+        reject("Image load failed");
       };
 
       img.src = e.target.result;
     };
 
-    reader.onerror = reject;
+    reader.onerror = function(){
+      reject("FileReader failed");
+    };
+
     reader.readAsDataURL(file);
   });
 }
 
+/* =========================
+   CATEGORY FILTER
+========================= */
 function setCategoryFilter(cat){
-  activeCategory = cat;
+  activeCategory=cat;
   loadItems();
 }
 
-function loadDashboard(){
-  safeFetch(API+'?action=getDashboard').then(d=>{
-    if(!d) return;
-    capital.innerText='₱'+(d.totalCapital||0);
-    sales.innerText='₱'+(d.totalSales||0);
-    profit.innerText='₱'+(d.totalProfit||0);
-    onhand.innerText=d.onHand||0;
-    sold.innerText=d.soldCount||0;
-  });
+/* =========================
+   LOAD DASHBOARD
+========================= */
+async function loadDashboard(){
+  const d = await safeFetch(API+'?action=getDashboard');
+
+  if(!d || d.status==="error") return;
+
+  capital.innerText='₱'+(d.totalCapital||0);
+  sales.innerText='₱'+(d.totalSales||0);
+  profit.innerText='₱'+(d.totalProfit||0);
+  onhand.innerText=d.onHand||0;
+  sold.innerText=d.soldCount||0;
 }
 
-function loadItems(){
-  safeFetch(API+'?action=getItems').then(data=>{
-    if(!Array.isArray(data)) return;
+/* =========================
+   LOAD ITEMS
+========================= */
+async function loadItems(){
 
-    let html='';
-    const s=search.value.toLowerCase();
-    const f=filter.value;
+  const data = await safeFetch(API+'?action=getItems');
 
-    data.forEach(r=>{
-      const id=r[0]||'';
-      const p=r[2]||'';
-      const c=r[3]||'';
-      const cap=+r[7]||0;
-      const img=r[9]||'';
-      const st=r[10]||'ON HAND';
-      const soldp=+r[12]||0;
-      const pro=+r[13]||0;
+  if(!Array.isArray(data)) return;
 
-      if(p.toLowerCase().indexOf(s)===-1) return;
-      if(f!=='ALL' && st!==f) return;
-      if(activeCategory!=='ALL' && c!==activeCategory) return;
+  let html='';
+  const s=search.value.toLowerCase();
+  const f=filter.value;
 
-      html += `<div class="item">
-      <span class="status-pill">${st}</span>
-      ${img?`<img src="${img}">`:''}
-      <div class="item-body">
-      <h3>${p}</h3>
-      <p>${c}</p>
-      <p>Capital: ₱${cap}</p>
-      <p>Sold: ${soldp?('₱'+soldp):'-'}</p>
-      <p style="color:${pro>=0?'green':'red'}">Profit: ₱${pro}</p>
+  data.forEach(r=>{
 
-      ${st==='ON HAND'
-      ? `<input id="sold-${id}" type="number" placeholder="Sold Amount">
-         <button class="full-btn" onclick="markSold('${id}')">Mark Sold</button>`
-      : `<button class="full-btn" onclick="editSold('${id}')">Edit Sold</button>`
-      }
+    const id=r[0]||'';
+    const p=r[2]||'';
+    const c=r[3]||'';
+    const cap=+r[7]||0;
+    const img=r[9]||'';
+    const st=r[10]||'ON HAND';
+    const soldp=+r[12]||0;
+    const pro=+r[13]||0;
 
-      <div class="action-row">
-      <button onclick="openEditModal('${id}')">Edit</button>
-      <button onclick="deleteItem('${id}')">Delete</button>
+    if(p.toLowerCase().indexOf(s)===-1) return;
+    if(f!=='ALL' && st!==f) return;
+    if(activeCategory!=='ALL' && c!==activeCategory) return;
+
+    html += `
+    <div class='item'>
+      <span class='status-pill'>${st}</span>
+      ${img ? `<img src="${img}">` : ''}
+      <div class='item-body'>
+        <h3>${p}</h3>
+        <p>${c}</p>
+        <p>Capital: ₱${cap}</p>
+        <p>Sold: ${soldp ? '₱'+soldp : '-'}</p>
+        <p style='color:${pro>=0?'green':'red'}'>Profit: ₱${pro}</p>
+
+        ${st==='ON HAND'
+          ? `<input id='sold-${id}' type='number' placeholder='Sold Amount'>
+             <button class='full-btn' onclick="markSold('${id}')">Mark Sold</button>`
+          : `<button class='full-btn' onclick="editSold('${id}')">Edit Sold</button>`
+        }
+
+        <div class='action-row'>
+          <button onclick="openEditModal('${id}')">Edit</button>
+          <button onclick="deleteItem('${id}')">Delete</button>
+        </div>
       </div>
-      </div>
-      </div>`;
-    });
-
-    grid.innerHTML = html;
+    </div>`;
   });
+
+  grid.innerHTML = html;
 }
 
+/* =========================
+   ADD ITEM (FULL FIX)
+========================= */
 async function addItem(){
+
+  console.log("ADD ITEM START");
 
   if(!name.value.trim()) return toast("Enter product name");
   if(!price.value) return toast("Enter purchase amount");
@@ -291,32 +396,38 @@ async function addItem(){
   btn.innerText = "Saving...";
 
   try{
+
     let photo = "";
     const file = image.files[0];
 
     if(file){
-      toast("Compressing image...");
+      console.log("Compressing image...");
       photo = await uploadImage(file);
+      console.log("Image compressed done");
     }
 
-    const result = await safeFetch(API,{
-      method:"POST",
-      body:JSON.stringify({
-        action:"addItem",
-        productName:name.value,
-        category:category.value,
-        purchaseAmount:+price.value,
-        shippingFee:+shipping.value,
-        otherFee:+other.value,
-        quantity:1,
-        photoURL:photo
-      })
+    const payload = {
+      action:'addItem',
+      productName:name.value.trim(),
+      category:category.value,
+      purchaseAmount:Number(price.value)||0,
+      shippingFee:Number(shipping.value)||0,
+      otherFee:Number(other.value)||0,
+      quantity:1,
+      photoURL:photo
+    };
+
+    console.log("POST PAYLOAD:", payload);
+
+    const res = await safeFetch(API,{
+      method:'POST',
+      body:JSON.stringify(payload)
     });
 
-    console.log(result);
+    console.log("POST RESULT:", res);
 
-    if(!result || result.status!=="success"){
-      toast("Add failed");
+    if(!res || res.status !== "success"){
+      toast("Backend Error: " + (res.message || "Unknown"));
       return;
     }
 
@@ -326,46 +437,53 @@ async function addItem(){
     other.value='';
     image.value='';
 
-    toast("Product Added");
+    toast("Product Added Successfully");
+
+    toggleAddForm(true);
     loadDashboard();
     loadItems();
-    toggleAddForm(true);
 
   }catch(err){
-    console.log(err);
-    toast("Add failed");
+    console.error(err);
+    toast("Add Item Failed");
   }
 
   btn.disabled = false;
   btn.innerText = "Add Product";
 }
 
+/* =========================
+   MARK SOLD
+========================= */
 async function markSold(id){
   const amt = +document.getElementById('sold-'+id).value;
   if(!amt) return toast("Enter sold amount");
 
   await safeFetch(API,{
-    method:"POST",
+    method:'POST',
     body:JSON.stringify({
-      action:"markSold",
+      action:'markSold',
       id:id,
       soldAmount:amt
     })
   });
 
-  toast("Marked Sold");
+  toast("Marked as Sold");
   loadDashboard();
   loadItems();
 }
 
+/* =========================
+   EDIT SOLD
+========================= */
 async function editSold(id){
   const amt = prompt("Enter new sold amount");
   if(!amt) return;
 
   await safeFetch(API,{
-    method:"POST",
+    method:'POST',
     body:JSON.stringify({
-      action:"editSold",
+      action:'editSold',
       id:id,
       soldAmount:+amt
     })
@@ -376,13 +494,16 @@ async function editSold(id){
   loadItems();
 }
 
+/* =========================
+   DELETE ITEM
+========================= */
 async function deleteItem(id){
   if(!confirm("Delete item?")) return;
 
   await safeFetch(API,{
-    method:"POST",
+    method:'POST',
     body:JSON.stringify({
-      action:"deleteItem",
+      action:'deleteItem',
       id:id
     })
   });
@@ -392,37 +513,43 @@ async function deleteItem(id){
   loadItems();
 }
 
-function openEditModal(id){
-  safeFetch(API+'?action=getItems').then(data=>{
-    const item = data.find(r=>r[0]==id);
-    if(!item) return;
+/* =========================
+   OPEN EDIT MODAL
+========================= */
+async function openEditModal(id){
+  const data = await safeFetch(API+'?action=getItems');
+  const item = data.find(r=>r[0]==id);
+  if(!item) return;
 
-    document.getElementById("edit-id").value=item[0];
-    document.getElementById("edit-name").value=item[2];
-    document.getElementById("edit-category").value=item[3];
-    document.getElementById("edit-purchase").value=item[4];
-    document.getElementById("edit-shipping").value=item[5];
-    document.getElementById("edit-other").value=item[6];
+  document.getElementById('edit-id').value=item[0];
+  document.getElementById('edit-name').value=item[2];
+  document.getElementById('edit-category').value=item[3];
+  document.getElementById('edit-purchase').value=item[4];
+  document.getElementById('edit-shipping').value=item[5];
+  document.getElementById('edit-other').value=item[6];
 
-    editModal.style.display="flex";
-  });
+  editModal.style.display='flex';
 }
 
 function closeEditModal(){
-  editModal.style.display="none";
+  editModal.style.display='none';
 }
 
+/* =========================
+   SAVE EDIT
+========================= */
 async function saveEditItem(){
+
   await safeFetch(API,{
-    method:"POST",
+    method:'POST',
     body:JSON.stringify({
-      action:"editItem",
-      id:document.getElementById("edit-id").value,
-      productName:document.getElementById("edit-name").value,
-      category:document.getElementById("edit-category").value,
-      purchaseAmount:+document.getElementById("edit-purchase").value,
-      shippingFee:+document.getElementById("edit-shipping").value,
-      otherFee:+document.getElementById("edit-other").value
+      action:'editItem',
+      id:document.getElementById('edit-id').value,
+      productName:document.getElementById('edit-name').value,
+      category:document.getElementById('edit-category').value,
+      purchaseAmount:+document.getElementById('edit-purchase').value,
+      shippingFee:+document.getElementById('edit-shipping').value,
+      otherFee:+document.getElementById('edit-other').value
     })
   });
 
@@ -432,29 +559,40 @@ async function saveEditItem(){
   loadItems();
 }
 
+/* =========================
+   DARK MODE
+========================= */
 function toggleDarkMode(){
-  document.body.classList.toggle("dark");
-  localStorage.setItem("darkmode",document.body.classList.contains("dark")?"on":"off");
+  document.body.classList.toggle('dark');
+  const d=document.body.classList.contains('dark');
+  darkSwitch.checked=d;
+  localStorage.setItem('darkmode',d?'on':'off');
 }
 
 function loadDarkMode(){
-  if(localStorage.getItem("darkmode")==="on"){
-    document.body.classList.add("dark");
+  if(localStorage.getItem('darkmode')==='on'){
+    document.body.classList.add('dark');
     darkSwitch.checked=true;
   }
 }
 
+/* =========================
+   FLOAT ADD FORM
+========================= */
 function toggleAddForm(force=false){
   if(force){
-    addFormBox.style.display="none";
+    addFormBox.style.display='none';
     return;
   }
-  addFormBox.style.display = addFormBox.style.display==="none" ? "block" : "none";
+
+  addFormBox.style.display =
+    addFormBox.style.display==='none' ? 'block' : 'none';
 }
 
+/* =========================
+   INITIALIZE
+========================= */
 loadDarkMode();
 loadDashboard();
 loadItems();
 </script>
-</body>
-</html>
