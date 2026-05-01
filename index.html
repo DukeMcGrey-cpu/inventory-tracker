@@ -151,13 +151,15 @@ function toast(msg){
 
 /* ---------------- SAFE FETCH FIXED ---------------- */
 async function safeFetch(url, options={}){
+
   try{
     const response = await fetch(url,{
       method: options.method || 'GET',
       headers:{
-        'Content-Type':'text/plain;charset=utf-8'
+        'Content-Type':'application/json'
       },
-      body: options.body || null
+      body: options.body || null,
+      redirect: "follow"
     });
 
     const txt = await response.text();
