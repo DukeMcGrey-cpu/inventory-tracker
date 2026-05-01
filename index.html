@@ -154,13 +154,15 @@ async function safeFetch(url, options={}){
 
   try{
     const response = await fetch(url,{
-      method: options.method || 'GET',
-      headers:{
-        'Content-Type':'application/json'
-      },
-      body: options.body || null,
-      redirect: "follow"
-    });
+  method: options.method || 'GET',
+  headers:{
+    'Content-Type':'application/json'
+  },
+  body: options.body || null,
+  redirect:"follow",
+  mode:"cors",
+  credentials:"omit"
+});
 
     const txt = await response.text();
     console.log("SERVER RESPONSE:", txt);
