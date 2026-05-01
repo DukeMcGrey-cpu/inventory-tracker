@@ -169,6 +169,12 @@
     // FIX: compress image before sending to avoid Apps Script payload limit
     function uploadImage(file) {
   return new Promise((res) => {
+    // Timeout fallback — if image hangs after 8 seconds, skip it
+    const timeout = setTimeout(() => {
+      toast('Image skipped, adding product...');
+      res('');
+    }, 8000);
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
@@ -180,12 +186,13 @@
         canvas.width = w;
         canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        clearTimeout(timeout);
         res(canvas.toDataURL('image/jpeg', 0.7));
       };
-      img.onerror = () => res(''); // ✅ if canvas fails, skip image and continue
+      img.onerror = () => { clearTimeout(timeout); res(''); };
       img.src = e.target.result;
     };
-    reader.onerror = () => res(''); // ✅ if file read fails, skip image and continue
+    reader.onerror = () => { clearTimeout(timeout); res(''); };
     reader.readAsDataURL(file);
   });
 }
@@ -261,42 +268,55 @@
 
     // FIX: use document.getElementById('name') to avoid window.name collision
     async function addItem() {
-      const nameVal = document.getElementById('name').value;
-      const categoryVal = document.getElementById('category').value;
-      const priceVal = document.getElementById('price').value;
-      const shippingVal = document.getElementById('shipping').value;
-      const otherVal = document.getElementById('other').value;
-      const imageEl = document.getElementById('image');
-      const file = imageEl.files[0];
-      let photo = '';
+  const nameVal = document.getElementById('name').value;
+  if (!nameVal) return toast('Enter product name');
 
-      if (file) photo = await uploadImage(file);
+  const categoryVal = document.getElementById('category').value;
+  const priceVal = document.getElementById('price').value;
+  const shippingVal = document.getElementById('shipping').value;
+  const otherVal = document.getElementById('other').value;
+  const imageEl = document.getElementById('image');
+  const file = imageEl.files[0];
 
-      await safeFetch(API, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'addItem',
-          productName: nameVal,
-          category: categoryVal,
-          purchaseAmount: +priceVal,
-          shippingFee: +shippingVal,
-          otherFee: +otherVal,
-          quantity: 1,
-          photoURL: photo
-        })
-      });
+  toast('Adding product...');  // ✅ immediate feedback so you know it's working
 
-      document.getElementById('name').value = '';
-      document.getElementById('price').value = '';
-      document.getElementById('shipping').value = '';
-      document.getElementById('other').value = '';
-      imageEl.value = '';
+  let photo = '';
+  try {
+    if (file) photo = await uploadImage(file);
+  } catch(e) {
+    photo = '';  // if anything goes wrong, just skip image
+  }
 
-      toast('Product Added');
-      loadDashboard();
-      loadItems();
-      toggleAddForm(true);
-    }
+  try {
+    await safeFetch(API, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'addItem',
+        productName: nameVal,
+        category: categoryVal,
+        purchaseAmount: +priceVal,
+        shippingFee: +shippingVal,
+        otherFee: +otherVal,
+        quantity: 1,
+        photoURL: photo
+      })
+    });
+
+    document.getElementById('name').value = '';
+    document.getElementById('price').value = '';
+    document.getElementById('shipping').value = '';
+    document.getElementById('other').value = '';
+    imageEl.value = '';
+
+    toast('Product Added!');
+    loadDashboard();
+    loadItems();
+    toggleAddForm(true);
+
+  } catch(e) {
+    toast('Failed to add product, try again.');
+  }
+}
 
     async function markSold(id) {
       const amt = +document.getElementById('sold-' + id).value;
