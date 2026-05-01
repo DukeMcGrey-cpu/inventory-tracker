@@ -418,11 +418,15 @@
 
     function safeFetch(url, o = {}) {
   if (o.method === 'POST') {
-    o.headers = { 'Content-Type': 'application/json' };
+    // ✅ Must use text/plain — application/json triggers CORS preflight that breaks Apps Script
+    o.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
   }
   return fetch(url, o)
     .then(r => r.text())
-    .then(t => { try { return JSON.parse(t); } catch(e) { return null; }});
+    .then(t => {
+      try { return JSON.parse(t); }
+      catch (e) { return null; }
+    });
 }
 
     // ✅ Replace your uploadImage() with this
@@ -435,10 +439,11 @@ function uploadImage(file) {
       let w = img.width, h = img.height;
       if (w > MAX) { h = h * MAX / w; w = MAX; }
       const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
+      canvas.width = w;
+      canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
-      res(canvas.toDataURL('image/jpeg', 0.7)); // 70% quality
+      res(canvas.toDataURL('image/jpeg', 0.7));
     };
     img.src = url;
   });
@@ -517,24 +522,32 @@ function uploadImage(file) {
     }
 
     async function addItem() {
-      const file = image.files[0];
-      let photo = '';
+  const nameVal = document.getElementById('name').value; // ✅ Fixed window.name collision
+  const file = image.files[0];
+  let photo = '';
 
-      if (file) photo = await uploadImage(file);
+  if (file) photo = await uploadImage(file);
 
-      await safeFetch(API, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'addItem',
-          productName: document.getElementById('name').value,
-          category: category.value,
-          purchaseAmount: +price.value,
-          shippingFee: +shipping.value,
-          otherFee: +other.value,
-          quantity: 1,
-          photoURL: photo
-        })
-      });
+  await safeFetch(API, {
+    method: 'POST',
+    body: JSON.stringify({
+      action: 'addItem',
+      productName: nameVal,           // ✅ Now correctly reads the input
+      category: category.value,
+      purchaseAmount: +price.value,
+      shippingFee: +shipping.value,
+      otherFee: +other.value,
+      quantity: 1,
+      photoURL: photo
+    })
+  });
+
+  name.value = price.value = shipping.value = other.value = image.value = '';
+  toast('Product Added');
+  loadDashboard();
+  loadItems();
+  toggleAddForm(true);
+}
 
       name.value = price.value = shipping.value = other.value = image.value = '';
       toast('Product Added');
