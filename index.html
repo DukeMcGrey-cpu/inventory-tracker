@@ -171,7 +171,19 @@
     .toast.success { background:rgba(21,128,61,0.92); box-shadow:0 8px 24px rgba(34,197,94,0.3); }
     .toast.error { background:rgba(185,28,28,0.92); box-shadow:0 8px 24px rgba(239,68,68,0.3); }
 
-    /* ── EMPTY STATE ── */
+    /* ── CELEBRATION OVERLAY ── */
+    .celebration { display:none; position:fixed; inset:0; z-index:99999; justify-content:center; align-items:center; flex-direction:column; pointer-events:none; }
+    .celebration.show { display:flex; }
+    .celeb-bg { position:absolute; inset:0; background:rgba(6,13,26,0.72); backdrop-filter:blur(6px); animation:celebFadeIn .3s ease; }
+    .celeb-icon { font-size:110px; position:relative; z-index:2; animation:celebBounce .6s cubic-bezier(.34,1.9,.64,1) forwards; filter:drop-shadow(0 8px 32px rgba(0,0,0,0.4)); }
+    .celeb-text { position:relative; z-index:2; font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#fff; text-align:center; margin-top:18px; padding:0 30px; animation:celebSlideUp .5s .2s cubic-bezier(.34,1.56,.64,1) both; text-shadow:0 2px 16px rgba(0,0,0,0.5); }
+    .celeb-sub { position:relative; z-index:2; font-size:13px; color:rgba(255,255,255,0.7); margin-top:8px; animation:celebSlideUp .5s .35s cubic-bezier(.34,1.56,.64,1) both; }
+    .confetti-wrap { position:absolute; inset:0; z-index:1; overflow:hidden; pointer-events:none; }
+    .confetti-wrap span { position:absolute; top:-20px; width:10px; height:10px; border-radius:2px; opacity:0; animation:confettiFall linear forwards; }
+    @keyframes celebFadeIn { from{opacity:0} to{opacity:1} }
+    @keyframes celebBounce { 0%{opacity:0;transform:scale(0) rotate(-20deg)} 60%{transform:scale(1.18) rotate(8deg)} 80%{transform:scale(.95) rotate(-4deg)} 100%{opacity:1;transform:scale(1) rotate(0)} }
+    @keyframes celebSlideUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes confettiFall { 0%{opacity:1;transform:translateY(0) rotate(0deg)} 100%{opacity:0;transform:translateY(110vh) rotate(720deg)} }
     .empty-state { text-align:center; padding:50px 20px; color:var(--subtext); grid-column:1/-1; }
     .empty-state p { font-size:14px; margin-top:8px; font-weight:600; }
 
@@ -212,6 +224,15 @@
 
   <div class="toast" id="toast"></div>
   <div class="spinner-overlay" id="spinnerOverlay"><div class="spinner"></div></div>
+
+  <!-- CELEBRATION OVERLAY -->
+  <div class="celebration" id="celebration">
+    <div class="celeb-bg"></div>
+    <div class="confetti-wrap" id="confettiWrap"></div>
+    <div class="celeb-icon" id="celebIcon">🏆</div>
+    <div class="celeb-text" id="celebText">Done deal!</div>
+    <div class="celeb-sub" id="celebSub">tap anywhere to dismiss</div>
+  </div>
 
   <!-- LIGHTBOX -->
   <div class="lightbox" id="lightbox" onclick="closeLightbox()">
@@ -402,7 +423,7 @@
 
   <script>
     const API      = 'https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec';
-    const IMGBB_KEY = 'c1047f546534cb119c255afbd588a63f'; // 🔑 Replace with your ImgBB key
+    const IMGBB_KEY = 'YOUR_IMGBB_API_KEY'; // 🔑 Replace with your ImgBB key
 
     let activeCategory = 'ALL';
     let cachedItems    = [];
@@ -411,6 +432,41 @@
     let salesChart     = null;
     let currentChartType = 'bar';
     let confirmCallback  = null;
+
+    // ── CELEBRATION ──
+    const CONFETTI_COLORS = ['#1d4ed8','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#fff','#fcd34d'];
+    let celebTimer = null;
+
+    function showCelebration(icon, text) {
+      const el   = document.getElementById('celebration');
+      const wrap = document.getElementById('confettiWrap');
+      document.getElementById('celebIcon').innerText = icon;
+      document.getElementById('celebText').innerText = text;
+
+      // Build confetti
+      wrap.innerHTML = '';
+      for (let i = 0; i < 60; i++) {
+        const s   = document.createElement('span');
+        const clr = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+        const dur = 1.6 + Math.random() * 1.8;
+        const del = Math.random() * 0.9;
+        s.style.cssText = `left:${Math.random()*100}%;background:${clr};width:${6+Math.random()*9}px;height:${6+Math.random()*9}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${dur}s;animation-delay:${del}s;`;
+        wrap.appendChild(s);
+      }
+
+      el.classList.add('show');
+      el.style.pointerEvents = 'all';
+      el.onclick = hideCelebration;
+      clearTimeout(celebTimer);
+      celebTimer = setTimeout(hideCelebration, 4000);
+    }
+
+    function hideCelebration() {
+      const el = document.getElementById('celebration');
+      el.classList.remove('show');
+      el.style.pointerEvents = 'none';
+      clearTimeout(celebTimer);
+    }
 
     // ── TOAST with animation & colour ──
     function toast(msg, type = '') {
@@ -696,6 +752,7 @@
 
       hideSpinner();
       toast('Product Added! ✅', 'success');
+      showCelebration('🦆📯', "Added a new gang! Welcome to the hood");
       cachedItems = [];
       loadDashboard();
       loadItems(true);
@@ -710,6 +767,7 @@
       await safeFetch(API, { method:'POST', body:JSON.stringify({ action:'markSold', id, soldAmount:amt }) });
       hideSpinner();
       toast('Marked as Sold ✅', 'success');
+      showCelebration('🏆', "Sold motherf*cker, Done deal!");
       cachedItems = [];
       loadDashboard();
       loadItems(true);
@@ -983,7 +1041,10 @@
       }
 
       hideSpinner();
+      const tradeIcons = ['🤝','🔀','💱','🔄','🎲'];
+      const randomIcon = tradeIcons[Math.floor(Math.random() * tradeIcons.length)];
       toast('Trade Complete! 🔄', 'success');
+      showCelebration(randomIcon, "Traded, better scam them or they will scam you");
       closeTradeModal();
       cachedItems = [];
       loadDashboard();
