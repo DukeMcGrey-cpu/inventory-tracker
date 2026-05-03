@@ -42,7 +42,7 @@
     .container { padding:16px 18px; max-width:1200px; margin:auto; }
 
     /* ── CARDS ── */
-    .cards { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin:14px 0; }
+    .cards { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin:14px 0; }
     .card { background:var(--glass); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid var(--glass-border); border-radius:20px; box-shadow:var(--shadow); padding:16px 10px; text-align:center; transition:transform .25s,box-shadow .25s,background .25s; }
     .card:hover { transform:translateY(-4px); background:var(--card-hover); box-shadow:0 16px 40px rgba(29,78,216,0.18); }
     .card small { display:block; color:var(--subtext); margin:5px 0; font-size:11px; font-weight:600; letter-spacing:.03em; text-transform:uppercase; }
@@ -120,10 +120,18 @@
 
     .status-pill { position:absolute; top:10px; right:10px; padding:5px 12px; border-radius:30px; font-size:11px; font-weight:800; letter-spacing:.03em; background:rgba(15,23,42,0.75); backdrop-filter:blur(8px); color:#fff; }
     .status-pill.sold { background:rgba(34,197,94,0.85); }
+    .status-pill.traded { background:rgba(234,179,8,0.92); color:#1a1000; }
     .action-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+    .action-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:10px; }
     .full-btn { grid-column:span 2; }
     .btn-danger { background:linear-gradient(135deg,#ef4444,#f97316) !important; box-shadow:0 4px 12px rgba(239,68,68,0.3) !important; }
     .btn-secondary { background:rgba(255,255,255,0.7) !important; background-image:none !important; color:var(--text) !important; border:1.5px solid rgba(29,78,216,0.2) !important; box-shadow:none !important; }
+    .btn-trade { background:linear-gradient(135deg,#b45309,#d97706) !important; box-shadow:0 4px 12px rgba(217,119,6,0.3) !important; }
+    .trade-info { font-size:12px; background:rgba(234,179,8,0.1); border-left:3px solid rgba(234,179,8,0.6); border-radius:8px; padding:7px 10px; margin:6px 0; }
+    body.dark .trade-info strong { color:#fcd34d; }
+    .modal-divider { border:none; border-top:1.5px solid rgba(29,78,216,0.12); margin:4px 0; }
+    .modal-section-label { font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--subtext); }
+    .cash-row { display:none; }
 
     /* ── LIGHTBOX ── */
     .lightbox { display:none; position:fixed; inset:0; background:rgba(6,13,26,0.92); z-index:10002; justify-content:center; align-items:center; padding:20px; cursor:zoom-out; animation:fadeIn .2s ease; }
@@ -189,6 +197,7 @@
       .search-row { grid-template-columns:1fr; }
       .app-text h2 { font-size:14px; }
       .topbar { padding:10px 14px; }
+      .action-row-3 { grid-template-columns:1fr 1fr 1fr; }
     }
     @media(max-width:400px) { .cards { grid-template-columns:repeat(2,1fr); } }
   </style>
@@ -249,6 +258,7 @@
       <div class="card">📈<small>Profit</small><h3 id="profit">₱0</h3></div>
       <div class="card">📦<small>On Hand</small><h3 id="onhand">0</h3></div>
       <div class="card">✅<small>Sold</small><h3 id="sold">0</h3></div>
+      <div class="card">🔄<small>Traded</small><h3 id="traded">0</h3></div>
     </div>
 
     <!-- ADD FORM -->
@@ -331,6 +341,62 @@
       <small style="color:var(--subtext);margin-top:-4px;font-size:12px;">Leave image empty to keep existing photos</small>
       <button onclick="saveEditItem()">Save Changes</button>
       <button class="btn-secondary" onclick="closeEditModal()" style="margin-top:4px;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- TRADE MODAL -->
+  <div id="tradeModal" class="modal">
+    <div class="modal-content" style="max-width:500px;">
+      <h3>🔄 Trade-In</h3>
+      <input type="hidden" id="trade-original-id">
+      <input type="hidden" id="trade-original-capital">
+
+      <p class="modal-section-label">📦 Your Item Being Traded Out</p>
+      <p id="trade-original-name" style="font-weight:700;font-size:15px;color:var(--accent);margin-bottom:4px;"></p>
+
+      <hr class="modal-divider">
+      <p class="modal-section-label">🔄 Trade-In Details</p>
+
+      <input id="trade-name" placeholder="Trade-In Item Name">
+      <select id="trade-category">
+        <option>Gadget / Console</option>
+        <option>Phone</option>
+        <option>Appliance</option>
+        <option>Others</option>
+      </select>
+      <input id="trade-value" type="number" placeholder="Trade-In Value (what their item is worth)" oninput="updateTradePreview()">
+
+      <select id="trade-cash-dir" onchange="toggleCashRow()">
+        <option value="none">💱 Straight Trade (no cash)</option>
+        <option value="customer">💵 Customer Adds Cash</option>
+        <option value="you">💸 You Add Cash</option>
+      </select>
+
+      <div class="cash-row" id="cashRow">
+        <input id="trade-cash-amt" type="number" placeholder="Cash Amount" oninput="updateTradePreview()">
+      </div>
+
+      <hr class="modal-divider">
+      <p class="modal-section-label">🧾 Your Expenses for New Item</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <input id="trade-shipping" type="number" placeholder="Shipping Fee" oninput="updateTradePreview()">
+        <input id="trade-other" type="number" placeholder="Other Fee" oninput="updateTradePreview()">
+      </div>
+
+      <hr class="modal-divider">
+      <p class="modal-section-label">📸 Photo & Notes for New Item</p>
+      <input id="trade-image" type="file" accept="image/*" multiple>
+      <textarea id="trade-notes" placeholder="Notes for the trade-in item..."></textarea>
+
+      <!-- LIVE PREVIEW -->
+      <div id="tradePreview" style="background:rgba(29,78,216,0.06);border-radius:12px;padding:12px;font-size:13px;line-height:1.9;border:1.5px solid rgba(29,78,216,0.15);">
+        <strong>📊 Trade Preview</strong><br>
+        <span id="prev-profit" style="color:var(--green)">Profit on your item: ₱0</span><br>
+        <span id="prev-new-capital">New item capital: ₱0</span>
+      </div>
+
+      <button onclick="submitTrade()" style="margin-top:4px;">✅ Confirm Trade</button>
+      <button class="btn-secondary" onclick="closeTradeModal()" style="margin-top:4px;">Cancel</button>
     </div>
   </div>
 
@@ -465,8 +531,9 @@
         document.getElementById('capital').innerText = '₱' + (d.totalCapital || 0).toLocaleString();
         document.getElementById('sales').innerText   = '₱' + (d.totalSales   || 0).toLocaleString();
         document.getElementById('profit').innerText  = '₱' + (d.totalProfit  || 0).toLocaleString();
-        document.getElementById('onhand').innerText  = d.onHand    || 0;
-        document.getElementById('sold').innerText    = d.soldCount || 0;
+        document.getElementById('onhand').innerText  = d.onHand     || 0;
+        document.getElementById('sold').innerText    = d.soldCount  || 0;
+        document.getElementById('traded').innerText  = d.tradedCount || 0;
       });
     }
 
@@ -537,24 +604,38 @@
 
         return `
           <div class='item' id='item-${id}'>
-            <span class='status-pill ${st==="SOLD"?"sold":""}'>${st}</span>
+            <span class='status-pill ${st==="SOLD"?"sold":st==="TRADED"?"traded":""}'>${st}</span>
             ${imgHTML}
             <div class='item-body'>
               <h3>${p}</h3>
               <p style='color:var(--subtext)'>${c}</p>
               <p>Capital: <strong>₱${cap.toLocaleString()}</strong></p>
-              <p>Sold: <strong>${soldp ? '₱'+soldp.toLocaleString() : '-'}</strong></p>
-              <p style='color:${pro>=0?"var(--green)":"var(--red)"}'>Profit: <strong>₱${pro.toLocaleString()}</strong></p>
+              ${st === 'TRADED'
+                ? `<div class='trade-info'>🔄 Trade Value: <strong>₱${soldp.toLocaleString()}</strong><br>
+                   Profit: <strong style='color:${pro>=0?"var(--green)":"var(--red)"}'>₱${pro.toLocaleString()}</strong></div>`
+                : `<p>Sold: <strong>${soldp ? '₱'+soldp.toLocaleString() : '-'}</strong></p>
+                   <p style='color:${pro>=0?"var(--green)":"var(--red)"}'>Profit: <strong>₱${pro.toLocaleString()}</strong></p>`
+              }
               ${notes ? `<div class='item-notes'>💬 ${notes}</div>` : ''}
               ${st === 'ON HAND'
                 ? `<input id='sold-${id}' type='number' placeholder='Sold Amount' style='margin-top:8px'>
-                   <button class='full-btn' style='margin-top:6px' onclick="markSold('${id}')">Mark Sold</button>`
-                : `<button class='full-btn' style='margin-top:8px' onclick="promptEditSold('${id}')">Edit Sold</button>`
+                   <button class='full-btn' style='margin-top:6px' onclick="markSold('${id}')">Mark Sold</button>
+                   <div class='action-row-3' style='margin-top:8px'>
+                     <button class='btn-trade' onclick="openTradeModal('${id}','${safeP}','${cap}')">🔄 Trade</button>
+                     <button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button>
+                     <button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️</button>
+                   </div>`
+                : st === 'TRADED'
+                  ? `<div class='action-row'>
+                       <button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button>
+                       <button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button>
+                     </div>`
+                  : `<button class='full-btn' style='margin-top:8px' onclick="promptEditSold('${id}')">Edit Sold</button>
+                     <div class='action-row'>
+                       <button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button>
+                       <button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button>
+                     </div>`
               }
-              <div class='action-row'>
-                <button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button>
-                <button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button>
-              </div>
             </div>
           </div>`;
       }).join('');
@@ -790,6 +871,123 @@
       });
       doc.save('inventory_' + new Date().toISOString().slice(0,10) + '.pdf');
       toast('PDF Exported 🖨️', 'success');
+    }
+
+    // ── TRADE MODAL ──
+    function openTradeModal(id, name, capital) {
+      document.getElementById('trade-original-id').value      = id;
+      document.getElementById('trade-original-capital').value = capital;
+      document.getElementById('trade-original-name').innerText = name;
+      document.getElementById('trade-name').value      = '';
+      document.getElementById('trade-value').value     = '';
+      document.getElementById('trade-cash-amt').value  = '';
+      document.getElementById('trade-shipping').value  = '';
+      document.getElementById('trade-other').value     = '';
+      document.getElementById('trade-notes').value     = '';
+      document.getElementById('trade-image').value     = '';
+      document.getElementById('trade-cash-dir').value  = 'none';
+      document.getElementById('cashRow').style.display = 'none';
+      updateTradePreview();
+      document.getElementById('tradeModal').style.display = 'flex';
+    }
+
+    function closeTradeModal() {
+      document.getElementById('tradeModal').style.display = 'none';
+    }
+
+    function toggleCashRow() {
+      const dir = document.getElementById('trade-cash-dir').value;
+      document.getElementById('cashRow').style.display = dir === 'none' ? 'none' : 'block';
+      updateTradePreview();
+    }
+
+    function updateTradePreview() {
+      const capital    = +document.getElementById('trade-original-capital').value || 0;
+      const tradeVal   = +document.getElementById('trade-value').value  || 0;
+      const cashDir    = document.getElementById('trade-cash-dir').value;
+      const cashAmt    = +document.getElementById('trade-cash-amt').value || 0;
+      const shipping   = +document.getElementById('trade-shipping').value || 0;
+      const other      = +document.getElementById('trade-other').value   || 0;
+
+      let profit = tradeVal - capital;
+      if (cashDir === 'customer') profit += cashAmt;
+      if (cashDir === 'you')      profit -= cashAmt;
+
+      const newCapital = tradeVal + shipping + other;
+
+      const profitEl = document.getElementById('prev-profit');
+      profitEl.innerText = `Profit on your item: ₱${profit.toLocaleString()}`;
+      profitEl.style.color = profit >= 0 ? 'var(--green)' : 'var(--red)';
+      document.getElementById('prev-new-capital').innerText = `New item capital: ₱${newCapital.toLocaleString()}`;
+    }
+
+    async function submitTrade() {
+      const originalId  = document.getElementById('trade-original-id').value;
+      const capital     = +document.getElementById('trade-original-capital').value || 0;
+      const tradeName   = document.getElementById('trade-name').value.trim();
+      const tradeCat    = document.getElementById('trade-category').value;
+      const tradeVal    = +document.getElementById('trade-value').value || 0;
+      const cashDir     = document.getElementById('trade-cash-dir').value;
+      const cashAmt     = +document.getElementById('trade-cash-amt').value || 0;
+      const shipping    = +document.getElementById('trade-shipping').value || 0;
+      const other       = +document.getElementById('trade-other').value   || 0;
+      const notes       = document.getElementById('trade-notes').value.trim();
+      const imageEl     = document.getElementById('trade-image');
+
+      if (!tradeName)  return toast('Enter the trade-in item name', 'error');
+      if (!tradeVal)   return toast('Enter the trade-in value', 'error');
+
+      let profit = tradeVal - capital;
+      if (cashDir === 'customer') profit += cashAmt;
+      if (cashDir === 'you')      profit -= cashAmt;
+
+      const newCapital = tradeVal + shipping + other;
+
+      toast('Processing trade...', '');
+      showSpinner();
+
+      const result = await safeFetch(API, {
+        method: 'POST',
+        body: JSON.stringify({
+          action:         'tradeItem',
+          originalId:     originalId,
+          tradeValue:     tradeVal,
+          cashDirection:  cashDir,
+          cashAmount:     cashAmt,
+          profit:         profit,
+          newName:        tradeName,
+          newCategory:    tradeCat,
+          newCapital:     newCapital,
+          newShipping:    shipping,
+          newOther:       other,
+          notes:          notes,
+          photoURL:       ''
+        })
+      });
+
+      if (!result || result.status !== 'success') {
+        hideSpinner();
+        return toast('Trade failed. Try again.', 'error');
+      }
+
+      // Upload images for new trade-in item
+      if (imageEl.files.length > 0) {
+        toast('Uploading images...', '');
+        const photoURLs = await uploadImages(imageEl.files);
+        if (photoURLs && result.newId) {
+          await safeFetch(API, {
+            method: 'POST',
+            body: JSON.stringify({ action:'uploadImage', id:result.newId, photoURL:photoURLs })
+          });
+        }
+      }
+
+      hideSpinner();
+      toast('Trade Complete! 🔄', 'success');
+      closeTradeModal();
+      cachedItems = [];
+      loadDashboard();
+      loadItems(true);
     }
 
     // ── DARK MODE ──
