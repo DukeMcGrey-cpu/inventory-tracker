@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BuySell Inventory Pro | Lazy Load Pagination</title>
+  <title>BuySell Inventory Pro | Fun Invoice</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -90,7 +90,7 @@
     /* ── GRID ── */
     .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; margin-top:14px; }
 
-    /* ── PAGINATION (lazy pages) ── */
+    /* ── PAGINATION ── */
     .pagination-container { display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin:28px 0 10px; }
     .page-btn { width:auto; min-width:38px; padding:6px 12px; border-radius:30px; background:rgba(255,255,255,0.65); backdrop-filter:blur(8px); border:1px solid rgba(29,78,216,0.2); color:var(--text); font-weight:700; font-size:14px; cursor:pointer; transition:all .2s; box-shadow:0 2px 5px rgba(0,0,0,0.03); background-image:none; }
     .page-btn.active { background:linear-gradient(135deg,#1e3a5f,#1d4ed8); color:#fff; border-color:transparent; box-shadow:0 4px 12px rgba(29,78,216,0.3); }
@@ -269,7 +269,7 @@
       <div class="app-icon">📦</div>
       <div class="app-text">
         <h2>BuySell Inventory Pro</h2>
-        <p>Lazy-Pagination · Ultra Premium</p>
+        <p>Fun Invoice · Pagination</p>
       </div>
     </div>
     <div class="topbar-right">
@@ -337,7 +337,6 @@
     </div>
 
     <div id="grid" class="grid"></div>
-    <!-- PAGINATION CONTROLS (lazy load pages) -->
     <div id="paginationControls" class="pagination-container"></div>
 
     <!-- CHART -->
@@ -433,8 +432,9 @@
   </div>
 
   <script>
-    const API      = 'https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec';
-    const IMGBB_KEY = 'c1047f546534cb119c255afbd588a63f';
+    // ======================= CONFIGURATION =======================
+    const API = 'https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec'; // REPLACE WITH YOUR DEPLOYMENT URL
+    const IMGBB_KEY = 'c1047f546534cb119c255afbd588a63f'; // Your ImgBB key
     
     let activeCategory = 'ALL';
     let cachedItems    = [];
@@ -443,11 +443,10 @@
     let salesChart     = null;
     let currentChartType = 'bar';
     let confirmCallback  = null;
-
-    // ---------- PAGINATION GLOBALS ----------
-    let currentPage    = 1;
+    let currentPage      = 1;
     const ITEMS_PER_PAGE = 12;
 
+    // ======================= HELPER FUNCTIONS =======================
     function resetPageAndRender() { currentPage = 1; renderItems(); }
     function filterChangeAndReset() { currentPage = 1; renderItems(); }
 
@@ -474,20 +473,36 @@
       }).length;
     }
 
-    // ── CELEBRATION ──
-    const CONFETTI_COLORS = ['#1d4ed8','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#fff','#fcd34d'];
-    let celebTimer = null;
+    function buildPaginationUI(totalItems) {
+      const container = document.getElementById('paginationControls');
+      if (totalItems <= ITEMS_PER_PAGE) { container.innerHTML = ''; return; }
+      const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+      let html = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">`;
+      html += `<button class="page-btn" onclick="changePage(${currentPage-1})" ${currentPage===1?'disabled class="page-btn disabled"':''}>‹ Prev</button>`;
+      let start = Math.max(1, currentPage - 2);
+      let end = Math.min(totalPages, start + 4);
+      if (end - start < 4) start = Math.max(1, end - 4);
+      for (let i = start; i <= end; i++) html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="changePage(${i})">${i}</button>`;
+      html += `<button class="page-btn" onclick="changePage(${currentPage+1})" ${currentPage===totalPages?'disabled class="page-btn disabled"':''}>Next ›</button>`;
+      html += `<span class="page-info">${(currentPage-1)*ITEMS_PER_PAGE+1}–${Math.min(currentPage*ITEMS_PER_PAGE,totalItems)} of ${totalItems}</span>`;
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    function showSkeletons(count = 6) { document.getElementById('grid').innerHTML = Array(count).fill(`<div class="skeleton"><div class="skel-img"></div><div class="skel-body"><div class="skel-line med"></div><div class="skel-line short"></div><div class="skel-line med"></div><div class="skel-line short"></div></div></div>`).join(''); document.getElementById('paginationControls').innerHTML = ''; }
+    
+    const imgObserver = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { const img = e.target; if (img.dataset.src) { img.src = img.dataset.src; img.removeAttribute('data-src'); } imgObserver.unobserve(img); } }); }, { rootMargin: '120px' });
+    
     function showCelebration(icon, text) {
-      const el        = document.getElementById('celebration');
-      const wrap      = document.getElementById('confettiWrap');
-      const iconEl    = document.getElementById('celebIcon');
-      if (icon.startsWith('http')) { iconEl.innerHTML = `<img src="${icon}" alt="">`; }
-      else { iconEl.innerHTML = icon; }
+      const el = document.getElementById('celebration');
+      const wrap = document.getElementById('confettiWrap');
+      const iconEl = document.getElementById('celebIcon');
+      if (icon.startsWith('http')) { iconEl.innerHTML = `<img src="${icon}" alt="">`; } else { iconEl.innerHTML = icon; }
       document.getElementById('celebText').innerText = text;
       wrap.innerHTML = '';
       for (let i = 0; i < 60; i++) {
-        const s   = document.createElement('span');
-        const clr = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+        const s = document.createElement('span');
+        const clr = ['#1d4ed8','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#fff','#fcd34d'][Math.floor(Math.random()*8)];
         const dur = 1.6 + Math.random() * 1.8;
         const del = Math.random() * 0.9;
         s.style.cssText = `left:${Math.random()*100}%;background:${clr};width:${6+Math.random()*9}px;height:${6+Math.random()*9}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${dur}s;animation-delay:${del}s;`;
@@ -495,35 +510,33 @@
       }
       el.classList.add('show');
       el.style.pointerEvents = 'all';
-      el.onclick = hideCelebration;
-      clearTimeout(celebTimer);
-      celebTimer = setTimeout(hideCelebration, 4000);
+      el.onclick = () => { el.classList.remove('show'); el.style.pointerEvents = 'none'; clearTimeout(celebTimer); };
+      let celebTimer = setTimeout(() => { el.classList.remove('show'); el.style.pointerEvents = 'none'; }, 4000);
     }
-    function hideCelebration() { const el = document.getElementById('celebration'); el.classList.remove('show'); el.style.pointerEvents = 'none'; clearTimeout(celebTimer); }
+    
     function toast(msg, type = '') { const t = document.getElementById('toast'); t.className = 'toast' + (type ? ' ' + type : ''); t.innerText = msg; void t.offsetWidth; t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.style.display = 'none', 400); }, 2600); }
     function showSpinner() { document.getElementById('spinnerOverlay').classList.add('show'); }
     function hideSpinner() { document.getElementById('spinnerOverlay').classList.remove('show'); }
     function safeFetch(url, o = {}) { return fetch(url, o).then(r => r.text()).then(t => { try { return JSON.parse(t); } catch(e) { return null; } }); }
-
     let searchTimer = null;
     function debouncedSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(() => { currentPage = 1; renderItems(); }, 280); }
-
+    
     function showConfirm(icon, title, msg, okLabel, okClass, cb) {
-      document.getElementById('confirmIcon').innerText  = icon;
+      document.getElementById('confirmIcon').innerText = icon;
       document.getElementById('confirmTitle').innerText = title;
-      document.getElementById('confirmMsg').innerText   = msg;
+      document.getElementById('confirmMsg').innerText = msg;
       const btn = document.getElementById('confirmOkBtn');
-      btn.innerText   = okLabel;
-      btn.className   = okClass;
+      btn.innerText = okLabel;
+      btn.className = okClass;
       confirmCallback = cb;
       document.getElementById('confirmModal').style.display = 'flex';
     }
     function closeConfirm() { document.getElementById('confirmModal').style.display = 'none'; confirmCallback = null; }
     document.getElementById('confirmOkBtn').onclick = () => { if (confirmCallback) confirmCallback(); closeConfirm(); };
-
+    
     function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').classList.add('show'); }
     function closeLightbox() { document.getElementById('lightbox').classList.remove('show'); }
-
+    
     async function uploadImage(file) {
       return new Promise((res) => {
         const timeout = setTimeout(() => { res(''); }, 12000);
@@ -545,10 +558,144 @@
     }
     async function uploadImages(files) { if (!files || !files.length) return ''; toast('Uploading images...', ''); const urls = await Promise.all(Array.from(files).slice(0, 5).map(uploadImage)); return urls.filter(Boolean).join(','); }
     
-    function showSkeletons(count = 6) { document.getElementById('grid').innerHTML = Array(count).fill(`<div class="skeleton"><div class="skel-img"></div><div class="skel-body"><div class="skel-line med"></div><div class="skel-line short"></div><div class="skel-line med"></div><div class="skel-line short"></div></div></div>`).join(''); document.getElementById('paginationControls').innerHTML = ''; }
+    // ======================= FIXED INVOICE GENERATION (no random characters) =======================
+    function generateAndDownloadInvoice(item, soldAmount, buyerName, sellerName) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const productName = item[2];
+      const dateTime = new Date().toLocaleString();
+      const invoiceNo = `INV-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${item[0]}`;
+      
+      // Use standard fonts (no emojis in PDF text to avoid encoding issues)
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(30, 58, 95);
+      doc.text("THANK YOU!", 105, 25, { align: "center" });
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      doc.text("Your purchase keeps our small business happy", 105, 35, { align: "center" });
+      
+      // Separator
+      doc.setDrawColor(30, 58, 95);
+      doc.line(20, 45, 190, 45);
+      
+      // Invoice details box
+      doc.setFillColor(245, 245, 245);
+      doc.roundedRect(20, 52, 170, 40, 5, 5, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Date & Time:", 25, 62);
+      doc.text("Invoice #:", 25, 72);
+      doc.text("Buyer:", 25, 82);
+      doc.text("Seller:", 25, 92);
+      
+      doc.setFont("helvetica", "normal");
+      doc.text(dateTime, 70, 62);
+      doc.text(invoiceNo, 70, 72);
+      doc.text(buyerName, 70, 82);
+      doc.text(sellerName, 70, 92);
+      
+      // Product details
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(30, 58, 95);
+      doc.text("Product Details", 25, 112);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Item: ${productName}`, 25, 124);
+      doc.text(`Amount Paid: PHP ${soldAmount.toLocaleString()}`, 25, 136);
+      
+      // Thank you & footer
+      doc.setFillColor(220, 245, 220);
+      doc.roundedRect(20, 155, 170, 40, 5, 5, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(34, 97, 34);
+      doc.text("A huge thank you!", 105, 170, { align: "center" });
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text("We appreciate your business. Come back again soon!", 105, 182, { align: "center" });
+      doc.text("Follow us for more great deals!", 105, 192, { align: "center" });
+      
+      // Save PDF
+      doc.save(`Invoice_${productName.replace(/\s+/g, '_')}_${invoiceNo}.pdf`);
+    }
     
-    const imgObserver = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { const img = e.target; if (img.dataset.src) { img.src = img.dataset.src; img.removeAttribute('data-src'); } imgObserver.unobserve(img); } }); }, { rootMargin: '120px' });
+    function regenerateInvoice(id) {
+      const item = cachedItems.find(r => r[0] == id);
+      if (!item || item[10] !== 'SOLD') return toast('Not a sold item', 'error');
+      const buyerName = item[15] || 'Customer';
+      const sellerName = item[16] || 'Our Store';
+      const soldAmount = item[12] || 0;
+      generateAndDownloadInvoice(item, soldAmount, buyerName, sellerName);
+    }
     
+    // ======================= CORE CRUD =======================
+    async function addItem() {
+      const nameVal = document.getElementById('nameInput').value.trim();
+      if (!nameVal) return toast('Enter a product name', 'error');
+      const categoryVal = document.getElementById('categoryInput').value;
+      const priceVal = document.getElementById('priceInput').value;
+      const shippingVal = document.getElementById('shippingInput').value;
+      const otherVal = document.getElementById('otherInput').value;
+      const notesVal = document.getElementById('notesInput').value.trim();
+      const imageEl = document.getElementById('imageInput');
+      toast('Adding product...', ''); showSpinner();
+      const result = await safeFetch(API, { method: 'POST', body: JSON.stringify({ action:'addItem', productName:nameVal, category:categoryVal, purchaseAmount:+priceVal, shippingFee:+shippingVal, otherFee:+otherVal, quantity:1, photoURL:'', notes:notesVal }) });
+      if (!result || result.status !== 'success') { hideSpinner(); return toast('Failed to add. Try again.', 'error'); }
+      if (imageEl.files.length > 0) { const photoURLs = await uploadImages(imageEl.files); if (photoURLs) await safeFetch(API, { method:'POST', body:JSON.stringify({ action:'uploadImage', id:result.id, photoURL:photoURLs }) }); }
+      document.getElementById('nameInput').value = ''; document.getElementById('priceInput').value = ''; document.getElementById('shippingInput').value = ''; document.getElementById('otherInput').value = ''; document.getElementById('notesInput').value = ''; imageEl.value = '';
+      hideSpinner(); toast('Product Added! ✅', 'success'); showCelebration('https://media1.tenor.com/m/BpCpdZNSlqIAAAAd/trombone-donald-duck.gif', "New product added!"); cachedItems = []; loadDashboard(); loadItems(true); toggleAddForm(true);
+    }
+    
+    async function markSold(id) {
+      const amtEl = document.getElementById('sold-' + id);
+      const soldAmount = +amtEl.value;
+      if (!soldAmount) return toast('Enter sold amount', 'error');
+      const buyerName = prompt('👤 Buyer name:', '');
+      if (!buyerName) return toast('Buyer name is required', 'error');
+      const sellerName = prompt('🛒 Seller name (your name or store name):', '');
+      if (!sellerName) return toast('Seller name is required', 'error');
+      showSpinner();
+      const res = await safeFetch(API, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'markSold', id: id, soldAmount: soldAmount, buyerName: buyerName, sellerName: sellerName })
+      });
+      if (res && res.status === 'updated') {
+        const item = cachedItems.find(r => r[0] == id);
+        if (item) generateAndDownloadInvoice(item, soldAmount, buyerName, sellerName);
+        toast('Sold & Invoice generated ✅', 'success');
+        showCelebration('🧾', `Sold to ${buyerName}`);
+        cachedItems = [];
+        loadDashboard();
+        loadItems(true);
+      } else {
+        toast('Failed to mark as sold', 'error');
+      }
+      hideSpinner();
+    }
+    
+    function promptEditSold(id) { showConfirm('💰', 'Edit Sold Amount', 'Enter the new sold amount in the prompt.', 'Continue', 'button', () => { const amt = prompt('Enter new sold amount:'); if (!amt) return; showSpinner(); safeFetch(API, { method:'POST', body:JSON.stringify({ action:'editSold', id, soldAmount:+amt }) }).then(() => { hideSpinner(); toast('Sold Updated ✅', 'success'); cachedItems = []; loadDashboard(); loadItems(true); }); }); }
+    
+    function confirmDelete(id, name) { showConfirm('🗑️', 'Delete Product?', `"${name}" will be permanently removed.`, 'Delete', 'btn-danger', async () => { showSpinner(); await safeFetch(API, { method:'POST', body:JSON.stringify({ action:'deleteItem', id }) }); hideSpinner(); toast('Item Deleted 🗑️', ''); showCelebration('https://media1.tenor.com/m/tnphPiAztMIAAAAd/skeleton.gif', "Item deleted"); cachedItems = []; loadDashboard(); loadItems(true); }); }
+    
+    function openEditModal(id, n, c, p, s, o, notes = '') { document.getElementById('edit-id').value = id; document.getElementById('edit-name').value = n; document.getElementById('edit-category').value = c; document.getElementById('edit-purchase').value = p; document.getElementById('edit-shipping').value = s; document.getElementById('edit-other').value = o; document.getElementById('edit-notes').value = notes; document.getElementById('edit-image').value = ''; document.getElementById('editModal').style.display = 'flex'; }
+    function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+    async function saveEditItem() { showSpinner(); const id = document.getElementById('edit-id').value; const imageEl = document.getElementById('edit-image'); await safeFetch(API, { method: 'POST', body: JSON.stringify({ action:'editItem', id, productName: document.getElementById('edit-name').value, category: document.getElementById('edit-category').value, purchaseAmount: +document.getElementById('edit-purchase').value, shippingFee: +document.getElementById('edit-shipping').value, otherFee: +document.getElementById('edit-other').value, notes: document.getElementById('edit-notes').value.trim() }) }); if (imageEl.files.length > 0) { const photoURLs = await uploadImages(imageEl.files); if (photoURLs) await safeFetch(API, { method:'POST', body:JSON.stringify({ action:'uploadImage', id, photoURL:photoURLs }) }); } hideSpinner(); toast('Item Updated ✅', 'success'); closeEditModal(); cachedItems = []; loadDashboard(); loadItems(true); }
+    
+    // ======================= TRADE FUNCTIONS =======================
+    function openTradeModal(id, name, capital) { document.getElementById('trade-original-id').value = id; document.getElementById('trade-original-capital').value = capital; document.getElementById('trade-original-name').innerText = name; document.getElementById('trade-name').value = ''; document.getElementById('trade-value').value = ''; document.getElementById('trade-cash-amt').value = ''; document.getElementById('trade-shipping').value = ''; document.getElementById('trade-other').value = ''; document.getElementById('trade-notes').value = ''; document.getElementById('trade-image').value = ''; document.getElementById('trade-cash-dir').value = 'none'; document.getElementById('cashRow').style.display = 'none'; updateTradePreview(); document.getElementById('tradeModal').style.display = 'flex'; }
+    function closeTradeModal() { document.getElementById('tradeModal').style.display = 'none'; }
+    function toggleCashRow() { const dir = document.getElementById('trade-cash-dir').value; document.getElementById('cashRow').style.display = dir === 'none' ? 'none' : 'block'; updateTradePreview(); }
+    function updateTradePreview() { const capital = +document.getElementById('trade-original-capital').value || 0; const tradeVal = +document.getElementById('trade-value').value || 0; const cashDir = document.getElementById('trade-cash-dir').value; const cashAmt = +document.getElementById('trade-cash-amt').value || 0; const shipping = +document.getElementById('trade-shipping').value || 0; const other = +document.getElementById('trade-other').value || 0; let profit = tradeVal - capital; if (cashDir === 'customer') profit += cashAmt; if (cashDir === 'you') profit -= cashAmt; const newCapital = tradeVal + shipping + other; const profitEl = document.getElementById('prev-profit'); profitEl.innerText = `Profit on your item: ₱${profit.toLocaleString()}`; profitEl.style.color = profit >= 0 ? 'var(--green)' : 'var(--red)'; document.getElementById('prev-new-capital').innerText = `New item capital: ₱${newCapital.toLocaleString()}`; }
+    async function submitTrade() { const originalId = document.getElementById('trade-original-id').value; const capital = +document.getElementById('trade-original-capital').value || 0; const tradeName = document.getElementById('trade-name').value.trim(); const tradeCat = document.getElementById('trade-category').value; const tradeVal = +document.getElementById('trade-value').value || 0; const cashDir = document.getElementById('trade-cash-dir').value; const cashAmt = +document.getElementById('trade-cash-amt').value || 0; const shipping = +document.getElementById('trade-shipping').value || 0; const other = +document.getElementById('trade-other').value || 0; const notes = document.getElementById('trade-notes').value.trim(); const imageEl = document.getElementById('trade-image'); if (!tradeName) return toast('Enter the trade-in item name', 'error'); if (!tradeVal) return toast('Enter the trade-in value', 'error'); let profit = tradeVal - capital; if (cashDir === 'customer') profit += cashAmt; if (cashDir === 'you') profit -= cashAmt; const newCapital = tradeVal + shipping + other; toast('Processing trade...', ''); showSpinner(); const result = await safeFetch(API, { method: 'POST', body: JSON.stringify({ action:'tradeItem', originalId, tradeValue: tradeVal, cashDirection: cashDir, cashAmount: cashAmt, profit, newName: tradeName, newCategory: tradeCat, newCapital, newShipping: shipping, newOther: other, notes, photoURL: '' }) }); if (!result || result.status !== 'success') { hideSpinner(); return toast('Trade failed. Try again.', 'error'); } if (imageEl.files.length > 0 && result.newId) { const photoURLs = await uploadImages(imageEl.files); if (photoURLs) await safeFetch(API, { method:'POST', body:JSON.stringify({ action:'uploadImage', id:result.newId, photoURL:photoURLs }) }); } hideSpinner(); toast('Trade Complete! 🔄', 'success'); showCelebration('🤝', "Trade completed"); closeTradeModal(); cachedItems = []; loadDashboard(); loadItems(true); }
+    
+    // ======================= RENDERING & CHART =======================
     function setCategoryFilter(cat, btn) { activeCategory = cat; document.querySelectorAll('.category-tabs button').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active'); currentPage = 1; renderItems(); }
     
     function loadDashboard() { safeFetch(API + '?action=getDashboard').then(d => { if (!d) return; document.getElementById('capital').innerText = '₱' + (d.totalCapital || 0).toLocaleString(); document.getElementById('sales').innerText   = '₱' + (d.totalSales   || 0).toLocaleString(); document.getElementById('profit').innerText  = '₱' + (d.totalProfit  || 0).toLocaleString(); document.getElementById('onhand').innerText  = d.onHand     || 0; document.getElementById('sold').innerText    = d.soldCount  || 0; document.getElementById('traded').innerText  = d.tradedCount || 0; }); }
@@ -559,38 +706,17 @@
       showSkeletons();
       safeFetch(API + '?action=getItems').then(data => {
         if (!Array.isArray(data)) { document.getElementById('grid').innerHTML = ''; document.getElementById('paginationControls').innerHTML = ''; return; }
-        cachedItems    = data;
-        cacheTimestamp = Date.now();
-        currentPage = 1;
-        renderItems();
-        buildChart(data);
+        cachedItems = data; cacheTimestamp = Date.now(); currentPage = 1; renderItems(); buildChart(data);
       });
     }
     
-    function buildPaginationUI(totalItems) {
-      const container = document.getElementById('paginationControls');
-      if (totalItems <= ITEMS_PER_PAGE) { container.innerHTML = ''; return; }
-      const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-      let html = `<div class="pagination-container-inner" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">`;
-      html += `<button class="page-btn" onclick="changePage(${currentPage-1})" ${currentPage===1?'disabled class="page-btn disabled"':''}>‹ Prev</button>`;
-      let start = Math.max(1, currentPage - 2);
-      let end = Math.min(totalPages, start + 4);
-      if (end - start < 4) start = Math.max(1, end - 4);
-      for (let i = start; i <= end; i++) html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="changePage(${i})">${i}</button>`;
-      html += `<button class="page-btn" onclick="changePage(${currentPage+1})" ${currentPage===totalPages?'disabled class="page-btn disabled"':''}>Next ›</button>`;
-      html += `<span class="page-info">${(currentPage-1)*ITEMS_PER_PAGE+1}–${Math.min(currentPage*ITEMS_PER_PAGE,totalItems)} of ${totalItems}</span>`;
-      html += `</div>`;
-      container.innerHTML = html;
-    }
-    
     function renderItems() {
-      const s    = document.getElementById('search').value.toLowerCase();
-      const f    = document.getElementById('filter').value;
-      const grid = document.getElementById('grid');
+      const s = document.getElementById('search').value.toLowerCase();
+      const f = document.getElementById('filter').value;
       let filtered = cachedItems.filter(r => {
         const name = (r[2] || '').toLowerCase();
-        const cat  = r[3]  || '';
-        const st   = r[10] || 'ON HAND';
+        const cat = r[3] || '';
+        const st = r[10] || 'ON HAND';
         if (name.indexOf(s) === -1) return false;
         if (f !== 'ALL' && st !== f) return false;
         if (activeCategory !== 'ALL' && cat !== activeCategory) return false;
@@ -602,12 +728,12 @@
       if (totalFiltered === 0) currentPage = 1;
       const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
       const pageItems = filtered.slice(startIdx, startIdx + ITEMS_PER_PAGE);
-      if (totalFiltered === 0) { grid.innerHTML = `<div class='empty-state'><div style='font-size:52px'>📭</div><p>No products found</p></div>`; buildPaginationUI(0); return; }
-      grid.innerHTML = pageItems.map(r => {
-        const id    = r[0]  || ''; const p = r[2]  || ''; const c = r[3]  || ''; const pu = +r[4] || 0; const sh = +r[5] || 0; const o = +r[6] || 0; const cap = +r[7] || 0; const imgs  = (r[9] || '').split(',').filter(Boolean); const st = r[10] || 'ON HAND'; const soldp = +r[12] || 0; const pro = +r[13] || 0; const notes = r[14] || ''; const safeP = p.replace(/'/g,"\\'").replace(/"/g,'&quot;'); const safeN = notes.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      if (totalFiltered === 0) { document.getElementById('grid').innerHTML = `<div class='empty-state'><div style='font-size:52px'>📭</div><p>No products found</p></div>`; buildPaginationUI(0); return; }
+      document.getElementById('grid').innerHTML = pageItems.map(r => {
+        const id = r[0] || ''; const p = r[2] || ''; const c = r[3] || ''; const pu = +r[4] || 0; const sh = +r[5] || 0; const o = +r[6] || 0; const cap = +r[7] || 0; const imgs = (r[9] || '').split(',').filter(Boolean); const st = r[10] || 'ON HAND'; const soldp = +r[12] || 0; const pro = +r[13] || 0; const notes = r[14] || ''; const buyer = r[15] || ''; const seller = r[16] || ''; const safeP = p.replace(/'/g,"\\'").replace(/"/g,'&quot;'); const safeN = notes.replace(/'/g,"\\'").replace(/"/g,'&quot;');
         let imgHTML = '';
         if (imgs.length > 0) { const mainSrc = imgs[0]; imgHTML = `<div class='item-gallery'><img class='main-img' data-src='${mainSrc}' src='' alt='${safeP}' onclick="openLightbox('${mainSrc}')">${imgs.length > 1 ? `<div class='thumb-row'>${imgs.map((url, i) => `<img data-src='${url}' src='' class='${i===0?"active":""}' onclick="switchMainImg(this,'${url}','${id}')" alt=''>`).join('')}</div>` : ''}</div>`; } else { imgHTML = `<div class='item-no-img'>📦</div>`; }
-        return `<div class='item' id='item-${id}'><span class='status-pill ${st==="SOLD"?"sold":st==="TRADED"?"traded":""}'>${st}</span>${imgHTML}<div class='item-body'><h3>${p}</h3><p style='color:var(--subtext)'>${c}</p><p>Capital: <strong>₱${cap.toLocaleString()}</strong></p>${st === 'TRADED' ? `<div class='trade-info'>🔄 Trade Value: <strong>₱${soldp.toLocaleString()}</strong><br>Profit: <strong style='color:${pro>=0?"var(--green)":"var(--red)"}'>₱${pro.toLocaleString()}</strong></div>` : `<p>Sold: <strong>${soldp ? '₱'+soldp.toLocaleString() : '-'}</strong></p><p style='color:${pro>=0?"var(--green)":"var(--red)"}'>Profit: <strong>₱${pro.toLocaleString()}</strong></p>`}${notes ? `<div class='item-notes'>💬 ${notes}</div>` : ''}${st === 'ON HAND' ? `<input id='sold-${id}' type='number' placeholder='Sold Amount' style='margin-top:8px'><button class='full-btn' style='margin-top:6px' onclick="markSold('${id}')">Mark Sold</button><div class='action-row-3' style='margin-top:8px'><button class='btn-trade' onclick="openTradeModal('${id}','${safeP}','${cap}')">🔄 Trade</button><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️</button></div>` : st === 'TRADED' ? `<div class='action-row'><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>` : `<button class='full-btn' style='margin-top:8px' onclick="promptEditSold('${id}')">Edit Sold</button><div class='action-row'><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>`}</div></div>`;
+        return `<div class='item' id='item-${id}'><span class='status-pill ${st==="SOLD"?"sold":st==="TRADED"?"traded":""}'>${st}</span>${imgHTML}<div class='item-body'><h3>${p}</h3><p style='color:var(--subtext)'>${c}</p><p>Capital: <strong>₱${cap.toLocaleString()}</strong></p>${st === 'TRADED' ? `<div class='trade-info'>🔄 Trade Value: <strong>₱${soldp.toLocaleString()}</strong><br>Profit: <strong style='color:${pro>=0?"var(--green)":"var(--red)"}'>₱${pro.toLocaleString()}</strong></div>` : `<p>Sold: <strong>${soldp ? '₱'+soldp.toLocaleString() : '-'}</strong></p><p style='color:${pro>=0?"var(--green)":"var(--red)"}'>Profit: <strong>₱${pro.toLocaleString()}</strong></p>`}${notes ? `<div class='item-notes'>💬 ${notes}</div>` : ''}${st === 'ON HAND' ? `<input id='sold-${id}' type='number' placeholder='Sold Amount' style='margin-top:8px'><button class='full-btn' style='margin-top:6px' onclick="markSold('${id}')">Mark Sold</button><div class='action-row-3' style='margin-top:8px'><button class='btn-trade' onclick="openTradeModal('${id}','${safeP}','${cap}')">🔄 Trade</button><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️</button></div>` : st === 'TRADED' ? `<div class='action-row'><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>` : `<button class='full-btn' style='margin-top:8px' onclick="promptEditSold('${id}')">Edit Sold</button><div class='action-row'><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>`}${st === 'SOLD' ? `<button class='export-btn' style='margin-top:6px; width:100%' onclick="regenerateInvoice('${id}')">🧾 Re‑download Invoice</button>` : ''}</div></div>`;
       }).join('');
       document.querySelectorAll('img[data-src]').forEach(img => imgObserver.observe(img));
       buildPaginationUI(totalFiltered);
@@ -615,33 +741,11 @@
     
     function switchMainImg(thumb, url, id) { const gallery = thumb.closest('.item-gallery'); const main = gallery.querySelector('.main-img'); main.src = url; main.onclick = () => openLightbox(url); gallery.querySelectorAll('.thumb-row img').forEach(t => t.classList.remove('active')); thumb.classList.add('active'); }
     
-    async function addItem() {
-      const nameVal = document.getElementById('nameInput').value.trim(); if (!nameVal) return toast('Enter a product name', 'error');
-      const categoryVal = document.getElementById('categoryInput').value; const priceVal = document.getElementById('priceInput').value; const shippingVal = document.getElementById('shippingInput').value; const otherVal = document.getElementById('otherInput').value; const notesVal = document.getElementById('notesInput').value.trim(); const imageEl = document.getElementById('imageInput');
-      toast('Adding product...', ''); showSpinner();
-      const result = await safeFetch(API, { method: 'POST', body: JSON.stringify({ action:'addItem', productName:nameVal, category:categoryVal, purchaseAmount:+priceVal, shippingFee:+shippingVal, otherFee:+otherVal, quantity:1, photoURL:'', notes:notesVal }) });
-      if (!result || result.status !== 'success') { hideSpinner(); return toast('Failed to add. Try again.', 'error'); }
-      if (imageEl.files.length > 0) { const photoURLs = await uploadImages(imageEl.files); if (photoURLs) await safeFetch(API, { method:'POST', body:JSON.stringify({ action:'uploadImage', id:result.id, photoURL:photoURLs }) }); }
-      document.getElementById('nameInput').value = ''; document.getElementById('priceInput').value = ''; document.getElementById('shippingInput').value = ''; document.getElementById('otherInput').value = ''; document.getElementById('notesInput').value = ''; imageEl.value = '';
-      hideSpinner(); toast('Product Added! ✅', 'success'); showCelebration('https://media1.tenor.com/m/BpCpdZNSlqIAAAAd/trombone-donald-duck.gif', "Added a new gang! Welcome to the hood"); cachedItems = []; loadDashboard(); loadItems(true); toggleAddForm(true);
-    }
-    async function markSold(id) { const amt = +document.getElementById('sold-' + id).value; if (!amt) return toast('Enter sold amount', 'error'); showSpinner(); await safeFetch(API, { method:'POST', body:JSON.stringify({ action:'markSold', id, soldAmount:amt }) }); hideSpinner(); toast('Marked as Sold ✅', 'success'); showCelebration('🏆', "Sold motherf*cker, Done deal!"); cachedItems = []; loadDashboard(); loadItems(true); }
-    function promptEditSold(id) { showConfirm('💰', 'Edit Sold Amount', 'Enter the new sold amount in the prompt.', 'Continue', 'button', () => { const amt = prompt('Enter new sold amount:'); if (!amt) return; showSpinner(); safeFetch(API, { method:'POST', body:JSON.stringify({ action:'editSold', id, soldAmount:+amt }) }).then(() => { hideSpinner(); toast('Sold Updated ✅', 'success'); cachedItems = []; loadDashboard(); loadItems(true); }); }); }
-    function confirmDelete(id, name) { showConfirm('🗑️', 'Delete Product?', `"${name}" will be permanently removed.`, 'Delete', 'btn-danger', async () => { showSpinner(); await safeFetch(API, { method:'POST', body:JSON.stringify({ action:'deleteItem', id }) }); hideSpinner(); toast('Item Deleted 🗑️', ''); showCelebration('https://media1.tenor.com/m/tnphPiAztMIAAAAd/skeleton.gif', "Gone forever, rip to that item 💀"); cachedItems = []; loadDashboard(); loadItems(true); }); }
-    function openEditModal(id, n, c, p, s, o, notes = '') { document.getElementById('edit-id').value = id; document.getElementById('edit-name').value = n; document.getElementById('edit-category').value = c; document.getElementById('edit-purchase').value = p; document.getElementById('edit-shipping').value = s; document.getElementById('edit-other').value = o; document.getElementById('edit-notes').value = notes; document.getElementById('edit-image').value = ''; document.getElementById('editModal').style.display = 'flex'; }
-    function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
-    async function saveEditItem() { showSpinner(); const id = document.getElementById('edit-id').value; const imageEl = document.getElementById('edit-image'); await safeFetch(API, { method: 'POST', body: JSON.stringify({ action:'editItem', id, productName: document.getElementById('edit-name').value, category: document.getElementById('edit-category').value, purchaseAmount: +document.getElementById('edit-purchase').value, shippingFee: +document.getElementById('edit-shipping').value, otherFee: +document.getElementById('edit-other').value, notes: document.getElementById('edit-notes').value.trim() }) }); if (imageEl.files.length > 0) { const photoURLs = await uploadImages(imageEl.files); if (photoURLs) await safeFetch(API, { method:'POST', body:JSON.stringify({ action:'uploadImage', id, photoURL:photoURLs }) }); } hideSpinner(); toast('Item Updated ✅', 'success'); closeEditModal(); cachedItems = []; loadDashboard(); loadItems(true); }
-    
-    function buildChart(data) { const soldItems = data.filter(r => r[10] === 'SOLD' && r[11]); const grouped = {}; soldItems.forEach(r => { const date = new Date(r[11]); if (isNaN(date)) return; const key = date.toLocaleString('default', { month:'short', year:'2-digit' }); if (!grouped[key]) grouped[key] = { sales:0, profit:0 }; grouped[key].sales  += +r[12] || 0; grouped[key].profit += +r[13] || 0; }); const labels = Object.keys(grouped); const salesData = labels.map(k => grouped[k].sales); const profitData = labels.map(k => grouped[k].profit); const isDark = document.body.classList.contains('dark'); const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(29,78,216,0.08)'; const labelColor = isDark ? '#94a3b8' : '#475569'; const ctx = document.getElementById('salesChart').getContext('2d'); if (salesChart) salesChart.destroy(); salesChart = new Chart(ctx, { type: currentChartType, data: { labels: labels.length ? labels : ['No sales yet'], datasets: [{ label:'Sales (₱)', data:salesData.length?salesData:[0], backgroundColor:'rgba(34,197,94,0.12)', borderColor:'#22c55e', borderWidth:2, tension:0.4, fill:true, pointBackgroundColor:'#22c55e', pointRadius:4 }, { label:'Profit (₱)', data:profitData.length?profitData:[0], backgroundColor:'rgba(29,78,216,0.12)', borderColor:'#1d4ed8', borderWidth:2, tension:0.4, fill:true, pointBackgroundColor:'#1d4ed8', pointRadius:4 }] }, options: { responsive:true, plugins:{ legend:{ labels:{ color:labelColor, font:{ family:'Nunito', weight:'700' } } } }, scales:{ x:{ ticks:{ color:labelColor, font:{ family:'Nunito' } }, grid:{ color:gridColor } }, y:{ ticks:{ color:labelColor, font:{ family:'Nunito' } }, grid:{ color:gridColor } } } } }); }
+    function buildChart(data) { const soldItems = data.filter(r => r[10] === 'SOLD' && r[11]); const grouped = {}; soldItems.forEach(r => { const date = new Date(r[11]); if (isNaN(date)) return; const key = date.toLocaleString('default', { month:'short', year:'2-digit' }); if (!grouped[key]) grouped[key] = { sales:0, profit:0 }; grouped[key].sales += +r[12] || 0; grouped[key].profit += +r[13] || 0; }); const labels = Object.keys(grouped); const salesData = labels.map(k => grouped[k].sales); const profitData = labels.map(k => grouped[k].profit); const isDark = document.body.classList.contains('dark'); const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(29,78,216,0.08)'; const labelColor = isDark ? '#94a3b8' : '#475569'; const ctx = document.getElementById('salesChart').getContext('2d'); if (salesChart) salesChart.destroy(); salesChart = new Chart(ctx, { type: currentChartType, data: { labels: labels.length ? labels : ['No sales yet'], datasets: [{ label:'Sales (₱)', data:salesData.length?salesData:[0], backgroundColor:'rgba(34,197,94,0.12)', borderColor:'#22c55e', borderWidth:2, tension:0.4, fill:true, pointBackgroundColor:'#22c55e', pointRadius:4 }, { label:'Profit (₱)', data:profitData.length?profitData:[0], backgroundColor:'rgba(29,78,216,0.12)', borderColor:'#1d4ed8', borderWidth:2, tension:0.4, fill:true, pointBackgroundColor:'#1d4ed8', pointRadius:4 }] }, options: { responsive:true, plugins:{ legend:{ labels:{ color:labelColor, font:{ family:'Nunito', weight:'700' } } } }, scales:{ x:{ ticks:{ color:labelColor, font:{ family:'Nunito' } }, grid:{ color:gridColor } }, y:{ ticks:{ color:labelColor, font:{ family:'Nunito' } }, grid:{ color:gridColor } } } } }); }
     function switchChart(type, btn) { currentChartType = type; document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active'); buildChart(cachedItems); }
-    function exportCSV() { if (!cachedItems.length) return toast('No data to export', 'error'); const headers = ['ID','Date','Product','Category','Purchase','Shipping','Other','Capital','Qty','Images','Status','Sold Date','Sold Amount','Profit','Notes']; const rows = cachedItems.map(r => r.map(v => `"${v}"`).join(',')); const csv = [headers.join(','), ...rows].join('\n'); const blob = new Blob([csv], { type:'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'inventory_' + new Date().toISOString().slice(0,10) + '.csv'; a.click(); toast('CSV Exported 📄', 'success'); }
-    function exportPDF() { if (!cachedItems.length) return toast('No data to export', 'error'); const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation:'landscape' }); doc.setFontSize(16); doc.text('BuySell Inventory Report', 14, 16); doc.setFontSize(10); doc.text('Generated: ' + new Date().toLocaleString(), 14, 23); const colWidths = [25,55,30,28,22,28,28,35]; const colX = [14]; colWidths.forEach((w,i) => colX.push(colX[i]+w)); const totalW = colWidths.reduce((a,b)=>a+b,0); const headers = ['ID','Product','Category','Capital','Status','Sold','Profit','Notes']; let y = 32; doc.setFillColor(30,58,95); doc.rect(14,y,totalW,8,'F'); doc.setTextColor(255,255,255); doc.setFontSize(9); headers.forEach((h,i) => doc.text(h, colX[i]+2, y+5.5)); doc.setTextColor(0,0,0); cachedItems.forEach((r,ri) => { y += 8; if (y > 190) { doc.addPage(); y = 20; } if (ri%2===0) { doc.setFillColor(235,240,250); doc.rect(14,y,totalW,8,'F'); } const row = [r[0]||'', r[2]||'', r[3]||'', '₱'+(+r[7]||0).toLocaleString(), r[10]||'ON HAND', r[12]?'₱'+(+r[12]).toLocaleString():'-', '₱'+(+r[13]||0).toLocaleString(), (r[14]||'').slice(0,30)]; row.forEach((cell,i) => doc.text(String(cell).slice(0,22), colX[i]+2, y+5.5)); }); doc.save('inventory_' + new Date().toISOString().slice(0,10) + '.pdf'); toast('PDF Exported 🖨️', 'success'); }
     
-    function openTradeModal(id, name, capital) { document.getElementById('trade-original-id').value = id; document.getElementById('trade-original-capital').value = capital; document.getElementById('trade-original-name').innerText = name; document.getElementById('trade-name').value = ''; document.getElementById('trade-value').value = ''; document.getElementById('trade-cash-amt').value = ''; document.getElementById('trade-shipping').value = ''; document.getElementById('trade-other').value = ''; document.getElementById('trade-notes').value = ''; document.getElementById('trade-image').value = ''; document.getElementById('trade-cash-dir').value = 'none'; document.getElementById('cashRow').style.display = 'none'; updateTradePreview(); document.getElementById('tradeModal').style.display = 'flex'; }
-    function closeTradeModal() { document.getElementById('tradeModal').style.display = 'none'; }
-    function toggleCashRow() { const dir = document.getElementById('trade-cash-dir').value; document.getElementById('cashRow').style.display = dir === 'none' ? 'none' : 'block'; updateTradePreview(); }
-    function updateTradePreview() { const capital = +document.getElementById('trade-original-capital').value || 0; const tradeVal = +document.getElementById('trade-value').value || 0; const cashDir = document.getElementById('trade-cash-dir').value; const cashAmt = +document.getElementById('trade-cash-amt').value || 0; const shipping = +document.getElementById('trade-shipping').value || 0; const other = +document.getElementById('trade-other').value || 0; let profit = tradeVal - capital; if (cashDir === 'customer') profit += cashAmt; if (cashDir === 'you') profit -= cashAmt; const newCapital = tradeVal + shipping + other; const profitEl = document.getElementById('prev-profit'); profitEl.innerText = `Profit on your item: ₱${profit.toLocaleString()}`; profitEl.style.color = profit >= 0 ? 'var(--green)' : 'var(--red)'; document.getElementById('prev-new-capital').innerText = `New item capital: ₱${newCapital.toLocaleString()}`; }
-    async function submitTrade() { const originalId = document.getElementById('trade-original-id').value; const capital = +document.getElementById('trade-original-capital').value || 0; const tradeName = document.getElementById('trade-name').value.trim(); const tradeCat = document.getElementById('trade-category').value; const tradeVal = +document.getElementById('trade-value').value || 0; const cashDir = document.getElementById('trade-cash-dir').value; const cashAmt = +document.getElementById('trade-cash-amt').value || 0; const shipping = +document.getElementById('trade-shipping').value || 0; const other = +document.getElementById('trade-other').value || 0; const notes = document.getElementById('trade-notes').value.trim(); const imageEl = document.getElementById('trade-image'); if (!tradeName) return toast('Enter the trade-in item name', 'error'); if (!tradeVal) return toast('Enter the trade-in value', 'error'); let profit = tradeVal - capital; if (cashDir === 'customer') profit += cashAmt; if (cashDir === 'you') profit -= cashAmt; const newCapital = tradeVal + shipping + other; toast('Processing trade...', ''); showSpinner(); const result = await safeFetch(API, { method: 'POST', body: JSON.stringify({ action:'tradeItem', originalId, tradeValue: tradeVal, cashDirection: cashDir, cashAmount: cashAmt, profit, newName: tradeName, newCategory: tradeCat, newCapital, newShipping: shipping, newOther: other, notes, photoURL: '' }) }); if (!result || result.status !== 'success') { hideSpinner(); return toast('Trade failed. Try again.', 'error'); } if (imageEl.files.length > 0 && result.newId) { const photoURLs = await uploadImages(imageEl.files); if (photoURLs) await safeFetch(API, { method:'POST', body:JSON.stringify({ action:'uploadImage', id:result.newId, photoURL:photoURLs }) }); } hideSpinner(); toast('Trade Complete! 🔄', 'success'); showCelebration('🤝', "Traded, better scam them or they will scam you"); closeTradeModal(); cachedItems = []; loadDashboard(); loadItems(true); }
+    function exportCSV() { if (!cachedItems.length) return toast('No data to export', 'error'); const headers = ['ID','Date','Product','Category','Purchase','Shipping','Other','Capital','Qty','Images','Status','Sold Date','Sold Amount','Profit','Notes','Buyer','Seller']; const rows = cachedItems.map(r => r.map(v => `"${v}"`).join(',')); const csv = [headers.join(','), ...rows].join('\n'); const blob = new Blob([csv], { type:'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'inventory_' + new Date().toISOString().slice(0,10) + '.csv'; a.click(); toast('CSV Exported 📄', 'success'); }
+    function exportPDF() { if (!cachedItems.length) return toast('No data to export', 'error'); const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation:'landscape' }); doc.setFontSize(16); doc.text('BuySell Inventory Report', 14, 16); doc.setFontSize(10); doc.text('Generated: ' + new Date().toLocaleString(), 14, 23); const colWidths = [25,55,30,28,22,28,28,35]; const colX = [14]; colWidths.forEach((w,i) => colX.push(colX[i]+w)); const totalW = colWidths.reduce((a,b)=>a+b,0); const headers = ['ID','Product','Category','Capital','Status','Sold','Profit','Notes']; let y = 32; doc.setFillColor(30,58,95); doc.rect(14,y,totalW,8,'F'); doc.setTextColor(255,255,255); doc.setFontSize(9); headers.forEach((h,i) => doc.text(h, colX[i]+2, y+5.5)); doc.setTextColor(0,0,0); cachedItems.forEach((r,ri) => { y += 8; if (y > 190) { doc.addPage(); y = 20; } if (ri%2===0) { doc.setFillColor(235,240,250); doc.rect(14,y,totalW,8,'F'); } const row = [r[0]||'', r[2]||'', r[3]||'', '₱'+(+r[7]||0).toLocaleString(), r[10]||'ON HAND', r[12]?'₱'+(+r[12]).toLocaleString():'-', '₱'+(+r[13]||0).toLocaleString(), (r[14]||'').slice(0,30)]; row.forEach((cell,i) => doc.text(String(cell).slice(0,22), colX[i]+2, y+5.5)); }); doc.save('inventory_' + new Date().toISOString().slice(0,10) + '.pdf'); toast('PDF Exported 🖨️', 'success'); }
     
     function toggleDarkMode() { document.body.classList.toggle('dark'); const d = document.body.classList.contains('dark'); document.getElementById('darkSwitch').checked = d; localStorage.setItem('darkmode', d ? 'on' : 'off'); if (cachedItems.length) buildChart(cachedItems); renderItems(); }
     function loadDarkMode() { if (localStorage.getItem('darkmode') === 'on') { document.body.classList.add('dark'); document.getElementById('darkSwitch').checked = true; } }
