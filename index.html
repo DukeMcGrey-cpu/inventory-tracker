@@ -176,6 +176,7 @@
     .celebration.show { display:flex; }
     .celeb-bg { position:absolute; inset:0; background:rgba(6,13,26,0.72); backdrop-filter:blur(6px); animation:celebFadeIn .3s ease; }
     .celeb-icon { font-size:110px; position:relative; z-index:2; animation:celebBounce .6s cubic-bezier(.34,1.9,.64,1) forwards; filter:drop-shadow(0 8px 32px rgba(0,0,0,0.4)); }
+    .celeb-icon img { width:160px; height:160px; object-fit:contain; border-radius:16px; }
     .celeb-text { position:relative; z-index:2; font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#fff; text-align:center; margin-top:18px; padding:0 30px; animation:celebSlideUp .5s .2s cubic-bezier(.34,1.56,.64,1) both; text-shadow:0 2px 16px rgba(0,0,0,0.5); }
     .celeb-sub { position:relative; z-index:2; font-size:13px; color:rgba(255,255,255,0.7); margin-top:8px; animation:celebSlideUp .5s .35s cubic-bezier(.34,1.56,.64,1) both; }
     .confetti-wrap { position:absolute; inset:0; z-index:1; overflow:hidden; pointer-events:none; }
@@ -438,9 +439,17 @@
     let celebTimer = null;
 
     function showCelebration(icon, text) {
-      const el   = document.getElementById('celebration');
-      const wrap = document.getElementById('confettiWrap');
-      document.getElementById('celebIcon').innerText = icon;
+      const el        = document.getElementById('celebration');
+      const wrap      = document.getElementById('confettiWrap');
+      const iconEl    = document.getElementById('celebIcon');
+
+      // Support either emoji string or image URL
+      if (icon.startsWith('http')) {
+        iconEl.innerHTML = `<img src="${icon}" alt="">`;
+      } else {
+        iconEl.innerHTML = icon;
+      }
+
       document.getElementById('celebText').innerText = text;
 
       // Build confetti
@@ -752,7 +761,7 @@
 
       hideSpinner();
       toast('Product Added! ✅', 'success');
-      showCelebration('🦆📯', "Added a new gang! Welcome to the hood");
+      showCelebration('https://media1.tenor.com/m/BpCpdZNSlqIAAAAd/trombone-donald-duck.gif', "Added a new gang! Welcome to the hood");
       cachedItems = [];
       loadDashboard();
       loadItems(true);
@@ -791,6 +800,7 @@
         await safeFetch(API, { method:'POST', body:JSON.stringify({ action:'deleteItem', id }) });
         hideSpinner();
         toast('Item Deleted 🗑️', '');
+        showCelebration('https://media1.tenor.com/m/tnphPiAztMIAAAAd/skeleton.gif', "Gone forever, rip to that item 💀");
         cachedItems = [];
         loadDashboard();
         loadItems(true);
