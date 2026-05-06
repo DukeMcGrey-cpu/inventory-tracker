@@ -260,8 +260,70 @@
       .app-text h2 { font-size:14px; }
       .topbar { padding:10px 14px; }
       .action-row-3 { grid-template-columns:1fr 1fr 1fr; }
+      body { padding-bottom:80px; }
     }
     @media(max-width:400px) { .cards { grid-template-columns:repeat(2,1fr); } }
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav { display:none; position:fixed; bottom:0; left:0; right:0; z-index:998; background:rgba(255,255,255,0.88); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:1px solid rgba(29,78,216,0.1); padding:8px 0 env(safe-area-inset-bottom,8px); box-shadow:0 -4px 24px rgba(30,58,95,0.1); }
+    .bottom-nav-inner { display:grid; grid-template-columns:repeat(4,1fr); max-width:480px; margin:auto; }
+    .nav-item { display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 0; cursor:pointer; border:none; background:none; color:var(--subtext); font-family:'Nunito',sans-serif; font-size:10px; font-weight:700; letter-spacing:.03em; transition:color .2s,transform .2s; box-shadow:none; width:auto; }
+    .nav-item .nav-icon { font-size:22px; transition:transform .25s cubic-bezier(.34,1.56,.64,1); }
+    .nav-item.active { color:var(--accent); }
+    .nav-item.active .nav-icon { transform:translateY(-3px) scale(1.18); }
+    .nav-item:hover { color:var(--accent); }
+    @media(max-width:600px) { .bottom-nav { display:block; } #fabBtn { display:none; } }
+    body.dark .bottom-nav { background:rgba(2,9,23,0.92); border-top-color:rgba(99,155,255,0.12); }
+    body.dark .nav-item { color:var(--subtext); }
+    body.dark .nav-item.active { color:#60a5fa; }
+
+    /* ── QUICK FILTER CHIPS ── */
+    .filter-chips { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 2px; }
+    .chip { width:auto; padding:7px 14px; border-radius:50px; font-size:12px; font-weight:700; background:rgba(255,255,255,0.6); color:var(--text); border:1.5px solid rgba(29,78,216,0.18); box-shadow:none; background-image:none; transition:all .2s; }
+    .chip:hover { transform:translateY(-2px); border-color:var(--accent); }
+    .chip.active { background:linear-gradient(135deg,#1e3a5f,#1d4ed8); color:#fff; border-color:transparent; box-shadow:0 4px 12px rgba(29,78,216,0.3); }
+    body.dark .chip { background:rgba(8,20,50,0.7); color:var(--text); border-color:rgba(99,155,255,0.2); }
+
+    /* ── SORT ROW ── */
+    .sort-row { display:flex; align-items:center; gap:8px; margin:8px 0; }
+    .sort-row label { font-size:12px; font-weight:700; color:var(--subtext); white-space:nowrap; }
+    .sort-row select { width:auto; padding:7px 12px; font-size:12px; border-radius:10px; }
+
+    /* ── PROFIT MARGIN BADGE ── */
+    .margin-badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:800; margin-top:4px; }
+    .margin-badge.positive { background:rgba(34,197,94,0.12); color:#15803d; border:1px solid rgba(34,197,94,0.25); }
+    .margin-badge.negative { background:rgba(239,68,68,0.1); color:#b91c1c; border:1px solid rgba(239,68,68,0.2); }
+    body.dark .margin-badge.positive { background:rgba(34,197,94,0.08); color:#4ade80; }
+    body.dark .margin-badge.negative { background:rgba(239,68,68,0.08); color:#f87171; }
+
+    /* ── MONTHLY SUMMARY ── */
+    .monthly-box { background:var(--glass); backdrop-filter:blur(16px); border:1px solid var(--glass-border); border-radius:20px; box-shadow:var(--shadow); padding:16px; margin-top:14px; }
+    .monthly-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; user-select:none; }
+    .monthly-header h3 { font-family:'Syne',sans-serif; font-size:15px; }
+    .monthly-toggle { font-size:18px; transition:transform .3s; }
+    .monthly-toggle.open { transform:rotate(180deg); }
+    .monthly-body { overflow:hidden; max-height:0; transition:max-height .4s cubic-bezier(.4,0,.2,1); }
+    .monthly-body.open { max-height:600px; }
+    .monthly-table { width:100%; border-collapse:collapse; margin-top:12px; font-size:13px; }
+    .monthly-table th { text-align:left; font-size:11px; font-weight:800; color:var(--subtext); letter-spacing:.04em; text-transform:uppercase; padding:6px 8px; border-bottom:2px solid rgba(29,78,216,0.1); }
+    .monthly-table td { padding:8px 8px; border-bottom:1px solid rgba(29,78,216,0.06); }
+    .monthly-table tr:last-child td { border-bottom:none; }
+    .monthly-table tr:hover td { background:rgba(29,78,216,0.03); }
+    body.dark .monthly-box { background:rgba(8,20,50,0.5); border-color:rgba(99,155,255,0.12); }
+    body.dark .monthly-table th { border-bottom-color:rgba(99,155,255,0.15); }
+    body.dark .monthly-table td { border-bottom-color:rgba(99,155,255,0.06); }
+
+    /* ── UNDO TOAST ── */
+    .undo-toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px); background:rgba(15,23,42,0.95); backdrop-filter:blur(12px); color:#fff; padding:12px 20px; border-radius:14px; display:none; z-index:10001; font-size:13px; font-weight:700; border:1px solid rgba(255,255,255,0.12); box-shadow:0 8px 24px rgba(0,0,0,0.3); white-space:nowrap; gap:12px; align-items:center; transition:all .35s cubic-bezier(.34,1.56,.64,1); opacity:0; }
+    .undo-toast.show { display:flex; opacity:1; transform:translateX(-50%) translateY(0); }
+    .undo-btn { background:rgba(255,255,255,0.15); border:1.5px solid rgba(255,255,255,0.3); color:#fff; padding:5px 14px; border-radius:8px; font-size:12px; font-weight:800; cursor:pointer; width:auto; box-shadow:none; transition:background .2s; }
+    .undo-btn:hover { background:rgba(255,255,255,0.25); }
+    .undo-progress { position:absolute; bottom:0; left:0; height:3px; background:rgba(99,155,255,0.7); border-radius:0 0 14px 14px; animation:undoProgress 5s linear forwards; }
+    @keyframes undoProgress { from{width:100%} to{width:0%} }
+
+    /* ── DRAFT SAVED INDICATOR ── */
+    .draft-badge { font-size:11px; color:var(--subtext); margin-top:6px; display:none; font-weight:600; }
+    .draft-badge.show { display:block; }
   </style>
 </head>
 <body>
@@ -274,6 +336,31 @@
 
   <div class="toast" id="toast"></div>
   <div class="spinner-overlay" id="spinnerOverlay"><div class="spinner"></div></div>
+
+  <!-- UNDO DELETE TOAST -->
+  <div class="undo-toast" id="undoToast">
+    <span id="undoMsg">Item deleted</span>
+    <button class="undo-btn" onclick="undoDelete()">↩ Undo</button>
+    <div class="undo-progress" id="undoProgress"></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <button class="nav-item active" id="nav-home" onclick="navTo('home')">
+        <span class="nav-icon">🏠</span>Home
+      </button>
+      <button class="nav-item" id="nav-add" onclick="navTo('add')">
+        <span class="nav-icon">➕</span>Add
+      </button>
+      <button class="nav-item" id="nav-chart" onclick="navTo('chart')">
+        <span class="nav-icon">📊</span>Chart
+      </button>
+      <button class="nav-item" id="nav-export" onclick="navTo('export')">
+        <span class="nav-icon">📤</span>Export
+      </button>
+    </div>
+  </nav>
 
   <!-- CELEBRATION OVERLAY -->
   <div class="celebration" id="celebration">
@@ -335,35 +422,60 @@
     <!-- ADD FORM -->
     <div id="addFormBox" class="box" style="display:none;">
       <div class="form-grid">
-        <input id="nameInput" placeholder="Product Name">
-        <select id="categoryInput">
+        <input id="nameInput" placeholder="Product Name" oninput="saveDraft()">
+        <select id="categoryInput" onchange="saveDraft()">
           <option>Gadget / Console</option>
           <option>Phone</option>
           <option>Appliance</option>
           <option>Others</option>
         </select>
-        <input id="priceInput" type="number" placeholder="Purchase Amount">
-        <input id="shippingInput" type="number" placeholder="Shipping Fee">
-        <input id="otherInput" type="number" placeholder="Other Fee">
+        <input id="priceInput" type="number" placeholder="Purchase Amount" oninput="saveDraft()">
+        <input id="shippingInput" type="number" placeholder="Shipping Fee" oninput="saveDraft()">
+        <input id="otherInput" type="number" placeholder="Other Fee" oninput="saveDraft()">
         <input id="imageInput" type="file" accept="image/*" multiple>
-        <textarea id="notesInput" class="full-col" placeholder="Notes (optional) — condition, source, buyer info..."></textarea>
+        <textarea id="notesInput" class="full-col" placeholder="Notes (optional) — condition, source, buyer info..." oninput="saveDraft()"></textarea>
         <button onclick="addItem()">Add Product</button>
       </div>
+      <div class="draft-badge" id="draftBadge">💾 Draft saved</div>
     </div>
 
     <!-- SEARCH -->
     <div class="box">
       <div class="search-row">
         <input id="search" placeholder="🔍 Search product..." oninput="debouncedSearch()">
-        <select id="filter" onchange="renderItems()">
+        <select id="filter" onchange="resetAndRender()">
           <option value="ALL">All Status</option>
           <option value="ON HAND">On Hand</option>
           <option value="SOLD">Sold</option>
+          <option value="TRADED">Traded</option>
         </select>
       </div>
+
+      <!-- QUICK FILTER CHIPS -->
+      <div class="filter-chips">
+        <button class="chip active" onclick="setChip('all',this)">🔍 All</button>
+        <button class="chip" onclick="setChip('profitable',this)">💹 Profitable</button>
+        <button class="chip" onclick="setChip('thisMonth',this)">📅 This Month</button>
+        <button class="chip" onclick="setChip('traded',this)">🔄 Traded</button>
+      </div>
+
+      <!-- SORT ROW -->
+      <div class="sort-row">
+        <label>Sort:</label>
+        <select id="sortSelect" onchange="resetAndRender()">
+          <option value="newest">🕐 Newest</option>
+          <option value="oldest">🕰 Oldest</option>
+          <option value="profit_high">📈 Highest Profit</option>
+          <option value="profit_low">📉 Lowest Profit</option>
+          <option value="capital_low">💸 Lowest Capital</option>
+          <option value="capital_high">💰 Highest Capital</option>
+          <option value="name_az">🔤 Name A–Z</option>
+        </select>
+      </div>
+
       <div class="export-row">
-        <button class="export-btn" onclick="exportCSV()">📄 Export CSV</button>
-        <button class="export-btn" onclick="exportPDF()">🖨️ Export PDF</button>
+        <button class="export-btn" id="exportCsvBtn" onclick="exportCSV()">📄 Export CSV</button>
+        <button class="export-btn" id="exportPdfBtn" onclick="exportPDF()">🖨️ Export PDF</button>
       </div>
     </div>
 
@@ -386,6 +498,31 @@
         <button class="chart-tab" onclick="switchChart('line',this)">Line</button>
       </div>
       <canvas id="salesChart" height="100"></canvas>
+    </div>
+
+    <!-- MONTHLY SUMMARY -->
+    <div class="monthly-box">
+      <div class="monthly-header" onclick="toggleMonthlySummary()">
+        <h3>📅 Monthly Income Summary</h3>
+        <span class="monthly-toggle" id="monthlyToggle">▼</span>
+      </div>
+      <div class="monthly-body" id="monthlyBody">
+        <table class="monthly-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Items Sold</th>
+              <th>Revenue</th>
+              <th>Capital Spent</th>
+              <th>Net Profit</th>
+              <th>Margin</th>
+            </tr>
+          </thead>
+          <tbody id="monthlyTableBody">
+            <tr><td colspan="6" style="text-align:center;color:var(--subtext);padding:20px">No sales data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -671,7 +808,7 @@
       const f    = document.getElementById('filter').value;
       const grid = document.getElementById('grid');
 
-      const filtered = cachedItems.filter(r => {
+      const filtered = applySort(applyChip(cachedItems.filter(r => {
         const name = (r[2] || '').toLowerCase();
         const cat  = r[3]  || '';
         const st   = r[10] || 'ON HAND';
@@ -679,7 +816,7 @@
         if (f !== 'ALL' && st !== f) return false;
         if (activeCategory !== 'ALL' && cat !== activeCategory) return false;
         return true;
-      });
+      })));
 
       if (filtered.length === 0) {
         grid.innerHTML = `<div class='empty-state'><div style='font-size:52px'>📭</div><p>No products found</p></div>`;
@@ -724,6 +861,10 @@
               <h3>${p}</h3>
               <p style='color:var(--subtext)'>${c}</p>
               <p>Capital: <strong>₱${cap.toLocaleString()}</strong></p>
+              ${st !== 'ON HAND' && cap > 0 ? (() => {
+                const margin = ((pro / cap) * 100).toFixed(1);
+                return `<span class="margin-badge ${pro>=0?'positive':'negative'}">${pro>=0?'+':''}${margin}% margin</span>`;
+              })() : ''}
               ${st === 'TRADED'
                 ? `<div class='trade-info'>🔄 Trade Value: <strong>₱${soldp.toLocaleString()}</strong><br>
                    Profit: <strong style='color:${pro>=0?"var(--green)":"var(--red)"}'>₱${pro.toLocaleString()}</strong></div>`
@@ -773,6 +914,18 @@
     async function addItem() {
       const nameVal     = document.getElementById('nameInput').value.trim();
       if (!nameVal) return toast('Enter a product name', 'error');
+
+      // ── DUPLICATE DETECTION ──
+      if (checkDuplicate(nameVal)) {
+        showConfirm('⚠️', 'Duplicate Detected!',
+          `"${nameVal}" already exists ON HAND. Add anyway?`,
+          'Add Anyway', 'button', () => proceedAddItem(nameVal));
+        return;
+      }
+      proceedAddItem(nameVal);
+    }
+
+    async function proceedAddItem(nameVal) {
       const categoryVal = document.getElementById('categoryInput').value;
       const priceVal    = document.getElementById('priceInput').value;
       const shippingVal = document.getElementById('shippingInput').value;
@@ -808,6 +961,7 @@
       document.getElementById('otherInput').value    = '';
       document.getElementById('notesInput').value    = '';
       imageEl.value = '';
+      clearDraft(); // ── clear saved draft on success
 
       hideSpinner();
       toast('Product Added! ✅', 'success');
@@ -1111,6 +1265,197 @@
       loadItems(true);
     }
 
+    // ── BOTTOM NAV ──
+    function navTo(tab) {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('nav-' + tab)?.classList.add('active');
+      if (tab === 'home') {
+        document.getElementById('addFormBox').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (tab === 'add') {
+        toggleAddForm();
+        document.getElementById('addFormBox').scrollIntoView({ behavior:'smooth', block:'center' });
+      } else if (tab === 'chart') {
+        document.querySelector('.chart-box').scrollIntoView({ behavior:'smooth', block:'start' });
+      } else if (tab === 'export') {
+        document.getElementById('exportCsvBtn').scrollIntoView({ behavior:'smooth', block:'center' });
+      }
+    }
+
+    // ── QUICK FILTER CHIPS ──
+    let activeChip = 'all';
+    function setChip(chip, btn) {
+      activeChip = chip;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      currentPage = 1;
+      renderItems();
+    }
+
+    // ── SORT ──
+    function resetAndRender() { currentPage = 1; renderItems(); }
+
+    function applySort(items) {
+      const sort = document.getElementById('sortSelect')?.value || 'newest';
+      const arr  = [...items];
+      if (sort === 'newest')       return arr.reverse();
+      if (sort === 'oldest')       return arr;
+      if (sort === 'profit_high')  return arr.sort((a,b) => (+b[13]||0) - (+a[13]||0));
+      if (sort === 'profit_low')   return arr.sort((a,b) => (+a[13]||0) - (+b[13]||0));
+      if (sort === 'capital_high') return arr.sort((a,b) => (+b[7]||0)  - (+a[7]||0));
+      if (sort === 'capital_low')  return arr.sort((a,b) => (+a[7]||0)  - (+b[7]||0));
+      if (sort === 'name_az')      return arr.sort((a,b) => (a[2]||'').localeCompare(b[2]||''));
+      return arr;
+    }
+
+    function applyChip(items) {
+      if (activeChip === 'all') return items;
+      const now   = new Date();
+      const month = now.getMonth();
+      const year  = now.getFullYear();
+      if (activeChip === 'profitable') return items.filter(r => (+r[13]||0) > 0);
+      if (activeChip === 'traded')     return items.filter(r => (r[10]||'') === 'TRADED');
+      if (activeChip === 'thisMonth')  return items.filter(r => {
+        const d = new Date(r[1]);
+        return !isNaN(d) && d.getMonth() === month && d.getFullYear() === year;
+      });
+      return items;
+    }
+
+    // ── OFFLINE DRAFT SAVING ──
+    const DRAFT_KEY = 'buysell_draft';
+    function saveDraft() {
+      const draft = {
+        name:     document.getElementById('nameInput').value,
+        category: document.getElementById('categoryInput').value,
+        price:    document.getElementById('priceInput').value,
+        shipping: document.getElementById('shippingInput').value,
+        other:    document.getElementById('otherInput').value,
+        notes:    document.getElementById('notesInput').value,
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      const badge = document.getElementById('draftBadge');
+      badge.classList.add('show');
+      setTimeout(() => badge.classList.remove('show'), 1800);
+    }
+
+    function loadDraft() {
+      try {
+        const d = JSON.parse(localStorage.getItem(DRAFT_KEY));
+        if (!d) return;
+        if (d.name)     { document.getElementById('nameInput').value     = d.name; }
+        if (d.category) { document.getElementById('categoryInput').value = d.category; }
+        if (d.price)    { document.getElementById('priceInput').value    = d.price; }
+        if (d.shipping) { document.getElementById('shippingInput').value = d.shipping; }
+        if (d.other)    { document.getElementById('otherInput').value    = d.other; }
+        if (d.notes)    { document.getElementById('notesInput').value    = d.notes; }
+        if (d.name || d.price) toast('📝 Draft restored!', '');
+      } catch(e) {}
+    }
+
+    function clearDraft() { localStorage.removeItem(DRAFT_KEY); }
+
+    // ── UNDO DELETE ──
+    let undoTimer   = null;
+    let pendingDelete = null;
+
+    function confirmDelete(id, name) {
+      pendingDelete = { id, name };
+      showUndoToast(`"${name}" deleted`);
+      // Optimistically remove from cache & UI
+      cachedItems = cachedItems.filter(r => r[0] != id);
+      renderItems();
+      loadDashboard();
+    }
+
+    function showUndoToast(msg) {
+      const el  = document.getElementById('undoToast');
+      const bar = document.getElementById('undoProgress');
+      document.getElementById('undoMsg').innerText = msg;
+      el.classList.add('show');
+      // Restart progress bar
+      bar.style.animation = 'none';
+      void bar.offsetWidth;
+      bar.style.animation = 'undoProgress 5s linear forwards';
+      clearTimeout(undoTimer);
+      undoTimer = setTimeout(executeDelete, 5000);
+    }
+
+    function undoDelete() {
+      clearTimeout(undoTimer);
+      pendingDelete = null;
+      document.getElementById('undoToast').classList.remove('show');
+      cachedItems = []; // force full refresh to restore item
+      loadItems(true);
+      toast('↩ Delete undone!', 'success');
+    }
+
+    async function executeDelete() {
+      document.getElementById('undoToast').classList.remove('show');
+      if (!pendingDelete) return;
+      await safeFetch(API, { method:'POST', body:JSON.stringify({ action:'deleteItem', id:pendingDelete.id }) });
+      showCelebration('https://media1.tenor.com/m/tnphPiAztMIAAAAd/skeleton.gif', "Gone forever, rip to that item 💀");
+      pendingDelete = null;
+      cachedItems   = [];
+      loadDashboard();
+      loadItems(true);
+    }
+
+    // ── DUPLICATE ITEM DETECTION ──
+    function checkDuplicate(name) {
+      if (!name) return false;
+      return cachedItems.some(r =>
+        (r[2]||'').toLowerCase() === name.toLowerCase() &&
+        (r[10]||'ON HAND') === 'ON HAND'
+      );
+    }
+
+    // ── MONTHLY SUMMARY ──
+    function toggleMonthlySummary() {
+      const body   = document.getElementById('monthlyBody');
+      const toggle = document.getElementById('monthlyToggle');
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open');
+      toggle.classList.toggle('open');
+      if (!isOpen) buildMonthlySummary();
+    }
+
+    function buildMonthlySummary() {
+      const tbody   = document.getElementById('monthlyTableBody');
+      const soldItems = cachedItems.filter(r => r[10] === 'SOLD' && r[11]);
+      if (!soldItems.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--subtext);padding:20px">No sales data yet</td></tr>`;
+        return;
+      }
+
+      const months = {};
+      soldItems.forEach(r => {
+        const d = new Date(r[11]);
+        if (isNaN(d)) return;
+        const key   = d.toLocaleString('default', { month:'long', year:'numeric' });
+        const sortK = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        if (!months[key]) months[key] = { sort:sortK, items:0, revenue:0, capital:0, profit:0 };
+        months[key].items++;
+        months[key].revenue += +r[12] || 0;
+        months[key].capital += +r[7]  || 0;
+        months[key].profit  += +r[13] || 0;
+      });
+
+      const sorted = Object.entries(months).sort((a,b) => b[1].sort.localeCompare(a[1].sort));
+      tbody.innerHTML = sorted.map(([month, d]) => {
+        const margin = d.revenue ? ((d.profit / d.revenue) * 100).toFixed(1) : 0;
+        const mColor = margin >= 0 ? 'var(--green)' : 'var(--red)';
+        return `<tr>
+          <td><strong>${month}</strong></td>
+          <td>${d.items}</td>
+          <td>₱${d.revenue.toLocaleString()}</td>
+          <td>₱${d.capital.toLocaleString()}</td>
+          <td style="color:${d.profit>=0?'var(--green)':'var(--red)'}"><strong>₱${d.profit.toLocaleString()}</strong></td>
+          <td style="color:${mColor}"><strong>${margin}%</strong></td>
+        </tr>`;
+      }).join('');
+    }
+
     // ── DARK MODE ──
     function toggleDarkMode() {
       document.body.classList.toggle('dark');
@@ -1199,6 +1544,7 @@
     loadDarkMode();
     loadDashboard();
     loadItems(true);
+    loadDraft();
   </script>
 </body>
 </html>
