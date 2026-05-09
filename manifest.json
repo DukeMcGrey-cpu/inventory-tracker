@@ -1,13 +1,16 @@
 {
   "name": "DGL BuySell Inventory Pro",
-  "short_name": "DGL Inventory",
-  "description": "Manage your buy and sell inventory, track profits, trades, and sales.",
+  "short_name": "DGL",
+  "description": "Buy and sell inventory manager with profit tracking and trade features.",
   "start_url": "/inventory-tracker/",
   "scope": "/inventory-tracker/",
   "display": "standalone",
   "theme_color": "#1e3a5f",
   "background_color": "#e8edf5",
   "orientation": "portrait",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["business", "shopping"],
   "icons": [
     {
       "src": "/inventory-tracker/icon-192.png",
@@ -21,11 +24,5 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "categories": [
-    "business",
-    "productivity"
-  ],
-  "lang": "en",
-  "dir": "ltr"
+  ]
 }
