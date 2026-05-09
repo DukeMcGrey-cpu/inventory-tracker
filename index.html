@@ -1307,33 +1307,53 @@ function attachCardGestures() {
     // ── DARK MODE ──
     function toggleDarkMode(){document.body.classList.toggle('dark');const d=document.body.classList.contains('dark');document.getElementById('darkSwitch').checked=d;localStorage.setItem('darkmode',d?'on':'off');if(cachedItems.length)buildChart(cachedItems);}
     function loadDarkMode(){if(localStorage.getItem('darkmode')==='on'){document.body.classList.add('dark');document.getElementById('darkSwitch').checked=true;}}
-    // Modified toggleAddForm: on mobile it becomes a bottom sheet (modal), on desktop toggle inline box
     function toggleAddForm(forceClose = false) {
-      if (window.innerWidth > 600) {
-        const box = document.getElementById('addFormBox');
-        if (forceClose) box.style.display = 'none';
-        else box.style.display = box.style.display === 'none' ? 'block' : 'none';
-        return;
-      }
-      let sheet = document.getElementById('mobileAddSheet');
-      if (!sheet) {
-        const originalBox = document.getElementById('addFormBox');
-        const clone = originalBox.cloneNode(true);
-        clone.id = 'mobileAddSheet';
-        clone.classList.add('modal');
-        clone.style.display = 'none';
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'modal-content';
-        while (clone.firstChild) contentDiv.appendChild(clone.firstChild);
-        clone.appendChild(contentDiv);
-        document.body.appendChild(clone);
-        sheet = clone;
-        // reattach event listeners? The cloned button's onclick still works because it's same function.
-        // Also need to ensure saveDraft works - IDs are duplicated but it's fine as hidden original.
-      }
-      if (forceClose) sheet.style.display = 'none';
-      else sheet.style.display = 'flex';
-    }
+  // Desktop: toggle inline form box
+  if (window.innerWidth > 600) {
+    const box = document.getElementById('addFormBox');
+    if (forceClose) box.style.display = 'none';
+    else box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    return;
+  }
+
+  // Mobile: use a bottom sheet modal
+  let sheet = document.getElementById('mobileAddSheet');
+  if (!sheet) {
+    const originalBox = document.getElementById('addFormBox');
+    const clone = originalBox.cloneNode(true);
+    clone.id = 'mobileAddSheet';
+    clone.classList.add('modal');
+    clone.style.display = 'none';
+    
+    // Wrap content in modal-content div
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'modal-content';
+    while (clone.firstChild) contentDiv.appendChild(clone.firstChild);
+    clone.appendChild(contentDiv);
+    
+    // Add a Cancel button at the bottom
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.className = 'btn-secondary';
+    cancelBtn.style.marginTop = '8px';
+    cancelBtn.onclick = () => {
+      const sheetEl = document.getElementById('mobileAddSheet');
+      if (sheetEl) sheetEl.style.display = 'none';
+    };
+    contentDiv.appendChild(cancelBtn);
+    
+    document.body.appendChild(clone);
+    sheet = clone;
+    
+    // Close when tapping on the backdrop (the modal overlay)
+    sheet.addEventListener('click', (e) => {
+      if (e.target === sheet) sheet.style.display = 'none';
+    });
+  }
+  
+  if (forceClose) sheet.style.display = 'none';
+  else sheet.style.display = 'flex';
+}
     function navTo(tab){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('nav-'+tab)?.classList.add('active');if(tab==='home'){toggleAddForm(true);window.scrollTo({top:0,behavior:'smooth'});}else if(tab==='add'){toggleAddForm();document.getElementById('addFormBox').scrollIntoView({behavior:'smooth',block:'center'});}else if(tab==='chart'){document.querySelector('.chart-box').scrollIntoView({behavior:'smooth',block:'start'});}else if(tab==='export'){document.getElementById('exportCsvBtn').scrollIntoView({behavior:'smooth',block:'center'});}}
 
     // ── RIPPLE ──
