@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="manifest" href="/inventory-tracker/manifest.json">
   <title>DGL | BuySell Inventory Pro</title>
   <link rel="icon" href="https://i.ibb.co/p6pRc65C/received-26163013153378553.jpg">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
@@ -1368,5 +1369,12 @@ function attachCardGestures() {
     initContextMenuActions();
     initPullToRefresh();
   </script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/inventory-tracker/sw.js')
+      .then(reg => console.log('Service Worker registered', reg))
+      .catch(err => console.error('SW registration failed', err));
+  }
+</script>
 </body>
 </html>
