@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <link rel="manifest" href="/inventory-tracker/manifest.json">
   <title>DGL | BuySell Inventory Pro</title>
   <link rel="icon" href="https://i.ibb.co/p6pRc65C/received-26163013153378553.jpg">
+  <link rel="manifest" href="/inventory-tracker/manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -41,9 +41,9 @@
     .cards { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin:14px 0; }
     .card { border-radius:22px; box-shadow:var(--shadow); padding:18px 10px; text-align:center; transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s; }
     .card:hover { transform:translateY(-6px) scale(1.03); box-shadow:0 20px 48px rgba(0,0,0,0.18); }
-    .card small { display:block; color:rgba(255,255,255,0.8); margin:5px 0; font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; position:relative; z-index:1; }
-    .card h3 { font-family:'Syne',sans-serif; font-size:18px; color:#fff; position:relative; z-index:1; text-shadow:0 1px 8px rgba(0,0,0,0.15); }
-    .card .card-emoji { font-size:22px; display:block; margin-bottom:2px; position:relative; z-index:1; }
+    .card small { display:block; color:rgba(255,255,255,0.8); margin:5px 0; font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+    .card h3 { font-family:'Syne',sans-serif; font-size:18px; color:#fff; text-shadow:0 1px 8px rgba(0,0,0,0.15); }
+    .card .card-emoji { font-size:22px; display:block; margin-bottom:2px; }
     .card-capital  { background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%); }
     .card-sales    { background:linear-gradient(135deg,#065f46 0%,#10b981 100%); }
     .card-profit   { background:linear-gradient(135deg,#1e3a5f 0%,#7c3aed 100%); }
@@ -91,7 +91,7 @@
     .detail-action-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 
     .confirm-modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(8px); justify-content:center; align-items:center; z-index:10001; padding:15px; }
-    .confirm-box { background:rgba(255,255,255,0.97); border-radius:22px; padding:28px 24px; max-width:340px; width:100%; text-align:center; box-shadow:0 24px 64px rgba(15,23,42,0.25); animation:modalIn .25s cubic-bezier(.34,1.56,.64,1); }
+    .confirm-box { background:rgba(255,255,255,0.97); border-radius:22px; padding:28px 24px; max-width:340px; width:100%; text-align:center; box-shadow:0 24px 64px rgba(15,23,42,0.25); }
 
     .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .form-grid button { grid-column:span 2; }
@@ -444,7 +444,15 @@ function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m =
 
 function vibrate(pattern = 50) { if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(pattern); }
 function addRipple(event, element) { const rect = element.getBoundingClientRect(); const ripple = document.createElement('span'); ripple.className = 'ripple'; const size = Math.max(rect.width, rect.height); const x = event.clientX - rect.left - size / 2; const y = event.clientY - rect.top - size / 2; ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`; element.appendChild(ripple); setTimeout(() => ripple.remove(), 600); }
-function isInteractiveElement(element) { const tag = element.tagName.toLowerCase(); if (tag === 'button' || tag === 'input' || tag === 'select' || tag === 'textarea') return true; if (element.closest('.thumb-row') || element.closest('.item-gallery')) return true; if (element.closest('.action-row') || element.closest('.action-row-3')) return true; if (element.closest('.detail-action-row')) return true; return false; }
+function isInteractiveElement(element) {
+  if (!element) return false;
+  const tag = element.tagName.toLowerCase();
+  if (tag === 'button' || tag === 'input' || tag === 'select' || tag === 'textarea') return true;
+  if (element.closest('.thumb-row') || element.closest('.item-gallery')) return true;
+  if (element.closest('.action-row') || element.closest('.action-row-3')) return true;
+  if (element.closest('.detail-action-row')) return true;
+  return false;
+}
 
 function attachCardGestures() {
   const cards = document.querySelectorAll('.item');
@@ -663,7 +671,7 @@ function buildChart(data){const soldItems=data.filter(r=>r[10]==='SOLD'&&r[11]);
 function switchChart(type,btn){currentChartType=type;document.querySelectorAll('.chart-tab').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');buildChart(cachedItems);}
 
 function toggleMonthlySummary(){const body=document.getElementById('monthlyBody'),toggle=document.getElementById('monthlyToggle');body.classList.toggle('open');toggle.classList.toggle('open');if(body.classList.contains('open'))buildMonthlySummary();}
-function buildMonthlySummary(){const tbody=document.getElementById('monthlyTableBody');const soldItems=cachedItems.filter(r=>r[10]==='SOLD'&&r[11]);if(!soldItems.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--subtext);padding:20px">No sales data yet</td></tr>`;return;}const months={};soldItems.forEach(r=>{const d=new Date(r[11]);if(isNaN(d))return;const key=d.toLocaleString('default',{month:'long',year:'numeric'});const sortK=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;if(!months[key])months[key]={sort:sortK,items:0,revenue:0,capital:0,profit:0};months[key].items++;months[key].revenue+=+r[12]||0;months[key].capital+=+r[7]||0;months[key].profit+=+r[13]||0;});const sorted=Object.entries(months).sort((a,b)=>b[1].sort.localeCompare(a[1].sort));tbody.innerHTML=sorted.map(([month,d])=>{const margin=d.revenue?((d.profit/d.revenue)*100).toFixed(1):0;const mColor=margin>=0?'var(--green)':'var(--red)';return`<tr><td><strong>${month}</strong></td><td>${d.items}</td><td>₱${d.revenue.toLocaleString()}</td><td>₱${d.capital.toLocaleString()}</td><td style="color:${d.profit>=0?'var(--green)':'var(--red)'}"><strong>₱${d.profit.toLocaleString()}</strong></td><td style="color:${mColor}"><strong>${margin}%</strong></td></tr>`;}).join('');}
+function buildMonthlySummary(){const tbody=document.getElementById('monthlyTableBody');const soldItems=cachedItems.filter(r=>r[10]==='SOLD'&&r[11]);if(!soldItems.length){tbody.innerHTML=`<td><td colspan="6" style="text-align:center;color:var(--subtext);padding:20px">No sales data yet</td></tr>`;return;}const months={};soldItems.forEach(r=>{const d=new Date(r[11]);if(isNaN(d))return;const key=d.toLocaleString('default',{month:'long',year:'numeric'});const sortK=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;if(!months[key])months[key]={sort:sortK,items:0,revenue:0,capital:0,profit:0};months[key].items++;months[key].revenue+=+r[12]||0;months[key].capital+=+r[7]||0;months[key].profit+=+r[13]||0;});const sorted=Object.entries(months).sort((a,b)=>b[1].sort.localeCompare(a[1].sort));tbody.innerHTML=sorted.map(([month,d])=>{const margin=d.revenue?((d.profit/d.revenue)*100).toFixed(1):0;const mColor=margin>=0?'var(--green)':'var(--red)';return`<tr><td><strong>${month}</strong></td><td>${d.items}</td><td>₱${d.revenue.toLocaleString()}</td><td>₱${d.capital.toLocaleString()}</td><td style="color:${d.profit>=0?'var(--green)':'var(--red)'}"><strong>₱${d.profit.toLocaleString()}</strong></td><td style="color:${mColor}"><strong>${margin}%</strong></td></tr>`;}).join('');}
 function toggleActivityFeed(){const body=document.getElementById('activityBody'),toggle=document.getElementById('activityToggle');body.classList.toggle('open');toggle.classList.toggle('open');if(body.classList.contains('open'))buildActivityFeed();}
 function buildActivityFeed(){const list=document.getElementById('activityList');if(!activityLog.length){list.innerHTML=`<div style="text-align:center;color:var(--subtext);padding:20px;font-size:13px">No activity yet</div>`;return;}const icons={added:'📦',sold:'✅',traded:'🔄',deleted:'🗑️',edited:'✏️'};const labels={added:'Added',sold:'Sold',traded:'Traded',deleted:'Deleted',edited:'Edited'};list.innerHTML=activityLog.slice(0,15).map(a=>`<div class="activity-item"><div class="activity-dot ${a.type}">${icons[a.type]||'📋'}</div><div class="activity-info"><strong>${a.name}</strong><span>${labels[a.type]||a.type}${a.extra?' · '+a.extra:''} · ${a.id}</span></div><div class="activity-time">${timeAgo(a.time)}</div></div>`).join('');}
 
@@ -707,19 +715,19 @@ function navTo(tab){document.querySelectorAll('.nav-item').forEach(n=>n.classLis
 
 document.addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn||btn.classList.contains('lightbox-close'))return;btn.classList.add('ripple-host');const r=document.createElement('span');r.className='ripple';const rect=btn.getBoundingClientRect();const size=Math.max(rect.width,rect.height);r.style.cssText=`width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px;`;btn.appendChild(r);setTimeout(()=>r.remove(),600);});
 
+// Service Worker registration
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/inventory-tracker/sw.js')
+    .then(reg => console.log('Service Worker registered', reg))
+    .catch(err => console.error('SW registration failed', err));
+}
+
 loadDarkMode();
 setView(currentView);
 loadDashboard();
 loadItems(true);
 loadDraft();
 initContextMenuActions();
-</script>
-  <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/inventory-tracker/sw.js')
-      .then(reg => console.log('Service Worker registered', reg))
-      .catch(err => console.error('SW registration failed', err));
-  }
 </script>
 </body>
 </html>
