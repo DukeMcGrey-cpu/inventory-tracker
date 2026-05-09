@@ -1215,9 +1215,21 @@ function attachCardGestures() {
     const imgObserver=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){const img=e.target;if(img.dataset.src){img.src=img.dataset.src;img.removeAttribute('data-src');}imgObserver.unobserve(img);}});},{rootMargin:'120px'});
     function loadItems(forceRefresh=false){const now=Date.now();if(!forceRefresh&&cachedItems.length>0&&(now-cacheTimestamp)<CACHE_TTL){renderItems();return;}showSkeletons();safeFetch(API+'?action=getItems').then(data=>{if(!Array.isArray(data)){document.getElementById('productContainer').innerHTML='';return;}cachedItems=data;cacheTimestamp=Date.now();currentPage=1;renderItems();buildChart(data);});}
     function afterRender() {
-      attachCardGestures();
-      attachLongPress();
-    }
+  attachCardGestures();
+  attachLongPress();
+
+  // Delegate list item clicks (but not on buttons/inputs)
+  document.querySelectorAll('.list-item').forEach(item => {
+    item.removeEventListener('click', listItemClickHandler);
+    item.addEventListener('click', listItemClickHandler);
+  });
+}
+
+function listItemClickHandler(e) {
+  if (isInteractiveElement(e.target)) return;
+  const id = this.getAttribute('data-id');
+  if (id) openDetailModal(id);
+}
 
     function renderItems(){
       const s=document.getElementById('search').value.toLowerCase();
@@ -1239,7 +1251,7 @@ function attachCardGestures() {
           const st=r[10]||'ON HAND',pro=+r[13]||0;
           const pillClass=st==='SOLD'?'sold':st==='TRADED'?'traded':'onhand';
           const thumbSrc=imgs[0]||'';
-          return `<div class="list-item" data-id="${id}" onclick="openDetailModal('${id}')">
+          return `<div class="list-item" data-id="${id}">
             <div class="list-thumb">${thumbSrc?`<img data-src="${thumbSrc}" src="" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:10px;">`:`<span>📦</span>`}</div>
             <div class="list-info">
               <h4 onclick="event.stopPropagation();openDetailModal('${id}')">${escapeHtml(p)}</h4>
