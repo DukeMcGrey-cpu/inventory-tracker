@@ -372,27 +372,7 @@
     body.dark .margin-badge.positive { background:rgba(34,197,94,0.08); color:#4ade80; }
     body.dark .margin-badge.negative { background:rgba(239,68,68,0.08); color:#f87171; }
     body.dark .trade-info strong { color:#fcd34d; }
-
-    /* Pull-to-refresh styles */
-    #pullToRefresh {
-      text-align: center;
-      font-size: 12px;
-      color: var(--subtext);
-      padding: 8px;
-      display: none;
-    }
-    #lastUpdated {
-      text-align: center;
-      font-size: 10px;
-      color: var(--subtext);
-      margin-bottom: 8px;
-    }
-    .pull-refresh-loading {
-      text-align: center;
-      padding: 8px;
-      font-size: 12px;
-      color: var(--accent);
-    }
+    
     /* Context menu */
     .context-menu {
       position: fixed;
@@ -609,10 +589,6 @@
       <button onclick="setCategoryFilter('Appliance',this)">Appliance</button>
       <button onclick="setCategoryFilter('Others',this)">Others</button>
     </div>
-
-    <!-- PULL-TO-REFRESH INDICATOR & LAST UPDATED -->
-    <div id="pullToRefresh">↓ Pull to refresh</div>
-    <div id="lastUpdated"></div>
 
     <!-- PRODUCT CONTAINER -->
     <div id="productContainer"></div>
