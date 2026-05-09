@@ -772,29 +772,34 @@
     }
 
     async function markSold(id) {
-      const amt = +document.getElementById('sold-' + id).value;
-      if (!amt) return toast('Enter sold amount', 'error');
-      const buyerName = prompt('👤 Buyer name:', '');
-      if (!buyerName) return toast('Buyer name is required', 'error');
-      const sellerName = prompt('🛒 Seller name (your name or store name):', '');
-      if (!sellerName) return toast('Seller name is required', 'error');
-      showSpinner();
-      const res = await safeFetch(API, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'markSold', id, soldAmount: amt, buyerName, sellerName })
-      });
-      if (res && res.status === 'updated') {
-        const item = cachedItems.find(r => r[0] == id);
-        // ✅ Add await since the function is now async
-	if (item) await generateAndDownloadInvoice(item, soldAmount, buyerName, sellerName);
-        toast('Sold & Invoice generated ✅', 'success');
-        showCelebration('🧾', `Sold to ${buyerName}`);
-        cachedItems = [];
-        loadDashboard();
-        loadItems(true);
-      } else { toast('Failed to mark as sold', 'error'); }
-      hideSpinner();
-    }
+  const amt = +document.getElementById('sold-' + id).value;
+  if (!amt) return toast('Enter sold amount', 'error');
+  const buyerName = prompt('👤 Buyer name:', '');
+  if (!buyerName) return toast('Buyer name is required', 'error');
+
+  // ✅ Default seller name pre‑filled
+  const DEFAULT_SELLER = 'DGL Trading BUY | SELL | GROW';
+  const sellerName = prompt('🛒 Seller name (your name or store name):', DEFAULT_SELLER);
+  if (!sellerName) return toast('Seller name is required', 'error');
+
+  showSpinner();
+  const res = await safeFetch(API, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'markSold', id, soldAmount: amt, buyerName, sellerName })
+  });
+  if (res && res.status === 'updated') {
+    const item = cachedItems.find(r => r[0] == id);
+    if (item) await generateAndDownloadInvoice(item, amt, buyerName, sellerName);
+    toast('Sold & Invoice generated ✅', 'success');
+    showCelebration('🧾', `Sold to ${buyerName}`);
+    cachedItems = [];
+    loadDashboard();
+    loadItems(true);
+  } else {
+    toast('Failed to mark as sold', 'error');
+  }
+  hideSpinner();
+}
 
     function promptEditSold(id) { showConfirm('💰', 'Edit Sold Amount', 'Enter the new sold amount in the prompt.', 'Continue', 'button', () => { const amt = prompt('Enter new sold amount:'); if (!amt) return; showSpinner(); safeFetch(API, { method:'POST', body:JSON.stringify({ action:'editSold', id, soldAmount:+amt }) }).then(() => { hideSpinner(); toast('Sold Updated ✅', 'success'); cachedItems = []; loadDashboard(); loadItems(true); }); }); }
 
