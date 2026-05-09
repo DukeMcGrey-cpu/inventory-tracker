@@ -882,64 +882,83 @@
         window.navigator.vibrate(pattern);
       }
     }
-    function attachCardGestures() {
-      const cards = document.querySelectorAll('.item');
-      cards.forEach(card => {
-        let startX = 0, startY = 0, isSwiping = false;
-        let touchStartTime = 0;
-        card.addEventListener('touchstart', (e) => {
-          startX = e.touches[0].clientX;
-          startY = e.touches[0].clientY;
-          touchStartTime = Date.now();
-          isSwiping = false;
-          card.classList.add('pressing');
-        }, { passive: true });
-        card.addEventListener('touchmove', (e) => {
-          const dx = e.touches[0].clientX - startX;
-          const dy = e.touches[0].clientY - startY;
-          if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 15) {
-            isSwiping = true;
-            e.preventDefault();
-            card.classList.remove('pressing');
-            if (dx < 0) {
-              card.classList.add('swipe-left');
-              card.classList.remove('swipe-right');
-            } else if (dx > 0) {
-              card.classList.add('swipe-right');
-              card.classList.remove('swipe-left');
-            }
+   // ----- Swipe actions + tap detection that respects vertical scrolling -----
+function attachCardGestures() {
+  const cards = document.querySelectorAll('.item');
+  cards.forEach(card => {
+    let startX = 0, startY = 0;
+    let touchStartTime = 0;
+    let movedBeyondTap = false;  // true if user scrolled/swiped significantly
+
+    card.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+      movedBeyondTap = false;
+      card.classList.add('pressing');
+    }, { passive: true });
+
+    card.addEventListener('touchmove', (e) => {
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      // If moved more than 10px horizontally OR vertically, it's not a tap
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+        movedBeyondTap = true;
+        card.classList.remove('pressing');
+        // Horizontal swipe detection (for delete / sold)
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 15) {
+          e.preventDefault(); // prevent vertical scroll when swiping horizontally
+          if (dx < 0) {
+            card.classList.add('swipe-left');
+            card.classList.remove('swipe-right');
+          } else if (dx > 0) {
+            card.classList.add('swipe-right');
+            card.classList.remove('swipe-left');
           }
-        }, { passive: false });
-        card.addEventListener('touchend', (e) => {
-          const dx = e.changedTouches[0].clientX - startX;
-          const duration = Date.now() - touchStartTime;
-          card.classList.remove('pressing', 'swipe-left', 'swipe-right');
-          if (isSwiping && Math.abs(dx) > 50 && duration < 300) {
-            vibrate(30);
-            const itemId = card.id.replace('item-', '');
-            const item = cachedItems.find(r => r[0] == itemId);
-            if (!item) return;
-            if (dx < 0) { // swipe left → delete
-              confirmDelete(itemId, item[2]);
-            } else if (dx > 0) { // swipe right → mark sold (only if ON HAND)
-              if (item[10] === 'ON HAND') {
-                const amt = prompt('Enter sold amount:');
-                if (amt && !isNaN(amt) && amt > 0) markSold(itemId);
-              } else {
-                toast('Only ON HAND items can be sold', 'error');
-              }
-            }
-          } else if (!isSwiping && duration < 200) {
-            const itemId = card.id.replace('item-', '');
-            openDetailModal(itemId);
+        }
+      }
+    }, { passive: false });
+
+    card.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
+      const duration = Date.now() - touchStartTime;
+      card.classList.remove('pressing', 'swipe-left', 'swipe-right');
+
+      // Check for intentional swipe (horizontal, fast, enough distance)
+      const isSwipe = !movedBeyondTap && Math.abs(dx) > 50 && duration < 300 && Math.abs(dx) > Math.abs(dy);
+      if (isSwipe) {
+        vibrate(30);
+        const itemId = card.id.replace('item-', '');
+        const item = cachedItems.find(r => r[0] == itemId);
+        if (!item) return;
+        if (dx < 0) { // swipe left → delete
+          confirmDelete(itemId, item[2]);
+        } else if (dx > 0) { // swipe right → mark sold
+          if (item[10] === 'ON HAND') {
+            const amt = prompt('Enter sold amount:');
+            if (amt && !isNaN(amt) && amt > 0) markSold(itemId);
+          } else {
+            toast('Only ON HAND items can be sold', 'error');
           }
-          isSwiping = false;
-        });
-        card.addEventListener('mousedown', () => card.classList.add('pressing'));
-        card.addEventListener('mouseup', () => card.classList.remove('pressing', 'swipe-left', 'swipe-right'));
-        card.addEventListener('mouseleave', () => card.classList.remove('pressing', 'swipe-left', 'swipe-right'));
-      });
-    }
+        }
+        return;
+      }
+
+      // Otherwise, it's a tap if little movement and short duration
+      const isTap = !movedBeyondTap && Math.abs(dx) < 15 && Math.abs(dy) < 15 && duration < 300;
+      if (isTap) {
+        const itemId = card.id.replace('item-', '');
+        openDetailModal(itemId);
+      }
+    });
+
+    // Mouse fallback for desktop (optional)
+    card.addEventListener('mousedown', () => card.classList.add('pressing'));
+    card.addEventListener('mouseup', () => card.classList.remove('pressing', 'swipe-left', 'swipe-right'));
+    card.addEventListener('mouseleave', () => card.classList.remove('pressing', 'swipe-left', 'swipe-right'));
+  });
+}
 
     // ── CONTEXT MENU (long press) ──
     let longPressTimer = null;
