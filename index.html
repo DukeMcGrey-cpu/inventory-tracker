@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DGL | BuySell Inventory Pro</title>
   <link rel="icon" href="https://i.ibb.co/p6pRc65C/received-26163013153378553.jpg">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
@@ -56,31 +56,11 @@
     /* ── BOX ── */
     .box { background:var(--glass); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid var(--glass-border); border-radius:20px; box-shadow:var(--shadow); padding:16px; margin-top:14px; }
 
-    /* ── MODAL & BOTTOM SHEET ── */
+    /* ── MODAL ── */
     .modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.55); backdrop-filter:blur(6px); justify-content:center; align-items:center; z-index:9999; padding:15px; }
     .modal-content { background:rgba(255,255,255,0.95); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid var(--glass-border); border-radius:24px; box-shadow:0 24px 64px rgba(29,78,216,0.2); padding:22px; width:100%; max-width:440px; max-height:90vh; overflow-y:auto; display:flex; flex-direction:column; gap:10px; animation:modalIn .25s cubic-bezier(.34,1.56,.64,1); }
     @keyframes modalIn { from{opacity:0;transform:scale(.92) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
-    /* Bottom sheet on mobile */
-    @media (max-width: 600px) {
-      .modal {
-        align-items: flex-end !important;
-        background: rgba(0,0,0,0.5);
-      }
-      .modal-content {
-        max-width: 100%;
-        border-radius: 28px 28px 0 0;
-        margin: 0;
-        animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
-      }
-      @keyframes slideUp {
-        from { transform: translateY(100%); }
-        to { transform: translateY(0); }
-      }
-      /* Hide inline add form on mobile, use bottom sheet instead */
-      #addFormBox {
-        display: none !important;
-      }
-    }
+    .modal-content h3 { font-family:'Syne',sans-serif; font-size:18px; }
 
     /* ── PRODUCT DETAIL MODAL ── */
     .detail-modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(10px); justify-content:center; align-items:center; z-index:9999; padding:15px; }
@@ -171,17 +151,6 @@
     body.dark .list-pill.onhand { background:rgba(29,78,216,0.2); color:#60a5fa; }
     body.dark .list-pill.sold   { background:rgba(21,128,61,0.2); color:#4ade80; }
     body.dark .list-pill.traded { background:rgba(180,83,9,0.2); color:#fcd34d; }
-
-    /* Animation for view transition */
-    .view-transition {
-      transition: opacity 0.2s ease, transform 0.2s ease;
-      opacity: 1;
-      transform: scale(1);
-    }
-    .view-transition-out {
-      opacity: 0;
-      transform: scale(0.96);
-    }
 
     /* ── SKELETON ── */
     .skeleton { background:var(--glass); border:1px solid var(--glass-border); border-radius:22px; overflow:hidden; }
@@ -373,61 +342,6 @@
     body.dark .margin-badge.negative { background:rgba(239,68,68,0.08); color:#f87171; }
     body.dark .trade-info strong { color:#fcd34d; }
 
-    /* Pull-to-refresh styles */
-    #pullToRefresh {
-      text-align: center;
-      font-size: 12px;
-      color: var(--subtext);
-      padding: 8px;
-      display: none;
-    }
-    #lastUpdated {
-      text-align: center;
-      font-size: 10px;
-      color: var(--subtext);
-      margin-bottom: 8px;
-    }
-    .pull-refresh-loading {
-      text-align: center;
-      padding: 8px;
-      font-size: 12px;
-      color: var(--accent);
-    }
-    /* Context menu */
-    .context-menu {
-      position: fixed;
-      background: rgba(255,255,255,0.98);
-      backdrop-filter: blur(20px);
-      border-radius: 16px;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
-      padding: 8px 0;
-      min-width: 160px;
-      z-index: 10010;
-      display: none;
-      animation: fadeIn 0.1s ease;
-      border: 1px solid rgba(29,78,216,0.2);
-    }
-    .context-menu button {
-      display: block;
-      width: 100%;
-      text-align: left;
-      padding: 10px 16px;
-      background: none;
-      border: none;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-      box-shadow: none;
-      border-radius: 0;
-    }
-    .context-menu button:hover {
-      background: rgba(29,78,216,0.1);
-    }
-    body.dark .context-menu {
-      background: rgba(4,12,32,0.98);
-      border-color: rgba(99,155,255,0.2);
-    }
-
     @media(max-width:600px) {
       .cards { grid-template-columns:repeat(3,1fr); }
       .form-grid { grid-template-columns:1fr; }
@@ -500,17 +414,9 @@
   <!-- PRODUCT DETAIL MODAL -->
   <div class="detail-modal" id="detailModal" onclick="closeDetailModal(event)">
     <div class="detail-content" id="detailContent">
-      <div id="detailHero"></div>
-      <div id="detailBody"></div>
+      <div class="detail-hero" id="detailHero"></div>
+      <div class="detail-body" id="detailBody"></div>
     </div>
-  </div>
-
-  <!-- CONTEXT MENU -->
-  <div class="context-menu" id="contextMenu">
-    <button id="ctxEdit">✏️ Edit</button>
-    <button id="ctxSold">💰 Mark Sold</button>
-    <button id="ctxTrade">🔄 Trade</button>
-    <button id="ctxDelete">🗑️ Delete</button>
   </div>
 
   <!-- TOPBAR -->
@@ -544,8 +450,8 @@
       <div class="card card-traded"><span class="card-emoji">🔄</span><small>Traded</small><h3 id="traded">0</h3></div>
     </div>
 
-    <!-- ADD FORM (inline for desktop, bottom sheet on mobile) -->
-    <div id="addFormBox" class="box">
+    <!-- ADD FORM -->
+    <div id="addFormBox" class="box" style="display:none;">
       <div class="form-grid">
         <input id="nameInput" placeholder="Product Name" oninput="saveDraft()">
         <select id="categoryInput" onchange="saveDraft()">
@@ -610,11 +516,7 @@
       <button onclick="setCategoryFilter('Others',this)">Others</button>
     </div>
 
-    <!-- PULL-TO-REFRESH INDICATOR & LAST UPDATED -->
-    <div id="pullToRefresh">↓ Pull to refresh</div>
-    <div id="lastUpdated"></div>
-
-    <!-- PRODUCT CONTAINER -->
+    <!-- PRODUCT GRID / LIST -->
     <div id="productContainer"></div>
 
     <!-- CHART -->
@@ -751,57 +653,48 @@
       return Math.floor(s/86400) + 'd ago';
     }
 
-    // ── VIEW TOGGLE (with animation) ──
+    // ── VIEW TOGGLE ──
     function setView(v) {
-      if (currentView === v) return;
-      const container = document.getElementById('productContainer');
-      container.classList.add('view-transition-out');
-      setTimeout(() => {
-        currentView = v;
-        localStorage.setItem('inventoryView', v);
-        document.getElementById('btnGrid').classList.toggle('active', v === 'grid');
-        document.getElementById('btnList').classList.toggle('active', v === 'list');
-        renderItems();
-        setTimeout(() => {
-          container.classList.remove('view-transition-out');
-        }, 50);
-      }, 150);
+      currentView = v;
+      localStorage.setItem('inventoryView', v);
+      document.getElementById('btnGrid').classList.toggle('active', v === 'grid');
+      document.getElementById('btnList').classList.toggle('active', v === 'list');
+      renderItems();
     }
 
-    // ── PRODUCT DETAIL MODAL (fixed) ──
+    // ── PRODUCT DETAIL MODAL ──
     function openDetailModal(id) {
-      const item = cachedItems.find(x => x[0] == id);
-      if (!item) return;
-      const p       = item[2]  || '';
-      const c       = item[3]  || '';
-      const pu      = +item[4] || 0;
-      const sh      = +item[5] || 0;
-      const o       = +item[6] || 0;
-      const cap     = +item[7] || 0;
-      const imgs    = (item[9] || '').split(',').filter(Boolean);
-      const st      = item[10] || 'ON HAND';
-      const soldDate = item[11] ? new Date(item[11]).toLocaleDateString() : '—';
-      const soldp   = +item[12] || 0;
-      const pro     = +item[13] || 0;
-      const notes   = item[14] || '';
-      const buyer   = item[15] || '';
-      const seller  = item[16] || '';
-      const addDate = item[1] ? new Date(item[1]).toLocaleDateString() : '—';
+      const r = cachedItems.find(x => x[0] == id);
+      if (!r) return;
+      const p     = r[2]  || '';
+      const c     = r[3]  || '';
+      const pu    = +r[4] || 0;
+      const sh    = +r[5] || 0;
+      const o     = +r[6] || 0;
+      const cap   = +r[7] || 0;
+      const imgs  = (r[9] || '').split(',').filter(Boolean);
+      const st    = r[10] || 'ON HAND';
+      const soldDate = r[11] ? new Date(r[11]).toLocaleDateString() : '—';
+      const soldp = +r[12] || 0;
+      const pro   = +r[13] || 0;
+      const notes = r[14] || '';
+      const buyer = r[15] || '';
+      const seller= r[16] || '';
+      const addDate = r[1] ? new Date(r[1]).toLocaleDateString() : '—';
       const margin  = cap > 0 ? ((pro / cap) * 100).toFixed(1) : '0';
       const pillClass = st === 'SOLD' ? 'sold' : st === 'TRADED' ? 'traded' : 'onhand';
       const pillLabel = st === 'ON HAND' ? '📦 On Hand' : st === 'SOLD' ? '✅ Sold' : '🔄 Traded';
-      const safeP = p.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-      const safeN = notes.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
+      // Hero images
       let heroHTML = '';
       if (imgs.length > 0) {
         heroHTML = `
-          <div style="position:relative;">
-            <img id="detailMainImg" src="${imgs[0]}" style="width:100%;height:240px;object-fit:cover;border-radius:28px 28px 0 0;display:block;cursor:pointer;" onclick="openLightbox('${imgs[0]}')">
+          <div class="detail-hero" style="position:relative;">
+            <img id="detailMainImg" src="${imgs[0]}" style="width:100%;height:240px;object-fit:cover;border-radius:28px 28px 0 0;display:block;" onclick="openLightbox('${imgs[0]}')">
             <span class="detail-pill ${pillClass}">${pillLabel}</span>
             <button class="detail-close" onclick="closeDetailModal()" style="position:absolute;top:14px;left:14px;">✕</button>
-            ${imgs.length > 1 ? `<div class="detail-hero-thumbs">${imgs.map((u, idx) =>
-              `<img src="${u}" data-img="${u}" class="${idx === 0 ? 'active' : ''}" onclick="switchDetailImg(this)">`).join('')}</div>` : ''}
+            ${imgs.length > 1 ? `<div class="detail-hero-thumbs">${imgs.map((u,i) =>
+              `<img src="${u}" class="${i===0?'active':''}" onclick="switchDetailImg(this,'${u}')">`).join('')}</div>` : ''}
           </div>`;
       } else {
         heroHTML = `
@@ -813,8 +706,9 @@
       }
 
       const bodyHTML = `
-        <div class="detail-title">${escapeHtml(p)}</div>
-        <div class="detail-category">${escapeHtml(c)} · ${item[0]}</div>
+        <div class="detail-title">${p}</div>
+        <div class="detail-category">${c} · ${r[0]}</div>
+
         <div class="detail-grid">
           <div class="detail-field"><label>Date Added</label><span>${addDate}</span></div>
           <div class="detail-field"><label>Status</label><span>${pillLabel}</span></div>
@@ -823,32 +717,24 @@
           <div class="detail-field"><label>Other Fee</label><span>₱${o.toLocaleString()}</span></div>
           <div class="detail-field"><label>Total Capital</label><span>₱${cap.toLocaleString()}</span></div>
           ${st !== 'ON HAND' ? `
-          <div class="detail-field"><label>${st === 'TRADED' ? 'Trade' : 'Sold'} Date</label><span>${soldDate}</span></div>
-          <div class="detail-field"><label>${st === 'TRADED' ? 'Trade Value' : 'Sold Amount'}</label><span>₱${soldp.toLocaleString()}</span></div>
-          <div class="detail-field ${pro >= 0 ? 'profit-pos' : 'profit-neg'}"><label>Net Profit</label><span>₱${pro.toLocaleString()}</span></div>
-          <div class="detail-field"><label>Margin</label><span>${pro >= 0 ? '+' : ''}${margin}%</span></div>
+          <div class="detail-field"><label>${st==='TRADED'?'Trade':'Sold'} Date</label><span>${soldDate}</span></div>
+          <div class="detail-field"><label>${st==='TRADED'?'Trade Value':'Sold Amount'}</label><span>₱${soldp.toLocaleString()}</span></div>
+          <div class="detail-field ${pro>=0?'profit-pos':'profit-neg'}"><label>Net Profit</label><span>₱${pro.toLocaleString()}</span></div>
+          <div class="detail-field"><label>Margin</label><span>${pro>=0?'+':''}${margin}%</span></div>
           ` : ''}
-          ${buyer  ? `<div class="detail-field"><label>Buyer</label><span>${escapeHtml(buyer)}</span></div>` : ''}
-          ${seller ? `<div class="detail-field"><label>Seller</label><span>${escapeHtml(seller)}</span></div>` : ''}
-          ${notes  ? `<div class="detail-field full"><label>Notes</label><div class="detail-notes-box">${escapeHtml(notes)}</div></div>` : ''}
+          ${buyer  ? `<div class="detail-field"><label>Buyer</label><span>${buyer}</span></div>` : ''}
+          ${seller ? `<div class="detail-field"><label>Seller</label><span>${seller}</span></div>` : ''}
+          ${notes  ? `<div class="detail-field full"><label>Notes</label><div class="detail-notes-box">${notes}</div></div>` : ''}
         </div>
+
         <div class="detail-action-row">
-          <button onclick="closeDetailModal();openEditModal('${item[0]}','${escapeHtml(p).replace(/'/g, "\\'")}','${escapeHtml(c)}','${pu}','${sh}','${o}','${escapeHtml(notes).replace(/'/g, "\\'")}')">✏️ Edit</button>
-          <button class="btn-danger" onclick="closeDetailModal();confirmDelete('${item[0]}','${escapeHtml(p).replace(/'/g, "\\'")}')">🗑️ Delete</button>
+          <button onclick="closeDetailModal();openEditModal('${r[0]}','${p.replace(/'/g,"\\'")}','${c}','${pu}','${sh}','${o}','${notes.replace(/'/g,"\\'")}')">✏️ Edit</button>
+          <button class="btn-danger" onclick="closeDetailModal();confirmDelete('${r[0]}','${p.replace(/'/g,"\\'")}')">🗑️ Delete</button>
         </div>
       `;
 
-      const heroContainer = document.getElementById('detailHero');
-      const bodyContainer = document.getElementById('detailBody');
-      if (heroContainer && bodyContainer) {
-        heroContainer.innerHTML = heroHTML;
-        bodyContainer.innerHTML = bodyHTML;
-        document.querySelectorAll('.detail-hero-thumbs img').forEach(img => {
-          img.onclick = () => switchDetailImg(img);
-        });
-        const mainImg = document.getElementById('detailMainImg');
-        if (mainImg) mainImg.onclick = () => openLightbox(mainImg.src);
-      }
+      document.getElementById('detailHero').outerHTML = heroHTML;
+      document.getElementById('detailBody').innerHTML = bodyHTML;
       document.getElementById('detailModal').classList.add('show');
     }
 
@@ -856,226 +742,40 @@
       if (e && e.target !== document.getElementById('detailModal')) return;
       document.getElementById('detailModal').classList.remove('show');
     }
-    function switchDetailImg(thumb) {
-      const url = thumb.getAttribute('data-img') || thumb.src;
-      const mainImg = document.getElementById('detailMainImg');
-      if (mainImg) {
-        mainImg.src = url;
-        mainImg.onclick = () => openLightbox(url);
-      }
-      document.querySelectorAll('.detail-hero-thumbs img').forEach(img => img.classList.remove('active'));
+    function switchDetailImg(thumb, url) {
+      const main = document.getElementById('detailMainImg');
+      if (main) { main.src = url; main.onclick = () => openLightbox(url); }
+      document.querySelectorAll('.detail-hero-thumbs img').forEach(t => t.classList.remove('active'));
       thumb.classList.add('active');
     }
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-      });
+
+    // ── ACTIVITY FEED ──
+    function toggleActivityFeed() {
+      const body   = document.getElementById('activityBody');
+      const toggle = document.getElementById('activityToggle');
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open');
+      toggle.classList.toggle('open');
+      if (!isOpen) buildActivityFeed();
     }
 
-    // ── SWIPE ACTIONS (left=delete, right=sold) with haptic ──
-    function vibrate(pattern = 50) {
-      if (window.navigator && window.navigator.vibrate) {
-        window.navigator.vibrate(pattern);
+    function buildActivityFeed() {
+      const list = document.getElementById('activityList');
+      if (!activityLog.length) {
+        list.innerHTML = `<div style="text-align:center;color:var(--subtext);padding:20px;font-size:13px">No activity yet</div>`;
+        return;
       }
-    }
-    function attachCardGestures() {
-      const cards = document.querySelectorAll('.item');
-      cards.forEach(card => {
-        let startX = 0, startY = 0, isSwiping = false;
-        let touchStartTime = 0;
-        card.addEventListener('touchstart', (e) => {
-          startX = e.touches[0].clientX;
-          startY = e.touches[0].clientY;
-          touchStartTime = Date.now();
-          isSwiping = false;
-          card.classList.add('pressing');
-        }, { passive: true });
-        card.addEventListener('touchmove', (e) => {
-          const dx = e.touches[0].clientX - startX;
-          const dy = e.touches[0].clientY - startY;
-          if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 15) {
-            isSwiping = true;
-            e.preventDefault();
-            card.classList.remove('pressing');
-            if (dx < 0) {
-              card.classList.add('swipe-left');
-              card.classList.remove('swipe-right');
-            } else if (dx > 0) {
-              card.classList.add('swipe-right');
-              card.classList.remove('swipe-left');
-            }
-          }
-        }, { passive: false });
-        card.addEventListener('touchend', (e) => {
-          const dx = e.changedTouches[0].clientX - startX;
-          const duration = Date.now() - touchStartTime;
-          card.classList.remove('pressing', 'swipe-left', 'swipe-right');
-          if (isSwiping && Math.abs(dx) > 50 && duration < 300) {
-            vibrate(30);
-            const itemId = card.id.replace('item-', '');
-            const item = cachedItems.find(r => r[0] == itemId);
-            if (!item) return;
-            if (dx < 0) { // swipe left → delete
-              confirmDelete(itemId, item[2]);
-            } else if (dx > 0) { // swipe right → mark sold (only if ON HAND)
-              if (item[10] === 'ON HAND') {
-                const amt = prompt('Enter sold amount:');
-                if (amt && !isNaN(amt) && amt > 0) markSold(itemId);
-              } else {
-                toast('Only ON HAND items can be sold', 'error');
-              }
-            }
-          } else if (!isSwiping && duration < 200) {
-            const itemId = card.id.replace('item-', '');
-            openDetailModal(itemId);
-          }
-          isSwiping = false;
-        });
-        card.addEventListener('mousedown', () => card.classList.add('pressing'));
-        card.addEventListener('mouseup', () => card.classList.remove('pressing', 'swipe-left', 'swipe-right'));
-        card.addEventListener('mouseleave', () => card.classList.remove('pressing', 'swipe-left', 'swipe-right'));
-      });
-    }
-
-    // ── CONTEXT MENU (long press) ──
-    let longPressTimer = null;
-    let currentContextItemId = null;
-    function showContextMenu(x, y, itemId) {
-      const menu = document.getElementById('contextMenu');
-      currentContextItemId = itemId;
-      menu.style.display = 'block';
-      menu.style.left = x + 'px';
-      menu.style.top = y + 'px';
-      const rect = menu.getBoundingClientRect();
-      if (rect.right > window.innerWidth) menu.style.left = (window.innerWidth - rect.width - 10) + 'px';
-      if (rect.bottom > window.innerHeight) menu.style.top = (window.innerHeight - rect.height - 10) + 'px';
-    }
-    function hideContextMenu() {
-      const menu = document.getElementById('contextMenu');
-      if (menu) menu.style.display = 'none';
-      currentContextItemId = null;
-    }
-    function attachLongPress() {
-      const elements = document.querySelectorAll('.item, .list-item');
-      elements.forEach(el => {
-        let touchTimer = null;
-        const startTouch = (e) => {
-          touchTimer = setTimeout(() => {
-            vibrate(30);
-            const rect = el.getBoundingClientRect();
-            const x = e.touches ? e.touches[0].clientX : rect.left + 10;
-            const y = e.touches ? e.touches[0].clientY : rect.top + 10;
-            const itemId = el.id?.replace('item-', '') || el.getAttribute('data-id');
-            if (itemId) {
-              showContextMenu(x, y, itemId);
-              e.preventDefault();
-            }
-          }, 500);
-          el.addEventListener('touchend', () => clearTimeout(touchTimer));
-          el.addEventListener('touchmove', () => clearTimeout(touchTimer));
-        };
-        el.addEventListener('touchstart', startTouch, { passive: false });
-        let mouseTimer = null;
-        el.addEventListener('mousedown', (e) => {
-          mouseTimer = setTimeout(() => {
-            const rect = el.getBoundingClientRect();
-            const itemId = el.id?.replace('item-', '') || el.getAttribute('data-id');
-            if (itemId) showContextMenu(e.clientX, e.clientY, itemId);
-          }, 500);
-          el.addEventListener('mouseup', () => clearTimeout(mouseTimer));
-          el.addEventListener('mouseleave', () => clearTimeout(mouseTimer));
-        });
-      });
-    }
-    function initContextMenuActions() {
-      document.getElementById('ctxEdit').onclick = () => {
-        if (currentContextItemId) {
-          const item = cachedItems.find(r => r[0] == currentContextItemId);
-          if (item) openEditModal(item[0], item[2], item[3], item[4], item[5], item[6], item[14] || '');
-        }
-        hideContextMenu();
-      };
-      document.getElementById('ctxSold').onclick = () => {
-        if (currentContextItemId) {
-          const item = cachedItems.find(r => r[0] == currentContextItemId);
-          if (item && item[10] === 'ON HAND') {
-            const amt = prompt('Enter sold amount:');
-            if (amt && !isNaN(amt) && amt > 0) markSold(currentContextItemId);
-          } else {
-            toast('Only ON HAND items can be sold', 'error');
-          }
-        }
-        hideContextMenu();
-      };
-      document.getElementById('ctxTrade').onclick = () => {
-        if (currentContextItemId) {
-          const item = cachedItems.find(r => r[0] == currentContextItemId);
-          if (item && item[10] === 'ON HAND') {
-            openTradeModal(currentContextItemId, item[2], item[7]);
-          } else {
-            toast('Only ON HAND items can be traded', 'error');
-          }
-        }
-        hideContextMenu();
-      };
-      document.getElementById('ctxDelete').onclick = () => {
-        if (currentContextItemId) {
-          const item = cachedItems.find(r => r[0] == currentContextItemId);
-          if (item) confirmDelete(currentContextItemId, item[2]);
-        }
-        hideContextMenu();
-      };
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.context-menu')) hideContextMenu();
-      });
-    }
-
-    // ── PULL TO REFRESH ──
-    function initPullToRefresh() {
-      const container = document.getElementById('productContainer');
-      const ptr = document.getElementById('pullToRefresh');
-      let touchStartY = 0;
-      let isPulling = false;
-      let refreshing = false;
-      container.addEventListener('touchstart', (e) => {
-        if (container.scrollTop === 0 && !refreshing) {
-          touchStartY = e.touches[0].clientY;
-          isPulling = true;
-        }
-      });
-      container.addEventListener('touchmove', (e) => {
-        if (!isPulling || refreshing) return;
-        const diff = e.touches[0].clientY - touchStartY;
-        if (diff > 0 && container.scrollTop === 0) {
-          e.preventDefault();
-          if (diff > 70) {
-            ptr.innerHTML = '🔄 Release to refresh';
-          } else {
-            ptr.innerHTML = '↓ Pull to refresh';
-          }
-          ptr.style.display = 'block';
-        }
-      });
-      container.addEventListener('touchend', async (e) => {
-        if (!isPulling || refreshing) return;
-        isPulling = false;
-        const diff = e.changedTouches[0].clientY - touchStartY;
-        if (diff > 70) {
-          refreshing = true;
-          ptr.innerHTML = '<div class="spinner" style="width:20px;height:20px;"></div> Refreshing...';
-          await loadItems(true);
-          document.getElementById('lastUpdated').innerText = `Last updated: ${new Date().toLocaleTimeString()}`;
-          refreshing = false;
-          ptr.style.display = 'none';
-          toast('Inventory refreshed', 'success');
-        } else {
-          ptr.style.display = 'none';
-        }
-      });
+      const icons  = { added:'📦', sold:'✅', traded:'🔄', deleted:'🗑️', edited:'✏️' };
+      const labels = { added:'Added', sold:'Sold', traded:'Traded', deleted:'Deleted', edited:'Edited' };
+      list.innerHTML = activityLog.slice(0, 15).map(a => `
+        <div class="activity-item">
+          <div class="activity-dot ${a.type}">${icons[a.type] || '📋'}</div>
+          <div class="activity-info">
+            <strong>${a.name}</strong>
+            <span>${labels[a.type] || a.type}${a.extra ? ' · ' + a.extra : ''} · ${a.id}</span>
+          </div>
+          <div class="activity-time">${timeAgo(a.time)}</div>
+        </div>`).join('');
     }
 
     // ── TOAST / SPINNER / CELEBRATIONS ──
@@ -1083,6 +783,7 @@
     function showSpinner() { document.getElementById('spinnerOverlay').classList.add('show'); }
     function hideSpinner() { document.getElementById('spinnerOverlay').classList.remove('show'); }
     function safeFetch(url,o={}) { return fetch(url,o).then(r=>r.text()).then(t=>{try{return JSON.parse(t);}catch(e){return null;}}); }
+
     function showCelebration(icon, text) {
       const el=document.getElementById('celebration'),wrap=document.getElementById('confettiWrap'),iconEl=document.getElementById('celebIcon');
       if(icon.startsWith('http')){iconEl.innerHTML=`<img src="${icon}" alt="">`;}else{iconEl.innerHTML=icon;}
@@ -1093,6 +794,7 @@
       let ct=setTimeout(()=>{el.classList.remove('show');el.style.pointerEvents='none';},4000);
       el.onclick=()=>{el.classList.remove('show');el.style.pointerEvents='none';clearTimeout(ct);};
     }
+
     function openLightbox(src){document.getElementById('lightboxImg').src=src;document.getElementById('lightbox').classList.add('show');}
     function closeLightbox(){document.getElementById('lightbox').classList.remove('show');}
     function showConfirm(icon,title,msg,okLabel,okClass,cb){document.getElementById('confirmIcon').innerText=icon;document.getElementById('confirmTitle').innerText=title;document.getElementById('confirmMsg').innerText=msg;const btn=document.getElementById('confirmOkBtn');btn.innerText=okLabel;btn.className=okClass;confirmCallback=cb;document.getElementById('confirmModal').style.display='flex';}
@@ -1190,11 +892,8 @@
     function loadDashboard(){safeFetch(API+'?action=getDashboard').then(d=>{if(!d)return;document.getElementById('capital').innerText='₱'+(d.totalCapital||0).toLocaleString();document.getElementById('sales').innerText='₱'+(d.totalSales||0).toLocaleString();document.getElementById('profit').innerText='₱'+(d.totalProfit||0).toLocaleString();document.getElementById('onhand').innerText=d.onHand||0;document.getElementById('sold').innerText=d.soldCount||0;document.getElementById('traded').innerText=d.tradedCount||0;});}
     function showSkeletons(){document.getElementById('productContainer').innerHTML=`<div class="grid">${Array(6).fill(`<div class="skeleton"><div class="skel-img"></div><div class="skel-body"><div class="skel-line med"></div><div class="skel-line short"></div><div class="skel-line med"></div><div class="skel-line short"></div></div></div>`).join('')}</div>`;}
     const imgObserver=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){const img=e.target;if(img.dataset.src){img.src=img.dataset.src;img.removeAttribute('data-src');}imgObserver.unobserve(img);}});},{rootMargin:'120px'});
+
     function loadItems(forceRefresh=false){const now=Date.now();if(!forceRefresh&&cachedItems.length>0&&(now-cacheTimestamp)<CACHE_TTL){renderItems();return;}showSkeletons();safeFetch(API+'?action=getItems').then(data=>{if(!Array.isArray(data)){document.getElementById('productContainer').innerHTML='';return;}cachedItems=data;cacheTimestamp=Date.now();currentPage=1;renderItems();buildChart(data);});}
-    function afterRender() {
-      attachCardGestures();
-      attachLongPress();
-    }
 
     function renderItems(){
       const s=document.getElementById('search').value.toLowerCase();
@@ -1207,8 +906,11 @@
       if(currentPage>totalPages&&totalPages>0)currentPage=totalPages;if(totalFiltered===0)currentPage=1;
       const startIdx=(currentPage-1)*ITEMS_PER_PAGE;const pageItems=filtered.slice(startIdx,startIdx+ITEMS_PER_PAGE);
       const container=document.getElementById('productContainer');
+
       if(totalFiltered===0){container.innerHTML=`<div class="grid"><div class="empty-state"><div style="font-size:52px">📭</div><p>No products found</p></div></div>`;return;}
+
       if(currentView==='list'){
+        // ── LIST VIEW ──
         let listHTML=`<div class="list-view">`;
         listHTML+=pageItems.map(r=>{
           const id=r[0]||'',p=r[2]||'',c=r[3]||'',cap=+r[7]||0;
@@ -1216,11 +918,11 @@
           const st=r[10]||'ON HAND',pro=+r[13]||0;
           const pillClass=st==='SOLD'?'sold':st==='TRADED'?'traded':'onhand';
           const thumbSrc=imgs[0]||'';
-          return `<div class="list-item" data-id="${id}" onclick="openDetailModal('${id}')">
+          return `<div class="list-item" onclick="openDetailModal('${id}')">
             <div class="list-thumb">${thumbSrc?`<img data-src="${thumbSrc}" src="" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:10px;">`:`<span>📦</span>`}</div>
             <div class="list-info">
-              <h4 onclick="event.stopPropagation();openDetailModal('${id}')">${escapeHtml(p)}</h4>
-              <p>${escapeHtml(c)} · ₱${cap.toLocaleString()} capital</p>
+              <h4 onclick="event.stopPropagation();openDetailModal('${id}')">${p}</h4>
+              <p>${c} · ₱${cap.toLocaleString()} capital</p>
             </div>
             <div class="list-meta">
               <span class="list-pill ${pillClass}">${st==='ON HAND'?'On Hand':st}</span>
@@ -1232,6 +934,7 @@
         container.innerHTML=listHTML;
         document.querySelectorAll('.list-thumb img[data-src]').forEach(img=>imgObserver.observe(img));
       } else {
+        // ── GRID VIEW ──
         container.innerHTML=`<div class="grid">${pageItems.map(r=>{
           const id=r[0]||'',p=r[2]||'',c=r[3]||'',pu=+r[4]||0,sh=+r[5]||0,o=+r[6]||0,cap=+r[7]||0;
           const imgs=(r[9]||'').split(',').filter(Boolean);
@@ -1246,17 +949,19 @@
           else{imgHTML=`<div class='item-no-img'>📦</div>`;}
           return `<div class='item' id='item-${id}'><span class='status-pill ${pillClass}'>${pillLabel}</span>${imgHTML}
             <div class='item-body'>
-              <h3 onclick="openDetailModal('${id}')">${escapeHtml(p)}</h3>
-              <p style='color:var(--subtext)'>${escapeHtml(c)}</p>
+              <h3 onclick="openDetailModal('${id}')">${p}</h3>
+              <p style='color:var(--subtext)'>${c}</p>
               <p>Capital: <strong>₱${cap.toLocaleString()}</strong></p>
               ${st!=='ON HAND'&&cap>0?`<span class="margin-badge ${pro>=0?'positive':'negative'}">${pro>=0?'+':''}${margin}% margin</span>`:''}
               ${st==='TRADED'?`<div class='trade-info'>🔄 Trade Value: <strong>₱${soldp.toLocaleString()}</strong><br>Profit: <strong style='color:${pro>=0?"var(--green)":"var(--red)"}'>₱${pro.toLocaleString()}</strong></div>`:`<p>Sold: <strong>${soldp?'₱'+soldp.toLocaleString():'-'}</strong></p><p style='color:${pro>=0?"var(--green)":"var(--red)"}'>Profit: <strong>₱${pro.toLocaleString()}</strong></p>`}
-              ${notes?`<div class='item-notes'>💬 ${escapeHtml(notes)}</div>`:''}
+              ${notes?`<div class='item-notes'>💬 ${notes}</div>`:''}
               ${st==='ON HAND'?`<input id='sold-${id}' type='number' placeholder='Sold Amount' style='margin-top:8px'><button class='full-btn' style='margin-top:6px' onclick="markSold('${id}')">Mark Sold</button><div class='action-row-3' style='margin-top:8px'><button class='btn-trade' onclick="openTradeModal('${id}','${safeP}','${cap}')">🔄 Trade</button><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️</button></div>`:st==='TRADED'?`<div class='action-row'><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>`:`<button class='full-btn' style='margin-top:8px' onclick="promptEditSold('${id}')">Edit Sold</button><button class='export-btn' style='margin-top:6px;width:100%' onclick="regenerateInvoice('${id}')">🧾 Re-download Invoice</button><div class='action-row'><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>`}
             </div></div>`;
         }).join('')}</div>`;
         document.querySelectorAll('img[data-src]').forEach(img=>imgObserver.observe(img));
+        attachCardGestures();
       }
+
       // Pagination
       const existing=document.getElementById('paginationControls');if(existing)existing.remove();
       if(totalFiltered>ITEMS_PER_PAGE){
@@ -1269,10 +974,11 @@
         html+=`<span style="font-size:13px;color:var(--subtext);font-weight:600">${(currentPage-1)*ITEMS_PER_PAGE+1}–${Math.min(currentPage*ITEMS_PER_PAGE,totalFiltered)} of ${totalFiltered}</span></div>`;
         pc.innerHTML=html;container.insertAdjacentElement('afterend',pc);
       }
-      afterRender();
     }
+
     function changePage(page){const total=cachedItems.length;const maxPage=Math.ceil(total/ITEMS_PER_PAGE)||1;if(page<1||page>maxPage)return;currentPage=page;renderItems();window.scrollTo({top:document.getElementById('productContainer').offsetTop-100,behavior:'smooth'});}
     function switchMainImg(thumb,url,id){const gallery=thumb.closest('.item-gallery');const main=gallery.querySelector('.main-img');main.src=url;main.onclick=()=>openLightbox(url);gallery.querySelectorAll('.thumb-row img').forEach(t=>t.classList.remove('active'));thumb.classList.add('active');}
+    function attachCardGestures(){document.querySelectorAll('.item').forEach(card=>{let startX=0,startY=0;card.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;startY=e.touches[0].clientY;card.classList.add('pressing');},{passive:true});card.addEventListener('touchmove',e=>{const dx=e.touches[0].clientX-startX;const dy=e.touches[0].clientY-startY;if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>8){card.classList.remove('pressing');card.classList.toggle('swipe-left',dx<0);card.classList.toggle('swipe-right',dx>0);}},{passive:true});card.addEventListener('touchend',()=>{card.classList.remove('pressing','swipe-left','swipe-right');});card.addEventListener('mousedown',()=>card.classList.add('pressing'));card.addEventListener('mouseup',()=>card.classList.remove('pressing'));card.addEventListener('mouseleave',()=>card.classList.remove('pressing'));});}
 
     // ── CHART ──
     function buildChart(data){const soldItems=data.filter(r=>r[10]==='SOLD'&&r[11]);const grouped={};soldItems.forEach(r=>{const date=new Date(r[11]);if(isNaN(date))return;const key=date.toLocaleString('default',{month:'short',year:'2-digit'});if(!grouped[key])grouped[key]={sales:0,profit:0};grouped[key].sales+=+r[12]||0;grouped[key].profit+=+r[13]||0;});const labels=Object.keys(grouped);const salesData=labels.map(k=>grouped[k].sales);const profitData=labels.map(k=>grouped[k].profit);const isDark=document.body.classList.contains('dark');const gridColor=isDark?'rgba(255,255,255,0.06)':'rgba(29,78,216,0.08)';const labelColor=isDark?'#94a3b8':'#475569';const ctx=document.getElementById('salesChart').getContext('2d');if(salesChart)salesChart.destroy();salesChart=new Chart(ctx,{type:currentChartType,data:{labels:labels.length?labels:['No sales yet'],datasets:[{label:'Sales (₱)',data:salesData.length?salesData:[0],backgroundColor:'rgba(34,197,94,0.12)',borderColor:'#22c55e',borderWidth:2,tension:0.4,fill:true,pointBackgroundColor:'#22c55e',pointRadius:4},{label:'Profit (₱)',data:profitData.length?profitData:[0],backgroundColor:'rgba(29,78,216,0.12)',borderColor:'#1d4ed8',borderWidth:2,tension:0.4,fill:true,pointBackgroundColor:'#1d4ed8',pointRadius:4}]},options:{responsive:true,plugins:{legend:{labels:{color:labelColor,font:{family:'Nunito',weight:'700'}}}},scales:{x:{ticks:{color:labelColor,font:{family:'Nunito'}},grid:{color:gridColor}},y:{ticks:{color:labelColor,font:{family:'Nunito'}},grid:{color:gridColor}}}}});}
@@ -1289,34 +995,8 @@
     // ── DARK MODE ──
     function toggleDarkMode(){document.body.classList.toggle('dark');const d=document.body.classList.contains('dark');document.getElementById('darkSwitch').checked=d;localStorage.setItem('darkmode',d?'on':'off');if(cachedItems.length)buildChart(cachedItems);}
     function loadDarkMode(){if(localStorage.getItem('darkmode')==='on'){document.body.classList.add('dark');document.getElementById('darkSwitch').checked=true;}}
-    // Modified toggleAddForm: on mobile it becomes a bottom sheet (modal), on desktop toggle inline box
-    function toggleAddForm(forceClose = false) {
-      if (window.innerWidth > 600) {
-        const box = document.getElementById('addFormBox');
-        if (forceClose) box.style.display = 'none';
-        else box.style.display = box.style.display === 'none' ? 'block' : 'none';
-        return;
-      }
-      let sheet = document.getElementById('mobileAddSheet');
-      if (!sheet) {
-        const originalBox = document.getElementById('addFormBox');
-        const clone = originalBox.cloneNode(true);
-        clone.id = 'mobileAddSheet';
-        clone.classList.add('modal');
-        clone.style.display = 'none';
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'modal-content';
-        while (clone.firstChild) contentDiv.appendChild(clone.firstChild);
-        clone.appendChild(contentDiv);
-        document.body.appendChild(clone);
-        sheet = clone;
-        // reattach event listeners? The cloned button's onclick still works because it's same function.
-        // Also need to ensure saveDraft works - IDs are duplicated but it's fine as hidden original.
-      }
-      if (forceClose) sheet.style.display = 'none';
-      else sheet.style.display = 'flex';
-    }
-    function navTo(tab){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('nav-'+tab)?.classList.add('active');if(tab==='home'){toggleAddForm(true);window.scrollTo({top:0,behavior:'smooth'});}else if(tab==='add'){toggleAddForm();document.getElementById('addFormBox').scrollIntoView({behavior:'smooth',block:'center'});}else if(tab==='chart'){document.querySelector('.chart-box').scrollIntoView({behavior:'smooth',block:'start'});}else if(tab==='export'){document.getElementById('exportCsvBtn').scrollIntoView({behavior:'smooth',block:'center'});}}
+    function toggleAddForm(force=false){const box=document.getElementById('addFormBox');if(force){box.style.display='none';return;}box.style.display=box.style.display==='none'?'block':'none';}
+    function navTo(tab){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('nav-'+tab)?.classList.add('active');if(tab==='home'){document.getElementById('addFormBox').style.display='none';window.scrollTo({top:0,behavior:'smooth'});}else if(tab==='add'){toggleAddForm();document.getElementById('addFormBox').scrollIntoView({behavior:'smooth',block:'center'});}else if(tab==='chart'){document.querySelector('.chart-box').scrollIntoView({behavior:'smooth',block:'start'});}else if(tab==='export'){document.getElementById('exportCsvBtn').scrollIntoView({behavior:'smooth',block:'center'});}}
 
     // ── RIPPLE ──
     document.addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn||btn.classList.contains('lightbox-close'))return;btn.classList.add('ripple-host');const r=document.createElement('span');r.className='ripple';const rect=btn.getBoundingClientRect();const size=Math.max(rect.width,rect.height);r.style.cssText=`width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px;`;btn.appendChild(r);setTimeout(()=>r.remove(),600);});
@@ -1327,8 +1007,6 @@
     loadDashboard();
     loadItems(true);
     loadDraft();
-    initContextMenuActions();
-    initPullToRefresh();
   </script>
 </body>
 </html>
