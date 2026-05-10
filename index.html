@@ -922,83 +922,132 @@
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // ---------- 0. Helper: Draw white icon on canvas and return PNG data URL ----------
-  function createIconPng(drawFunc, sizeMm = 8) {
-    // Convert mm to pixels (approx 3.78 px per mm, but we'll use a fixed canvas size)
-    const canvasSize = 64; // fixed pixels for crispness
+  // ---------- Helper: Draw white icon on canvas ----------
+  function createIconPng(drawFunc) {
     const canvas = document.createElement('canvas');
-    canvas.width = canvasSize;
-    canvas.height = canvasSize;
+    canvas.width = 64;
+    canvas.height = 64;
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvasSize, canvasSize);
+    ctx.clearRect(0, 0, 64, 64);
     ctx.fillStyle = '#FFFFFF';
-    // Scale drawing: assume drawFunc uses relative coordinates 0..1
-    const scale = canvasSize;
     ctx.save();
-    ctx.scale(scale, scale);
+    ctx.scale(64, 64);
     drawFunc(ctx);
     ctx.restore();
     return canvas.toDataURL('image/png');
   }
 
-  // Predefine drawing functions (each receives ctx with 0..1 normalized coordinates)
-  const drawGamepad = (ctx) => {
-    ctx.fillRect(0.2, 0.4, 0.6, 0.2);
-    ctx.fillRect(0.3, 0.2, 0.4, 0.2);
-    ctx.beginPath();
-    ctx.arc(0.2, 0.5, 0.1, 0, Math.PI*2);
-    ctx.arc(0.8, 0.5, 0.1, 0, Math.PI*2);
-    ctx.fill();
-  };
-  const drawController = (ctx) => {
-    ctx.fillRect(0.2, 0.3, 0.6, 0.4);
-    ctx.fillRect(0.1, 0.5, 0.1, 0.2);
-    ctx.fillRect(0.8, 0.5, 0.1, 0.2);
-    ctx.beginPath();
-    ctx.arc(0.3, 0.5, 0.08, 0, Math.PI*2);
-    ctx.arc(0.7, 0.5, 0.08, 0, Math.PI*2);
-    ctx.fill();
-  };
-  const drawMonitor = (ctx) => {
-    ctx.fillRect(0.15, 0.3, 0.7, 0.5);
-    ctx.fillRect(0.4, 0.8, 0.2, 0.1);
-  };
-  const drawKeyboard = (ctx) => {
-    ctx.fillRect(0.2, 0.4, 0.6, 0.2);
-    for (let i = 0; i < 5; i++) {
-      ctx.fillRect(0.25 + i*0.08, 0.45, 0.05, 0.05);
+  // Define 15 different gaming icon drawing functions (0..1 coordinates)
+  const icons = [
+    (ctx) => { // Gamepad
+      ctx.fillRect(0.2, 0.4, 0.6, 0.2);
+      ctx.fillRect(0.3, 0.2, 0.4, 0.2);
+      ctx.beginPath(); ctx.arc(0.2, 0.5, 0.1, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0.8, 0.5, 0.1, 0, Math.PI*2); ctx.fill();
+    },
+    (ctx) => { // Joystick
+      ctx.fillRect(0.3, 0.3, 0.4, 0.4);
+      ctx.fillRect(0.45, 0.7, 0.1, 0.2);
+      ctx.beginPath(); ctx.arc(0.5, 0.5, 0.15, 0, Math.PI*2); ctx.fill();
+    },
+    (ctx) => { // Monitor
+      ctx.fillRect(0.15, 0.3, 0.7, 0.5);
+      ctx.fillRect(0.4, 0.8, 0.2, 0.1);
+    },
+    (ctx) => { // Keyboard
+      ctx.fillRect(0.2, 0.4, 0.6, 0.2);
+      for (let i = 0; i < 5; i++) ctx.fillRect(0.25 + i*0.08, 0.45, 0.05, 0.05);
+      ctx.fillRect(0.45, 0.55, 0.1, 0.05);
+    },
+    (ctx) => { // Headset
+      ctx.beginPath(); ctx.arc(0.5, 0.5, 0.25, 0, Math.PI*2); ctx.fill();
+      ctx.fillRect(0.2, 0.5, 0.1, 0.3);
+      ctx.fillRect(0.7, 0.5, 0.1, 0.3);
+    },
+    (ctx) => { // Mouse
+      ctx.fillRect(0.4, 0.2, 0.2, 0.6);
+      ctx.beginPath(); ctx.ellipse(0.5, 0.5, 0.1, 0.2, 0, 0, Math.PI*2); ctx.fill();
+    },
+    (ctx) => { // Gaming chair
+      ctx.fillRect(0.2, 0.3, 0.6, 0.4);
+      ctx.fillRect(0.3, 0.7, 0.4, 0.2);
+      ctx.fillRect(0.1, 0.9, 0.8, 0.1);
+    },
+    (ctx) => { // Trophy / cup
+      ctx.fillRect(0.4, 0.2, 0.2, 0.5);
+      ctx.fillRect(0.3, 0.7, 0.4, 0.1);
+      ctx.beginPath(); ctx.ellipse(0.5, 0.2, 0.15, 0.1, 0, 0, Math.PI*2); ctx.fill();
+    },
+    (ctx) => { // Arcade button
+      ctx.beginPath(); ctx.arc(0.5, 0.5, 0.3, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0.5, 0.5, 0.15, 0, Math.PI*2); ctx.fillStyle = '#08072A'; ctx.fill();
+    },
+    (ctx) => { // D-pad
+      ctx.fillRect(0.4, 0.2, 0.2, 0.6);
+      ctx.fillRect(0.2, 0.4, 0.6, 0.2);
+    },
+    (ctx) => { // VR headset
+      ctx.fillRect(0.2, 0.4, 0.6, 0.3);
+      ctx.fillRect(0.1, 0.5, 0.1, 0.2);
+      ctx.fillRect(0.8, 0.5, 0.1, 0.2);
+    },
+    (ctx) => { // Steering wheel
+      ctx.beginPath(); ctx.ellipse(0.5, 0.5, 0.3, 0.15, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillRect(0.5, 0.6, 0.05, 0.2);
+    },
+    (ctx) => { // Gaming console
+      ctx.fillRect(0.2, 0.3, 0.6, 0.4);
+      ctx.fillRect(0.3, 0.5, 0.1, 0.1);
+      ctx.fillRect(0.6, 0.5, 0.1, 0.1);
+    },
+    (ctx) => { // SD card / cartridge
+      ctx.fillRect(0.3, 0.2, 0.4, 0.6);
+      ctx.fillRect(0.35, 0.3, 0.3, 0.1);
+    },
+    (ctx) => { // Star / power-up
+      ctx.beginPath();
+      let spikes = 5; let outer = 0.35; let inner = 0.15;
+      for (let i = 0; i < spikes*2; i++) {
+        let rad = (i * Math.PI * 2 / (spikes*2)) - Math.PI/2;
+        let r = (i%2 === 0) ? outer : inner;
+        let x = 0.5 + r * Math.cos(rad);
+        let y = 0.5 + r * Math.sin(rad);
+        if (i===0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath(); ctx.fill();
     }
-  };
-  const drawHeadset = (ctx) => {
-    ctx.beginPath();
-    ctx.arc(0.5, 0.5, 0.25, 0, Math.PI*2);
-    ctx.fillRect(0.2, 0.5, 0.1, 0.3);
-    ctx.fillRect(0.7, 0.5, 0.1, 0.3);
-  };
-
-  const iconCreators = [drawGamepad, drawController, drawMonitor, drawKeyboard, drawHeadset];
-  const iconPngs = iconCreators.map(fn => createIconPng(fn, 9));
-  const iconSizeMm = 9;
-
-  // ---------- 1. Dark background ----------
-  doc.setFillColor(8, 7, 42); // #08072A
-  doc.rect(0, 0, pageWidth, pageHeight, 'F');
-
-  // ---------- 2. Scatter icons with low opacity ----------
-  const positions = [
-    { x: 15, y: 30 }, { x: 170, y: 50 }, { x: 40, y: 140 }, { x: 180, y: 180 },
-    { x: 25, y: 220 }, { x: 160, y: 250 }, { x: 100, y: 80 }, { x: 50, y: 270 },
-    { x: 140, y: 20 }, { x: 10, y: 100 }, { x: 190, y: 120 }, { x: 120, y: 200 },
-    { x: 70, y: 190 }, { x: 130, y: 260 }, { x: 20, y: 280 }, { x: 180, y: 290 }
   ];
 
-  // Use low opacity for watermarks
+  const iconPngs = icons.map(fn => createIconPng(fn));
+  const iconSize = 8; // mm
+
+  // ---------- 1. Dark background ----------
+  doc.setFillColor(8, 7, 42);
+  doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+  // ---------- 2. Scatter icons (more positions, low opacity) ----------
+  const positions = [];
+  // Generate 40 random positions (avoid top 10mm and bottom 15mm where text sits)
+  for (let i = 0; i < 48; i++) {
+    positions.push({
+      x: 8 + Math.random() * (pageWidth - 16),
+      y: 12 + Math.random() * (pageHeight - 25)
+    });
+  }
+  // Also add some fixed positions for even coverage
+  const fixed = [
+    [20,30], [180,45], [35,120], [170,150], [15,210], [185,260], [90,25], [130,280],
+    [55,190], [145,80], [10,270], [190,100], [70,160], [120,40], [160,230], [30,250]
+  ];
+  fixed.forEach(([x,y]) => positions.push({x, y}));
+
   if (doc.GState) {
-    doc.setGState(new doc.GState({ opacity: 0.12 }));
+    doc.setGState(new doc.GState({ opacity: 0.1 }));
   }
   for (let pos of positions) {
     const randomIcon = iconPngs[Math.floor(Math.random() * iconPngs.length)];
-    doc.addImage(randomIcon, 'PNG', pos.x, pos.y, iconSizeMm, iconSizeMm);
+    doc.addImage(randomIcon, 'PNG', pos.x, pos.y, iconSize, iconSize);
   }
   if (doc.GState) {
     doc.setGState(new doc.GState({ opacity: 1 }));
@@ -1025,7 +1074,7 @@
     doc.text('DGL', 20, 30);
   }
 
-  // ---------- 4. Header title ----------
+  // ---------- 4. Header ----------
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
   doc.setTextColor(0, 255, 255);
@@ -1040,46 +1089,57 @@
   doc.setLineWidth(0.5);
   doc.line(30, 52, pageWidth - 30, 52);
 
-  // ---------- 5. Invoice details box ----------
+  // ---------- 5. Invoice details box (increased height, better layout) ----------
+  const boxY = 60;
+  const boxHeight = 52; // increased from 42 to 52
   doc.setFillColor(15, 25, 65);
-  doc.roundedRect(20, 60, pageWidth - 40, 42, 4, 4, 'F');
+  doc.roundedRect(20, boxY, pageWidth - 40, boxHeight, 4, 4, 'F');
   doc.setDrawColor(0, 255, 255);
-  doc.roundedRect(20, 60, pageWidth - 40, 42, 4, 4, 'S');
+  doc.roundedRect(20, boxY, pageWidth - 40, boxHeight, 4, 4, 'S');
+
+  // Two columns: left labels, right values
+  const leftX = 28;
+  const rightX = 70;
+  const rowHeight = 8;
+  const startY = boxY + 12;
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
-  doc.text('Date & Time:', 28, 72);
-  doc.text('Invoice #:', 28, 82);
-  doc.text('Buyer:', 28, 92);
-  doc.text('Seller:', 28, 102);
+  doc.text('Date & Time:', leftX, startY);
+  doc.text('Invoice #:', leftX, startY + rowHeight);
+  doc.text('Buyer:', leftX, startY + rowHeight * 2);
+  doc.text('Seller:', leftX, startY + rowHeight * 3);
 
   doc.setFont('helvetica', 'normal');
   const dateTime = new Date().toLocaleString();
   const invoiceNo = `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${item[0]}`;
-  doc.text(dateTime, 70, 72);
-  doc.text(invoiceNo, 70, 82);
-  doc.text(buyerName, 70, 92);
-  doc.text(sellerName, 70, 102);
+  // Wrap long text if needed (simple truncation, but buyer/seller names are usually short)
+  doc.text(dateTime, rightX, startY);
+  doc.text(invoiceNo, rightX, startY + rowHeight);
+  doc.text(buyerName, rightX, startY + rowHeight * 2);
+  doc.text(sellerName, rightX, startY + rowHeight * 3);
 
   // ---------- 6. Product details ----------
+  const prodY = boxY + boxHeight + 8;
   doc.setFillColor(8, 7, 42);
-  doc.roundedRect(20, 110, pageWidth - 40, 55, 4, 4, 'F');
+  doc.roundedRect(20, prodY, pageWidth - 40, 48, 4, 4, 'F');
   doc.setDrawColor(0, 255, 255);
-  doc.roundedRect(20, 110, pageWidth - 40, 55, 4, 4, 'S');
+  doc.roundedRect(20, prodY, pageWidth - 40, 48, 4, 4, 'S');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.setTextColor(0, 255, 255);
-  doc.text('ORDER SUMMARY', 28, 125);
+  doc.text('ORDER SUMMARY', 28, prodY + 12);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
-  doc.text(`Item: ${item[2]}`, 28, 140);
-  doc.text(`Amount Paid: PHP ${Number(soldAmount).toLocaleString()}`, 28, 155);
+  doc.text(`Item: ${item[2]}`, 28, prodY + 28);
+  doc.text(`Amount Paid: PHP ${Number(soldAmount).toLocaleString()}`, 28, prodY + 42);
 
-  // ---------- 7. Creative thank‑you (game themed) ----------
+  // ---------- 7. Creative thank‑you message ----------
+  const thanksY = prodY + 60;
   const messages = [
     "Thanks for leveling up with us!",
     "Your purchase unlocked a huge win for our small shop. Game on!",
@@ -1092,19 +1152,19 @@
   const randomMsg = messages[Math.floor(Math.random() * messages.length)];
 
   doc.setFillColor(0, 30, 50);
-  doc.roundedRect(20, 175, pageWidth - 40, 35, 4, 4, 'F');
+  doc.roundedRect(20, thanksY, pageWidth - 40, 35, 4, 4, 'F');
   doc.setDrawColor(0, 255, 255);
-  doc.roundedRect(20, 175, pageWidth - 40, 35, 4, 4, 'S');
+  doc.roundedRect(20, thanksY, pageWidth - 40, 35, 4, 4, 'S');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(0, 255, 255);
-  doc.text('A huge thank you!', pageWidth / 2, 190, { align: 'center' });
+  doc.text('A huge thank you!', pageWidth / 2, thanksY + 12, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
-  doc.text(randomMsg, pageWidth / 2, 202, { align: 'center' });
+  doc.text(randomMsg, pageWidth / 2, thanksY + 26, { align: 'center' });
 
   // ---------- 8. Footer ----------
   doc.setFontSize(9);
