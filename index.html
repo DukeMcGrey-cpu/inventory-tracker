@@ -662,81 +662,86 @@
       renderItems();
     }
 
-    // ── PRODUCT DETAIL MODAL ──
-    function openDetailModal(id) {
-      const r = cachedItems.find(x => x[0] == id);
-      if (!r) return;
-      const p     = r[2]  || '';
-      const c     = r[3]  || '';
-      const pu    = +r[4] || 0;
-      const sh    = +r[5] || 0;
-      const o     = +r[6] || 0;
-      const cap   = +r[7] || 0;
-      const imgs  = (r[9] || '').split(',').filter(Boolean);
-      const st    = r[10] || 'ON HAND';
-      const soldDate = r[11] ? new Date(r[11]).toLocaleDateString() : '—';
-      const soldp = +r[12] || 0;
-      const pro   = +r[13] || 0;
-      const notes = r[14] || '';
-      const buyer = r[15] || '';
-      const seller= r[16] || '';
-      const addDate = r[1] ? new Date(r[1]).toLocaleDateString() : '—';
-      const margin  = cap > 0 ? ((pro / cap) * 100).toFixed(1) : '0';
-      const pillClass = st === 'SOLD' ? 'sold' : st === 'TRADED' ? 'traded' : 'onhand';
-      const pillLabel = st === 'ON HAND' ? '📦 On Hand' : st === 'SOLD' ? '✅ Sold' : '🔄 Traded';
+   function openDetailModal(id) {
+  const r = cachedItems.find(x => x[0] == id);
+  if (!r) return;
 
-      // Hero images
-      let heroHTML = '';
-      if (imgs.length > 0) {
-        heroHTML = `
-          <div class="detail-hero" style="position:relative;">
-            <img id="detailMainImg" src="${imgs[0]}" style="width:100%;height:240px;object-fit:cover;border-radius:28px 28px 0 0;display:block;" onclick="openLightbox('${imgs[0]}')">
-            <span class="detail-pill ${pillClass}">${pillLabel}</span>
-            <button class="detail-close" onclick="closeDetailModal()" style="position:absolute;top:14px;left:14px;">✕</button>
-            ${imgs.length > 1 ? `<div class="detail-hero-thumbs">${imgs.map((u,i) =>
-              `<img src="${u}" class="${i===0?'active':''}" onclick="switchDetailImg(this,'${u}')">`).join('')}</div>` : ''}
-          </div>`;
-      } else {
-        heroHTML = `
-          <div style="position:relative;">
-            <div class="detail-hero-placeholder">📦</div>
-            <span class="detail-pill ${pillClass}">${pillLabel}</span>
-            <button class="detail-close" onclick="closeDetailModal()" style="position:absolute;top:14px;left:14px;">✕</button>
-          </div>`;
-      }
+  const p     = r[2]  || '';
+  const c     = r[3]  || '';
+  const pu    = +r[4] || 0;
+  const sh    = +r[5] || 0;
+  const o     = +r[6] || 0;
+  const cap   = +r[7] || 0;
+  const imgs  = (r[9] || '').split(',').filter(Boolean);
+  const st    = r[10] || 'ON HAND';
+  const soldDate = r[11] ? new Date(r[11]).toLocaleDateString() : '—';
+  const soldp = +r[12] || 0;
+  const pro   = +r[13] || 0;
+  const notes = r[14] || '';
+  const buyer = r[15] || '';
+  const seller= r[16] || '';
+  const addDate = r[1] ? new Date(r[1]).toLocaleDateString() : '—';
+  const margin  = cap > 0 ? ((pro / cap) * 100).toFixed(1) : '0';
+  const pillClass = st === 'SOLD' ? 'sold' : st === 'TRADED' ? 'traded' : 'onhand';
+  const pillLabel = st === 'ON HAND' ? '📦 On Hand' : st === 'SOLD' ? '✅ Sold' : '🔄 Traded';
 
-      const bodyHTML = `
-        <div class="detail-title">${p}</div>
-        <div class="detail-category">${c} · ${r[0]}</div>
+  // Build hero HTML (without replacing the container)
+  let heroHTML = '';
+  if (imgs.length > 0) {
+    heroHTML = `
+      <div style="position:relative;">
+        <img id="detailMainImg" src="${imgs[0]}" style="width:100%;height:240px;object-fit:cover;border-radius:28px 28px 0 0;display:block;" onclick="openLightbox('${imgs[0]}')">
+        <span class="detail-pill ${pillClass}">${pillLabel}</span>
+        <button class="detail-close" onclick="closeDetailModal()" style="position:absolute;top:14px;left:14px;">✕</button>
+        ${imgs.length > 1 ? `<div class="detail-hero-thumbs">${imgs.map((u,i) =>
+          `<img src="${u}" class="${i===0?'active':''}" onclick="switchDetailImg(this,'${u}')">`).join('')}</div>` : ''}
+      </div>`;
+  } else {
+    heroHTML = `
+      <div style="position:relative;">
+        <div class="detail-hero-placeholder">📦</div>
+        <span class="detail-pill ${pillClass}">${pillLabel}</span>
+        <button class="detail-close" onclick="closeDetailModal()" style="position:absolute;top:14px;left:14px;">✕</button>
+      </div>`;
+  }
 
-        <div class="detail-grid">
-          <div class="detail-field"><label>Date Added</label><span>${addDate}</span></div>
-          <div class="detail-field"><label>Status</label><span>${pillLabel}</span></div>
-          <div class="detail-field"><label>Purchase Amount</label><span>₱${pu.toLocaleString()}</span></div>
-          <div class="detail-field"><label>Shipping Fee</label><span>₱${sh.toLocaleString()}</span></div>
-          <div class="detail-field"><label>Other Fee</label><span>₱${o.toLocaleString()}</span></div>
-          <div class="detail-field"><label>Total Capital</label><span>₱${cap.toLocaleString()}</span></div>
-          ${st !== 'ON HAND' ? `
-          <div class="detail-field"><label>${st==='TRADED'?'Trade':'Sold'} Date</label><span>${soldDate}</span></div>
-          <div class="detail-field"><label>${st==='TRADED'?'Trade Value':'Sold Amount'}</label><span>₱${soldp.toLocaleString()}</span></div>
-          <div class="detail-field ${pro>=0?'profit-pos':'profit-neg'}"><label>Net Profit</label><span>₱${pro.toLocaleString()}</span></div>
-          <div class="detail-field"><label>Margin</label><span>${pro>=0?'+':''}${margin}%</span></div>
-          ` : ''}
-          ${buyer  ? `<div class="detail-field"><label>Buyer</label><span>${buyer}</span></div>` : ''}
-          ${seller ? `<div class="detail-field"><label>Seller</label><span>${seller}</span></div>` : ''}
-          ${notes  ? `<div class="detail-field full"><label>Notes</label><div class="detail-notes-box">${notes}</div></div>` : ''}
-        </div>
+  // Update containers – keep the elements, replace inner content
+  const heroContainer = document.getElementById('detailHero');
+  const bodyContainer = document.getElementById('detailBody');
+  if (!heroContainer || !bodyContainer) return;
 
-        <div class="detail-action-row">
-          <button onclick="closeDetailModal();openEditModal('${r[0]}','${p.replace(/'/g,"\\'")}','${c}','${pu}','${sh}','${o}','${notes.replace(/'/g,"\\'")}')">✏️ Edit</button>
-          <button class="btn-danger" onclick="closeDetailModal();confirmDelete('${r[0]}','${p.replace(/'/g,"\\'")}')">🗑️ Delete</button>
-        </div>
-      `;
+  heroContainer.innerHTML = heroHTML;
+  bodyContainer.innerHTML = `
+    <div class="detail-title">${p}</div>
+    <div class="detail-category">${c} · ${r[0]}</div>
 
-      document.getElementById('detailHero').outerHTML = heroHTML;
-      document.getElementById('detailBody').innerHTML = bodyHTML;
-      document.getElementById('detailModal').classList.add('show');
-    }
+    <div class="detail-grid">
+      <div class="detail-field"><label>Date Added</label><span>${addDate}</span></div>
+      <div class="detail-field"><label>Status</label><span>${pillLabel}</span></div>
+      <div class="detail-field"><label>Purchase Amount</label><span>₱${pu.toLocaleString()}</span></div>
+      <div class="detail-field"><label>Shipping Fee</label><span>₱${sh.toLocaleString()}</span></div>
+      <div class="detail-field"><label>Other Fee</label><span>₱${o.toLocaleString()}</span></div>
+      <div class="detail-field"><label>Total Capital</label><span>₱${cap.toLocaleString()}</span></div>
+      ${st !== 'ON HAND' ? `
+      <div class="detail-field"><label>${st==='TRADED'?'Trade':'Sold'} Date</label><span>${soldDate}</span></div>
+      <div class="detail-field"><label>${st==='TRADED'?'Trade Value':'Sold Amount'}</label><span>₱${soldp.toLocaleString()}</span></div>
+      <div class="detail-field ${pro>=0?'profit-pos':'profit-neg'}"><label>Net Profit</label><span>₱${pro.toLocaleString()}</span></div>
+      <div class="detail-field"><label>Margin</label><span>${pro>=0?'+':''}${margin}%</span></div>
+      ` : ''}
+      ${buyer  ? `<div class="detail-field"><label>Buyer</label><span>${buyer}</span></div>` : ''}
+      ${seller ? `<div class="detail-field"><label>Seller</label><span>${seller}</span></div>` : ''}
+      ${notes  ? `<div class="detail-field full"><label>Notes</label><div class="detail-notes-box">${notes}</div></div>` : ''}
+    </div>
+
+    <div class="detail-action-row">
+      <button onclick="closeDetailModal();openEditModal('${r[0]}','${p.replace(/'/g,"\\'")}','${c}','${pu}','${sh}','${o}','${notes.replace(/'/g,"\\'")}')">✏️ Edit</button>
+      <button class="btn-danger" onclick="closeDetailModal();confirmDelete('${r[0]}','${p.replace(/'/g,"\\'")}')">🗑️ Delete</button>
+    </div>
+  `;
+
+  // Show modal
+  document.getElementById('detailModal').classList.add('show');
+}
 
     function closeDetailModal(e) {
       if (e && e.target !== document.getElementById('detailModal')) return;
