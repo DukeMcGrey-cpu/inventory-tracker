@@ -355,6 +355,14 @@
       body { padding-bottom:80px; }
     }
     @media(max-width:400px) { .cards { grid-template-columns:repeat(2,1fr); } }
+    .preview-trigger {
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.preview-trigger:hover {
+  opacity: 0.75;
+}
   </style>
 </head>
 <body>
@@ -954,10 +962,10 @@ function escapeHtml(str) {
           const st=r[10]||'ON HAND',pro=+r[13]||0;
           const pillClass=st==='SOLD'?'sold':st==='TRADED'?'traded':'onhand';
           const thumbSrc=imgs[0]||'';
-          return `<div class="list-item" onclick="openDetailModal('${id}')">
+          return `<div class="list-item">
             <div class="list-thumb">${thumbSrc?`<img data-src="${thumbSrc}" src="" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:10px;">`:`<span>📦</span>`}</div>
             <div class="list-info">
-              <h4 onclick="event.stopPropagation();openDetailModal('${id}')">${p}</h4>
+              <h4 class="preview-trigger"     onclick="event.stopPropagation(); openDetailModal('${id}')">     ${p} </h4>
               <p>${c} · ₱${cap.toLocaleString()} capital</p>
             </div>
             <div class="list-meta">
@@ -981,17 +989,36 @@ function escapeHtml(str) {
           const pillLabel=st==='ON HAND'?'📦 On Hand':st==='SOLD'?'✅ Sold':'🔄 Traded';
           const margin=cap>0?((pro/cap)*100).toFixed(1):'0';
           let imgHTML='';
-          if(imgs.length>0){const mainSrc=imgs[0];imgHTML=`<div class='item-gallery'><img class='main-img' data-src='${mainSrc}' src='' alt='${safeP}' onclick="openLightbox('${mainSrc}')">${imgs.length>1?`<div class='thumb-row'>${imgs.map((url,i)=>`<img data-src='${url}' src='' class='${i===0?"active":""}' onclick="switchMainImg(this,'${url}','${id}')" alt=''>`).join('')}</div>`:''}</div>`;}
+          if(imgs.length>0){const mainSrc=imgs[0];imgHTML=`<div class='item-gallery'><img class='main-img'
+     data-src='${mainSrc}'
+     src=''
+     alt='${safeP}'
+     onclick="event.stopPropagation(); openDetailModal('${id}')">${imgs.length>1?`<div class='thumb-row'>${imgs.map((url,i)=>`<img data-src='${url}' src='' class='${i===0?"active":""}' onclick="event.stopPropagation(); switchMainImg(this,'${url}','${id}')" alt=''>`).join('')}</div>`:''}</div>`;}
           else{imgHTML=`<div class='item-no-img'>📦</div>`;}
           return `<div class='item' id='item-${id}'><span class='status-pill ${pillClass}'>${pillLabel}</span>${imgHTML}
             <div class='item-body'>
-              <h3 onclick="openDetailModal('${id}')">${p}</h3>
+              <h3 class="preview-trigger"
+    onclick="event.stopPropagation(); openDetailModal('${id}')">
+    ${p}
+</h3>
               <p style='color:var(--subtext)'>${c}</p>
               <p>Capital: <strong>₱${cap.toLocaleString()}</strong></p>
               ${st!=='ON HAND'&&cap>0?`<span class="margin-badge ${pro>=0?'positive':'negative'}">${pro>=0?'+':''}${margin}% margin</span>`:''}
               ${st==='TRADED'?`<div class='trade-info'>🔄 Trade Value: <strong>₱${soldp.toLocaleString()}</strong><br>Profit: <strong style='color:${pro>=0?"var(--green)":"var(--red)"}'>₱${pro.toLocaleString()}</strong></div>`:`<p>Sold: <strong>${soldp?'₱'+soldp.toLocaleString():'-'}</strong></p><p style='color:${pro>=0?"var(--green)":"var(--red)"}'>Profit: <strong>₱${pro.toLocaleString()}</strong></p>`}
               ${notes?`<div class='item-notes'>💬 ${notes}</div>`:''}
-              ${st==='ON HAND'?`<input id='sold-${id}' type='number' placeholder='Sold Amount' style='margin-top:8px'><button class='full-btn' style='margin-top:6px' onclick="markSold('${id}')">Mark Sold</button><div class='action-row-3' style='margin-top:8px'><button class='btn-trade' onclick="openTradeModal('${id}','${safeP}','${cap}')">🔄 Trade</button><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️</button></div>`:st==='TRADED'?`<div class='action-row'><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>`:`<button class='full-btn' style='margin-top:8px' onclick="promptEditSold('${id}')">Edit Sold</button><button class='export-btn' style='margin-top:6px;width:100%' onclick="regenerateInvoice('${id}')">🧾 Re-download Invoice</button><div class='action-row'><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>`}
+              ${st==='ON HAND'?`<input id='sold-${id}'
+       type='number'
+       placeholder='Sold Amount'
+       style='margin-top:8px'
+       onclick="event.stopPropagation()"
+       onfocus="event.stopPropagation()"><button class='full-btn'
+        style='margin-top:6px'
+        onclick="event.stopPropagation(); markSold('${id}')">
+        Mark Sold
+</button><div class='action-row-3' style='margin-top:8px'><button class='btn-trade'
+        onclick="event.stopPropagation(); openTradeModal('${id}','${safeP}','${cap}')">
+        🔄 Trade
+</button><button onclick="event.stopPropagation(); openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="event.stopPropagation(); confirmDelete('${id}','${safeP}')">🗑️</button></div>`:st==='TRADED'?`<div class='action-row'><button onclick="event.stopPropagation(); openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="event.stopPropagation(); confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>`:`<button class='full-btn' style='margin-top:8px' onclick="event.stopPropagation(); promptEditSold('${id}')">Edit Sold</button><button class='export-btn' style='margin-top:6px;width:100%' onclick="event.stopPropagation(); regenerateInvoice('${id}')">🧾 Re-download Invoice</button><div class='action-row'><button onclick="event.stopPropagation(); openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="event.stopPropagation(); confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>`}
             </div></div>`;
         }).join('')}</div>`;
         document.querySelectorAll('img[data-src]').forEach(img=>imgObserver.observe(img));
