@@ -912,7 +912,6 @@
 
   // ========== INVOICE ==========
   async function generateAndDownloadInvoice(item, soldAmount, buyerName, sellerName) {
-  // Safety check
   if (typeof window.jspdf === 'undefined') {
     toast('PDF library not loaded', 'error');
     return;
@@ -923,34 +922,25 @@
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // ---------- 1. Dark background ----------
-  doc.setFillColor(8, 7, 42); // #08072A
+  // 1. Dark background
+  doc.setFillColor(8, 7, 42);
   doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
-  // ---------- 2. Scattered watermark icons (gamepad) ----------
-  // Simple SVG gamepad icon as base64 (white, scalable)
-  const gamepadSvg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZmZmZiIgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIj48cGF0aCBkPSJNMjEgNkgzdjEyaDE4VjZ6bS0yIDhINXYtNGgxNHY0ek05IDhIN3YySDlWOHowbTggMGgtMnYyaDJWOHoiLz48L3N2Zz4='; // white gamepad
-  const positions = [
-    { x: 20, y: 40, size: 35, opacity: 0.08 },
-    { x: 150, y: 100, size: 50, opacity: 0.07 },
-    { x: 50, y: 180, size: 42, opacity: 0.09 },
-    { x: 170, y: 220, size: 38, opacity: 0.08 },
-    { x: 30, y: 260, size: 45, opacity: 0.07 },
-    { x: 140, y: 280, size: 40, opacity: 0.06 },
-    { x: 10, y: 120, size: 30, opacity: 0.1 },
-    { x: 190, y: 140, size: 33, opacity: 0.08 }
-  ];
-  positions.forEach(pos => {
-    doc.setGState(new doc.GState({ opacity: pos.opacity }));
-    doc.addImage(gamepadSvg, 'PNG', pos.x, pos.y, pos.size, pos.size);
-  });
-  doc.setGState(new doc.GState({ opacity: 1 })); // reset
+  // 2. Scattered game emoji watermarks (light gray, subtle)
+  const watermarks = ['🕹️', '🎮', '👾', '🎲', '🃏', '🎯', '🕹️', '🎮'];
+  for (let i = 0; i < 60; i++) {
+    const x = Math.random() * (pageWidth - 20) + 10;
+    const y = Math.random() * (pageHeight - 20) + 10;
+    const emoji = watermarks[Math.floor(Math.random() * watermarks.length)];
+    doc.setTextColor(100, 100, 140);
+    doc.setFontSize(12 + Math.random() * 10);
+    doc.text(emoji, x, y);
+  }
 
-  // ---------- 3. Header – Logo (from global LOGO_URL) ----------
-  let logoData = null;
+  // 3. Logo (optional, continue if fails)
   try {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img.crossOrigin = 'Anonymous';
     await new Promise((resolve, reject) => {
       img.onload = resolve;
       img.onerror = reject;
@@ -960,22 +950,18 @@
     canvas.width = img.width;
     canvas.height = img.height;
     canvas.getContext('2d').drawImage(img, 0, 0);
-    logoData = canvas.toDataURL('image/jpeg');
-  } catch (e) {
-    console.warn('Logo not loaded, skipping');
-  }
-  if (logoData) {
+    const logoData = canvas.toDataURL('image/jpeg');
     doc.addImage(logoData, 'JPEG', 20, 15, 25, 25);
-  } else {
+  } catch (e) {
     doc.setFontSize(16);
     doc.setTextColor(255, 255, 255);
     doc.text('DGL', 20, 30);
   }
 
-  // ---------- 4. Title & Company ----------
+  // 4. Header
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
-  doc.setTextColor(0, 255, 255); // neon cyan accent
+  doc.setTextColor(0, 255, 255);
   doc.text('THANK YOU!', pageWidth / 2, 35, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
@@ -983,16 +969,14 @@
   doc.setTextColor(255, 255, 255);
   doc.text('Your purchase keeps our small business happy', pageWidth / 2, 45, { align: 'center' });
 
-  // decorative neon line
   doc.setDrawColor(0, 255, 255);
   doc.setLineWidth(0.5);
   doc.line(30, 52, pageWidth - 30, 52);
 
-  // ---------- 5. Invoice details box (semi-transparent dark) ----------
-  doc.setFillColor(15, 25, 65, 0.9);
+  // 5. Invoice details box
+  doc.setFillColor(15, 25, 65);
   doc.roundedRect(20, 60, pageWidth - 40, 42, 4, 4, 'F');
   doc.setDrawColor(0, 255, 255);
-  doc.setLineWidth(0.3);
   doc.roundedRect(20, 60, pageWidth - 40, 42, 4, 4, 'S');
 
   doc.setFont('helvetica', 'bold');
@@ -1011,8 +995,8 @@
   doc.text(buyerName, 70, 92);
   doc.text(sellerName, 70, 102);
 
-  // ---------- 6. Product details ----------
-  doc.setFillColor(8, 7, 42, 0.85);
+  // 6. Product details
+  doc.setFillColor(8, 7, 42);
   doc.roundedRect(20, 110, pageWidth - 40, 55, 4, 4, 'F');
   doc.setDrawColor(0, 255, 255);
   doc.roundedRect(20, 110, pageWidth - 40, 55, 4, 4, 'S');
@@ -1028,7 +1012,7 @@
   doc.text(`Item: ${item[2]}`, 28, 140);
   doc.text(`Amount Paid: PHP ${Number(soldAmount).toLocaleString()}`, 28, 155);
 
-  // ---------- 7. Creative thank-you message (randomized) ----------
+  // 7. Creative thank-you
   const messages = [
     "Thanks for leveling up with us! 🎮",
     "Your purchase unlocked a huge win for our small shop. Game on! 🕹️",
@@ -1040,7 +1024,7 @@
   ];
   const randomMsg = messages[Math.floor(Math.random() * messages.length)];
 
-  doc.setFillColor(0, 30, 50, 0.7);
+  doc.setFillColor(0, 30, 50);
   doc.roundedRect(20, 175, pageWidth - 40, 35, 4, 4, 'F');
   doc.setDrawColor(0, 255, 255);
   doc.roundedRect(20, 175, pageWidth - 40, 35, 4, 4, 'S');
@@ -1055,13 +1039,13 @@
   doc.setTextColor(255, 255, 255);
   doc.text(randomMsg, pageWidth / 2, 202, { align: 'center' });
 
-  // ---------- 8. Footer – social & call to action ----------
+  // 8. Footer
   doc.setFontSize(9);
   doc.setTextColor(150, 150, 200);
   doc.text('Follow us for more epic deals!', pageWidth / 2, pageHeight - 15, { align: 'center' });
   doc.text('DGL | BuySell Inventory Pro', pageWidth / 2, pageHeight - 8, { align: 'center' });
 
-  // ---------- 9. Save PDF ----------
+  // 9. Save
   const fileName = `Invoice_${item[2].replace(/\s+/g, '_')}_${invoiceNo}.pdf`;
   doc.save(fileName);
 }
