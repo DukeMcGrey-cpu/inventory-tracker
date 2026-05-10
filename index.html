@@ -922,22 +922,89 @@
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // 1. Dark background
-  doc.setFillColor(8, 7, 42);
-  doc.rect(0, 0, pageWidth, pageHeight, 'F');
-
-  // 2. Scattered game emoji watermarks (light gray, subtle)
-  const watermarks = ['🕹️', '🎮', '👾', '🎲', '🃏', '🎯', '🕹️', '🎮'];
-  for (let i = 0; i < 60; i++) {
-    const x = Math.random() * (pageWidth - 20) + 10;
-    const y = Math.random() * (pageHeight - 20) + 10;
-    const emoji = watermarks[Math.floor(Math.random() * watermarks.length)];
-    doc.setTextColor(100, 100, 140);
-    doc.setFontSize(12 + Math.random() * 10);
-    doc.text(emoji, x, y);
+  // ---------- 0. Helper: Draw white icon on canvas and return PNG data URL ----------
+  function createIconPng(drawFunc, sizeMm = 8) {
+    // Convert mm to pixels (approx 3.78 px per mm, but we'll use a fixed canvas size)
+    const canvasSize = 64; // fixed pixels for crispness
+    const canvas = document.createElement('canvas');
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvasSize, canvasSize);
+    ctx.fillStyle = '#FFFFFF';
+    // Scale drawing: assume drawFunc uses relative coordinates 0..1
+    const scale = canvasSize;
+    ctx.save();
+    ctx.scale(scale, scale);
+    drawFunc(ctx);
+    ctx.restore();
+    return canvas.toDataURL('image/png');
   }
 
-  // 3. Logo (optional, continue if fails)
+  // Predefine drawing functions (each receives ctx with 0..1 normalized coordinates)
+  const drawGamepad = (ctx) => {
+    ctx.fillRect(0.2, 0.4, 0.6, 0.2);
+    ctx.fillRect(0.3, 0.2, 0.4, 0.2);
+    ctx.beginPath();
+    ctx.arc(0.2, 0.5, 0.1, 0, Math.PI*2);
+    ctx.arc(0.8, 0.5, 0.1, 0, Math.PI*2);
+    ctx.fill();
+  };
+  const drawController = (ctx) => {
+    ctx.fillRect(0.2, 0.3, 0.6, 0.4);
+    ctx.fillRect(0.1, 0.5, 0.1, 0.2);
+    ctx.fillRect(0.8, 0.5, 0.1, 0.2);
+    ctx.beginPath();
+    ctx.arc(0.3, 0.5, 0.08, 0, Math.PI*2);
+    ctx.arc(0.7, 0.5, 0.08, 0, Math.PI*2);
+    ctx.fill();
+  };
+  const drawMonitor = (ctx) => {
+    ctx.fillRect(0.15, 0.3, 0.7, 0.5);
+    ctx.fillRect(0.4, 0.8, 0.2, 0.1);
+  };
+  const drawKeyboard = (ctx) => {
+    ctx.fillRect(0.2, 0.4, 0.6, 0.2);
+    for (let i = 0; i < 5; i++) {
+      ctx.fillRect(0.25 + i*0.08, 0.45, 0.05, 0.05);
+    }
+  };
+  const drawHeadset = (ctx) => {
+    ctx.beginPath();
+    ctx.arc(0.5, 0.5, 0.25, 0, Math.PI*2);
+    ctx.fillRect(0.2, 0.5, 0.1, 0.3);
+    ctx.fillRect(0.7, 0.5, 0.1, 0.3);
+  };
+
+  const iconCreators = [drawGamepad, drawController, drawMonitor, drawKeyboard, drawHeadset];
+  const iconPngs = iconCreators.map(fn => createIconPng(fn, 9));
+  const iconSizeMm = 9;
+
+  // ---------- 1. Dark background ----------
+  doc.setFillColor(8, 7, 42); // #08072A
+  doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+  // ---------- 2. Scatter icons with low opacity ----------
+  const positions = [
+    { x: 15, y: 30 }, { x: 170, y: 50 }, { x: 40, y: 140 }, { x: 180, y: 180 },
+    { x: 25, y: 220 }, { x: 160, y: 250 }, { x: 100, y: 80 }, { x: 50, y: 270 },
+    { x: 140, y: 20 }, { x: 10, y: 100 }, { x: 190, y: 120 }, { x: 120, y: 200 },
+    { x: 70, y: 190 }, { x: 130, y: 260 }, { x: 20, y: 280 }, { x: 180, y: 290 }
+  ];
+
+  // Use low opacity for watermarks
+  if (doc.GState) {
+    doc.setGState(new doc.GState({ opacity: 0.12 }));
+  }
+  for (let pos of positions) {
+    const randomIcon = iconPngs[Math.floor(Math.random() * iconPngs.length)];
+    doc.addImage(randomIcon, 'PNG', pos.x, pos.y, iconSizeMm, iconSizeMm);
+  }
+  if (doc.GState) {
+    doc.setGState(new doc.GState({ opacity: 1 }));
+  }
+
+  // ---------- 3. Logo (optional) ----------
   try {
     const img = new Image();
     img.crossOrigin = 'Anonymous';
@@ -958,7 +1025,7 @@
     doc.text('DGL', 20, 30);
   }
 
-  // 4. Header
+  // ---------- 4. Header title ----------
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
   doc.setTextColor(0, 255, 255);
@@ -973,7 +1040,7 @@
   doc.setLineWidth(0.5);
   doc.line(30, 52, pageWidth - 30, 52);
 
-  // 5. Invoice details box
+  // ---------- 5. Invoice details box ----------
   doc.setFillColor(15, 25, 65);
   doc.roundedRect(20, 60, pageWidth - 40, 42, 4, 4, 'F');
   doc.setDrawColor(0, 255, 255);
@@ -995,7 +1062,7 @@
   doc.text(buyerName, 70, 92);
   doc.text(sellerName, 70, 102);
 
-  // 6. Product details
+  // ---------- 6. Product details ----------
   doc.setFillColor(8, 7, 42);
   doc.roundedRect(20, 110, pageWidth - 40, 55, 4, 4, 'F');
   doc.setDrawColor(0, 255, 255);
@@ -1012,12 +1079,12 @@
   doc.text(`Item: ${item[2]}`, 28, 140);
   doc.text(`Amount Paid: PHP ${Number(soldAmount).toLocaleString()}`, 28, 155);
 
-  // 7. Creative thank-you
+  // ---------- 7. Creative thank‑you (game themed) ----------
   const messages = [
-    "Thanks for leveling up with us! 🎮",
-    "Your purchase unlocked a huge win for our small shop. Game on! 🕹️",
-    "We're officially out of 'game over' screens. Thanks for the continue! ▶️",
-    "You've earned the 'Loyal Customer' achievement. Thank you! 🏆",
+    "Thanks for leveling up with us!",
+    "Your purchase unlocked a huge win for our small shop. Game on!",
+    "We're officially out of 'game over' screens. Thanks for the continue!",
+    "You've earned the 'Loyal Customer' achievement. Thank you!",
     "High score achieved! Thanks for being part of our gaming family.",
     "Press START to continue shopping with us. Thank you!",
     "Extra life added to your wallet? We hope so! Thanks for your support."
@@ -1039,13 +1106,13 @@
   doc.setTextColor(255, 255, 255);
   doc.text(randomMsg, pageWidth / 2, 202, { align: 'center' });
 
-  // 8. Footer
+  // ---------- 8. Footer ----------
   doc.setFontSize(9);
   doc.setTextColor(150, 150, 200);
   doc.text('Follow us for more epic deals!', pageWidth / 2, pageHeight - 15, { align: 'center' });
   doc.text('DGL | BuySell Inventory Pro', pageWidth / 2, pageHeight - 8, { align: 'center' });
 
-  // 9. Save
+  // ---------- 9. Save PDF ----------
   const fileName = `Invoice_${item[2].replace(/\s+/g, '_')}_${invoiceNo}.pdf`;
   doc.save(fileName);
 }
