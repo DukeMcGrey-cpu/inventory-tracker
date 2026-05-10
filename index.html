@@ -911,22 +911,160 @@
   async function uploadImages(files){if(!files||!files.length)return '';toast('Uploading images...','');const urls=await Promise.all(Array.from(files).slice(0,5).map(uploadImage));return urls.filter(Boolean).join(',');}
 
   // ========== INVOICE ==========
-  async function generateAndDownloadInvoice(item,soldAmount,buyerName,sellerName){
-    if (typeof window.jspdf === 'undefined') { toast('PDF library not loaded', 'error'); return; }
-    const {jsPDF}=window.jspdf; const doc=new jsPDF(); const productName=item[2]; const dateTime=new Date().toLocaleString(); const invoiceNo=`INV-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${item[0]}`;
-    let logoData=null;
-    try{const img=new Image();img.crossOrigin='anonymous';await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=LOGO_URL;});const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;canvas.getContext('2d').drawImage(img,0,0);logoData=canvas.toDataURL('image/jpeg');}catch(e){logoData=null;}
-    if(logoData)doc.addImage(logoData,'JPEG',20,10,22,22);
-    doc.setFont("helvetica","bold");doc.setFontSize(22);doc.setTextColor(30,58,95);doc.text("THANK YOU!",105,25,{align:"center"});
-    doc.setFont("helvetica","normal");doc.setFontSize(10);doc.setTextColor(80,80,80);doc.text("Your purchase keeps our small business happy",105,35,{align:"center"});
-    doc.setDrawColor(30,58,95);doc.line(20,45,190,45);
-    doc.setFillColor(245,245,245);doc.roundedRect(20,52,170,40,5,5,"F");doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(0,0,0);doc.text("Date & Time:",25,62);doc.text("Invoice #:",25,72);doc.text("Buyer:",25,82);doc.text("Seller:",25,92);
-    doc.setFont("helvetica","normal");doc.text(dateTime,70,62);doc.text(invoiceNo,70,72);doc.text(buyerName,70,82);doc.text(sellerName,70,92);
-    doc.setFont("helvetica","bold");doc.setFontSize(12);doc.setTextColor(30,58,95);doc.text("Product Details",25,112);
-    doc.setFont("helvetica","normal");doc.setFontSize(11);doc.setTextColor(0,0,0);doc.text(`Item: ${productName}`,25,124);doc.text(`Amount Paid: PHP ${Number(soldAmount).toLocaleString()}`,25,136);
-    doc.setFillColor(220,245,220);doc.roundedRect(20,155,170,40,5,5,"F");doc.setFont("helvetica","bold");doc.setFontSize(12);doc.setTextColor(34,97,34);doc.text("A huge thank you!",105,170,{align:"center"});doc.setFont("helvetica","normal");doc.setFontSize(10);doc.text("We appreciate your business. Come back again soon!",105,182,{align:"center"});doc.text("Follow us for more great deals!",105,192,{align:"center"});
-    doc.save(`Invoice_${productName.replace(/\s+/g,'_')}_${invoiceNo}.pdf`);
+  async function generateAndDownloadInvoice(item, soldAmount, buyerName, sellerName) {
+  // Safety check
+  if (typeof window.jspdf === 'undefined') {
+    toast('PDF library not loaded', 'error');
+    return;
   }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  // ---------- 1. Dark background ----------
+  doc.setFillColor(8, 7, 42); // #08072A
+  doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+  // ---------- 2. Scattered watermark icons (gamepad) ----------
+  // Simple SVG gamepad icon as base64 (white, scalable)
+  const gamepadSvg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZmZmZiIgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIj48cGF0aCBkPSJNMjEgNkgzdjEyaDE4VjZ6bS0yIDhINXYtNGgxNHY0ek05IDhIN3YySDlWOHowbTggMGgtMnYyaDJWOHoiLz48L3N2Zz4='; // white gamepad
+  const positions = [
+    { x: 20, y: 40, size: 35, opacity: 0.08 },
+    { x: 150, y: 100, size: 50, opacity: 0.07 },
+    { x: 50, y: 180, size: 42, opacity: 0.09 },
+    { x: 170, y: 220, size: 38, opacity: 0.08 },
+    { x: 30, y: 260, size: 45, opacity: 0.07 },
+    { x: 140, y: 280, size: 40, opacity: 0.06 },
+    { x: 10, y: 120, size: 30, opacity: 0.1 },
+    { x: 190, y: 140, size: 33, opacity: 0.08 }
+  ];
+  positions.forEach(pos => {
+    doc.setGState(new doc.GState({ opacity: pos.opacity }));
+    doc.addImage(gamepadSvg, 'PNG', pos.x, pos.y, pos.size, pos.size);
+  });
+  doc.setGState(new doc.GState({ opacity: 1 })); // reset
+
+  // ---------- 3. Header – Logo (from global LOGO_URL) ----------
+  let logoData = null;
+  try {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = LOGO_URL;
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    logoData = canvas.toDataURL('image/jpeg');
+  } catch (e) {
+    console.warn('Logo not loaded, skipping');
+  }
+  if (logoData) {
+    doc.addImage(logoData, 'JPEG', 20, 15, 25, 25);
+  } else {
+    doc.setFontSize(16);
+    doc.setTextColor(255, 255, 255);
+    doc.text('DGL', 20, 30);
+  }
+
+  // ---------- 4. Title & Company ----------
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(0, 255, 255); // neon cyan accent
+  doc.text('THANK YOU!', pageWidth / 2, 35, { align: 'center' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.text('Your purchase keeps our small business happy', pageWidth / 2, 45, { align: 'center' });
+
+  // decorative neon line
+  doc.setDrawColor(0, 255, 255);
+  doc.setLineWidth(0.5);
+  doc.line(30, 52, pageWidth - 30, 52);
+
+  // ---------- 5. Invoice details box (semi-transparent dark) ----------
+  doc.setFillColor(15, 25, 65, 0.9);
+  doc.roundedRect(20, 60, pageWidth - 40, 42, 4, 4, 'F');
+  doc.setDrawColor(0, 255, 255);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(20, 60, pageWidth - 40, 42, 4, 4, 'S');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.text('Date & Time:', 28, 72);
+  doc.text('Invoice #:', 28, 82);
+  doc.text('Buyer:', 28, 92);
+  doc.text('Seller:', 28, 102);
+
+  doc.setFont('helvetica', 'normal');
+  const dateTime = new Date().toLocaleString();
+  const invoiceNo = `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${item[0]}`;
+  doc.text(dateTime, 70, 72);
+  doc.text(invoiceNo, 70, 82);
+  doc.text(buyerName, 70, 92);
+  doc.text(sellerName, 70, 102);
+
+  // ---------- 6. Product details ----------
+  doc.setFillColor(8, 7, 42, 0.85);
+  doc.roundedRect(20, 110, pageWidth - 40, 55, 4, 4, 'F');
+  doc.setDrawColor(0, 255, 255);
+  doc.roundedRect(20, 110, pageWidth - 40, 55, 4, 4, 'S');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(0, 255, 255);
+  doc.text('ORDER SUMMARY', 28, 125);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(255, 255, 255);
+  doc.text(`Item: ${item[2]}`, 28, 140);
+  doc.text(`Amount Paid: PHP ${Number(soldAmount).toLocaleString()}`, 28, 155);
+
+  // ---------- 7. Creative thank-you message (randomized) ----------
+  const messages = [
+    "Thanks for leveling up with us! 🎮",
+    "Your purchase unlocked a huge win for our small shop. Game on! 🕹️",
+    "We're officially out of 'game over' screens. Thanks for the continue! ▶️",
+    "You've earned the 'Loyal Customer' achievement. Thank you! 🏆",
+    "High score achieved! Thanks for being part of our gaming family.",
+    "Press START to continue shopping with us. Thank you!",
+    "Extra life added to your wallet? We hope so! Thanks for your support."
+  ];
+  const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+
+  doc.setFillColor(0, 30, 50, 0.7);
+  doc.roundedRect(20, 175, pageWidth - 40, 35, 4, 4, 'F');
+  doc.setDrawColor(0, 255, 255);
+  doc.roundedRect(20, 175, pageWidth - 40, 35, 4, 4, 'S');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(0, 255, 255);
+  doc.text('A huge thank you!', pageWidth / 2, 190, { align: 'center' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.text(randomMsg, pageWidth / 2, 202, { align: 'center' });
+
+  // ---------- 8. Footer – social & call to action ----------
+  doc.setFontSize(9);
+  doc.setTextColor(150, 150, 200);
+  doc.text('Follow us for more epic deals!', pageWidth / 2, pageHeight - 15, { align: 'center' });
+  doc.text('DGL | BuySell Inventory Pro', pageWidth / 2, pageHeight - 8, { align: 'center' });
+
+  // ---------- 9. Save PDF ----------
+  const fileName = `Invoice_${item[2].replace(/\s+/g, '_')}_${invoiceNo}.pdf`;
+  doc.save(fileName);
+}
   function regenerateInvoice(id){const item=cachedItems?.find(r=>r[0]==id);if(!item||item[10]!=='SOLD'){toast('Not a sold item','error');return;} generateAndDownloadInvoice(item,item[12]||0,item[15]||'Customer',item[16]||'Our Store');}
 
   // ========== DRAFT ==========
