@@ -241,8 +241,14 @@
     .activity-header h3 { font-family:'Syne',sans-serif; font-size:15px; }
     .activity-toggle { font-size:18px; transition:transform .3s; }
     .activity-toggle.open { transform:rotate(180deg); }
-    .activity-body { overflow:hidden; max-height:0; transition:max-height .4s cubic-bezier(.4,0,.2,1); }
-    .activity-body.open { max-height:500px; }
+    .activity-body {
+  overflow: hidden;
+  max-height: 500px;       /* was 0 – now open by default */
+  transition: max-height .4s cubic-bezier(.4,0,.2,1);
+}
+.activity-body.open {
+  max-height: 500px;       /* keep same for toggle */
+}
     .activity-list { display:flex; flex-direction:column; gap:0; margin-top:12px; }
     .activity-item { display:flex; align-items:center; gap:12px; padding:10px 4px; border-bottom:1px solid rgba(29,78,216,0.06); animation:itemIn .3s ease both; }
     .activity-item:last-child { border-bottom:none; }
@@ -695,6 +701,7 @@
     activityLog.unshift({ type, name, id, extra, time: Date.now() });
     if (activityLog.length > 50) activityLog = activityLog.slice(0, 50);
     safeSetStorage('activityLog', activityLog);
+    buildActivityFeed();
   }
   function timeAgo(ts) {
     const s = Math.floor((Date.now() - ts) / 1000);
@@ -1525,6 +1532,7 @@
   loadDashboard();
   loadItems(true);
   loadDraft();
+  buildActivityFeed();
 </script>
 </body>
 </html>
