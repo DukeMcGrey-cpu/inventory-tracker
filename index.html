@@ -4,7 +4,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>DGL | BuySell Inventory Pro</title>
   <link rel="icon" href="https://i.ibb.co/p6pRc65C/received-26163013153378553.jpg">
-  <link rel="manifest" href="/inventory-tracker/manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -643,11 +642,34 @@ function renderItems(){
       const safeN=notes.replace(/'/g,"\\'").replace(/"/g,'&quot;');
       const pillClass=st==='SOLD'?'sold':st==='TRADED'?'traded':'onhand';
       const pillLabel=st==='ON HAND'?'📦 On Hand':st==='SOLD'?'✅ Sold':'🔄 Traded';
-      const margin=cap>0?((pro/cap)*100).toFixed(1):'0';
+      let marginDisplay='';
+      if(st!=='ON HAND' && cap>0){
+        const margin=((pro/cap)*100).toFixed(1);
+        marginDisplay=`<span class="margin-badge ${pro>=0?'positive':'negative'}">${pro>=0?'+':''}${margin}% margin</span>`;
+      }
       let imgHTML='';
-      if(imgs.length>0){const mainSrc=imgs[0];imgHTML=`<div class='item-gallery'><img class='main-img' data-src='${mainSrc}' src='' alt='${escapeHtml(p)}' onclick="openLightbox('${mainSrc}')">${imgs.length>1?`<div class='thumb-row'>${imgs.map((url,i)=>`<img data-src='${url}' src='' class='${i===0?"active":""}' onclick="switchMainImg(this,'${url}','${id}')" alt=''>`).join('')}</div>`:''}</div>`;}
-      else{imgHTML=`<div class='item-no-img'>📦</div>`;}
-      return `<div class='item' id='item-${id}'><span class='status-pill ${pillClass}'>${pillLabel}</span>${imgHTML}<div class='item-body'><h3>${escapeHtml(p)}</h3><p>${escapeHtml(c)}</p><p>Capital: <strong>₱${cap.toLocaleString()}</strong></p>${st!=='ON HAND'&&cap>0?`<span class="margin-badge ${pro>=0?'positive':'negative'}">${pro>=0?'+':''}${margin}% margin</span>`:''}${st==='TRADED'?`<div class='trade-info'>🔄 Trade Value: <strong>₱${soldp.toLocaleString()}</strong><br>Profit: <strong style='color:${pro>=0?"var(--green)":"var(--red)"}'>₱${pro.toLocaleString()}</strong></div>`:`<p>Sold: <strong>${soldp?'₱'+soldp.toLocaleString():'-'}</strong></p><p style='color:${pro>=0?"var(--green)":"var(--red)"}'>Profit: <strong>₱${pro.toLocaleString()}</strong></p>`}${notes?`<div class='item-notes'>💬 ${escapeHtml(notes)}</div>`:''}${st==='ON HAND'?`<input id='sold-${id}' type='number' placeholder='Sold Amount' style='margin-top:8px'><button class='full-btn' style='margin-top:6px' onclick="markSold('${id}')">Mark Sold</button><div class='action-row-3' style='margin-top:8px'><button class='btn-trade' onclick="openTradeModal('${id}','${safeP}','${cap}')">🔄 Trade</button><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️</button></div>`:st==='TRADED'?`<div class='action-row'><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>`:`<button class='full-btn' style='margin-top:8px' onclick="promptEditSold('${id}')">Edit Sold</button><button class='export-btn' style='margin-top:6px;width:100%' onclick="regenerateInvoice('${id}')">🧾 Re-download Invoice</button><div class='action-row'><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>`}</div></div>`;
+      if(imgs.length>0){
+        const mainSrc=imgs[0];
+        imgHTML=`<div class='item-gallery'><img class='main-img' data-src='${mainSrc}' src='' alt='${escapeHtml(p)}' onclick="openLightbox('${mainSrc}')">${imgs.length>1?`<div class='thumb-row'>${imgs.map((url,i)=>`<img data-src='${url}' src='' class='${i===0?"active":""}' onclick="switchMainImg(this,'${url}','${id}')" alt=''>`).join('')}</div>`:''}</div>`;
+      } else {
+        imgHTML=`<div class='item-no-img'>📦</div>`;
+      }
+      let bodyContent=`<div class='item-body'><h3>${escapeHtml(p)}</h3><p>${escapeHtml(c)}</p><p>Capital: <strong>₱${cap.toLocaleString()}</strong></p>${marginDisplay}`;
+      if(st==='TRADED'){
+        bodyContent+=`<div class='trade-info'>🔄 Trade Value: <strong>₱${soldp.toLocaleString()}</strong><br>Profit: <strong style='color:${pro>=0?"var(--green)":"var(--red)"}'>₱${pro.toLocaleString()}</strong></div>`;
+      } else if(st!=='ON HAND'){
+        bodyContent+=`<p>Sold: <strong>${soldp?'₱'+soldp.toLocaleString():'-'}</strong></p><p style='color:${pro>=0?"var(--green)":"var(--red)"}'>Profit: <strong>₱${pro.toLocaleString()}</strong></p>`;
+      }
+      if(notes) bodyContent+=`<div class='item-notes'>💬 ${escapeHtml(notes)}</div>`;
+      if(st==='ON HAND'){
+        bodyContent+=`<input id='sold-${id}' type='number' placeholder='Sold Amount' style='margin-top:8px'><button class='full-btn' style='margin-top:6px' onclick="markSold('${id}')">Mark Sold</button><div class='action-row-3' style='margin-top:8px'><button class='btn-trade' onclick="openTradeModal('${id}','${safeP}','${cap}')">🔄 Trade</button><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️</button></div>`;
+      } else if(st==='TRADED'){
+        bodyContent+=`<div class='action-row'><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>`;
+      } else {
+        bodyContent+=`<button class='full-btn' style='margin-top:8px' onclick="promptEditSold('${id}')">Edit Sold</button><button class='export-btn' style='margin-top:6px;width:100%' onclick="regenerateInvoice('${id}')">🧾 Re-download Invoice</button><div class='action-row'><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️ Delete</button></div>`;
+      }
+      bodyContent+=`</div>`;
+      return `<div class='item' id='item-${id}'><span class='status-pill ${pillClass}'>${pillLabel}</span>${imgHTML}${bodyContent}</div>`;
     }).join('')}</div>`;
     document.querySelectorAll('img[data-src]').forEach(img=>imgObserver.observe(img));
   }
@@ -671,7 +693,7 @@ function buildChart(data){const soldItems=data.filter(r=>r[10]==='SOLD'&&r[11]);
 function switchChart(type,btn){currentChartType=type;document.querySelectorAll('.chart-tab').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');buildChart(cachedItems);}
 
 function toggleMonthlySummary(){const body=document.getElementById('monthlyBody'),toggle=document.getElementById('monthlyToggle');body.classList.toggle('open');toggle.classList.toggle('open');if(body.classList.contains('open'))buildMonthlySummary();}
-function buildMonthlySummary(){const tbody=document.getElementById('monthlyTableBody');const soldItems=cachedItems.filter(r=>r[10]==='SOLD'&&r[11]);if(!soldItems.length){tbody.innerHTML=`<td><td colspan="6" style="text-align:center;color:var(--subtext);padding:20px">No sales data yet</td></tr>`;return;}const months={};soldItems.forEach(r=>{const d=new Date(r[11]);if(isNaN(d))return;const key=d.toLocaleString('default',{month:'long',year:'numeric'});const sortK=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;if(!months[key])months[key]={sort:sortK,items:0,revenue:0,capital:0,profit:0};months[key].items++;months[key].revenue+=+r[12]||0;months[key].capital+=+r[7]||0;months[key].profit+=+r[13]||0;});const sorted=Object.entries(months).sort((a,b)=>b[1].sort.localeCompare(a[1].sort));tbody.innerHTML=sorted.map(([month,d])=>{const margin=d.revenue?((d.profit/d.revenue)*100).toFixed(1):0;const mColor=margin>=0?'var(--green)':'var(--red)';return`<tr><td><strong>${month}</strong></td><td>${d.items}</td><td>₱${d.revenue.toLocaleString()}</td><td>₱${d.capital.toLocaleString()}</td><td style="color:${d.profit>=0?'var(--green)':'var(--red)'}"><strong>₱${d.profit.toLocaleString()}</strong></td><td style="color:${mColor}"><strong>${margin}%</strong></td></tr>`;}).join('');}
+function buildMonthlySummary(){const tbody=document.getElementById('monthlyTableBody');const soldItems=cachedItems.filter(r=>r[10]==='SOLD'&&r[11]);if(!soldItems.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--subtext);padding:20px">No sales data yet</td></tr>`;return;}const months={};soldItems.forEach(r=>{const d=new Date(r[11]);if(isNaN(d))return;const key=d.toLocaleString('default',{month:'long',year:'numeric'});const sortK=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;if(!months[key])months[key]={sort:sortK,items:0,revenue:0,capital:0,profit:0};months[key].items++;months[key].revenue+=+r[12]||0;months[key].capital+=+r[7]||0;months[key].profit+=+r[13]||0;});const sorted=Object.entries(months).sort((a,b)=>b[1].sort.localeCompare(a[1].sort));tbody.innerHTML=sorted.map(([month,d])=>{const margin=d.revenue?((d.profit/d.revenue)*100).toFixed(1):0;const mColor=margin>=0?'var(--green)':'var(--red)';return`<tr><td><strong>${month}</strong></td><td>${d.items}</td><td>₱${d.revenue.toLocaleString()}</td><td>₱${d.capital.toLocaleString()}</td><td style="color:${d.profit>=0?'var(--green)':'var(--red)'}"><strong>₱${d.profit.toLocaleString()}</strong></td><td style="color:${mColor}"><strong>${margin}%</strong></td></tr>`;}).join('');}
 function toggleActivityFeed(){const body=document.getElementById('activityBody'),toggle=document.getElementById('activityToggle');body.classList.toggle('open');toggle.classList.toggle('open');if(body.classList.contains('open'))buildActivityFeed();}
 function buildActivityFeed(){const list=document.getElementById('activityList');if(!activityLog.length){list.innerHTML=`<div style="text-align:center;color:var(--subtext);padding:20px;font-size:13px">No activity yet</div>`;return;}const icons={added:'📦',sold:'✅',traded:'🔄',deleted:'🗑️',edited:'✏️'};const labels={added:'Added',sold:'Sold',traded:'Traded',deleted:'Deleted',edited:'Edited'};list.innerHTML=activityLog.slice(0,15).map(a=>`<div class="activity-item"><div class="activity-dot ${a.type}">${icons[a.type]||'📋'}</div><div class="activity-info"><strong>${a.name}</strong><span>${labels[a.type]||a.type}${a.extra?' · '+a.extra:''} · ${a.id}</span></div><div class="activity-time">${timeAgo(a.time)}</div></div>`).join('');}
 
@@ -715,12 +737,7 @@ function navTo(tab){document.querySelectorAll('.nav-item').forEach(n=>n.classLis
 
 document.addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn||btn.classList.contains('lightbox-close'))return;btn.classList.add('ripple-host');const r=document.createElement('span');r.className='ripple';const rect=btn.getBoundingClientRect();const size=Math.max(rect.width,rect.height);r.style.cssText=`width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px;`;btn.appendChild(r);setTimeout(()=>r.remove(),600);});
 
-// Service Worker registration
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/inventory-tracker/sw.js')
-    .then(reg => console.log('Service Worker registered', reg))
-    .catch(err => console.error('SW registration failed', err));
-}
+// Service worker removed to fix 404 error – you can re-add later if needed
 
 loadDarkMode();
 setView(currentView);
