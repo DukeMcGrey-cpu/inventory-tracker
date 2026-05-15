@@ -356,14 +356,9 @@
     }
     @media(max-width:400px) { .cards { grid-template-columns:repeat(2,1fr); } }
 
-    /* New styles for preview and tour */
+    /* Additional style for preview */
     .image-preview { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
     .preview-thumb { width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid var(--glass-border); }
-    .drop-zone { border:2px dashed var(--accent); border-radius:12px; padding:20px; text-align:center; cursor:pointer; margin-bottom:8px; transition:background 0.2s; }
-    .drop-zone.drag-over { background:rgba(29,78,216,0.1); }
-    .tour-tooltip { position:absolute; background:#1e3a5f; color:white; padding:12px; border-radius:12px; max-width:250px; z-index:10001; box-shadow:0 4px 12px rgba(0,0,0,0.3); }
-    .tour-tooltip button { margin-top:8px; background:white; color:#1e3a5f; padding:4px 12px; width:auto; }
-    .tour-tooltip::before { content:''; position:absolute; top:-8px; left:20px; border-left:8px solid transparent; border-right:8px solid transparent; border-bottom:8px solid #1e3a5f; }
   </style>
 </head>
 <body>
@@ -445,7 +440,6 @@
       <input type="checkbox" onchange="toggleDarkMode()" id="darkSwitch">
       <span class="slider"></span>
     </label>
-    <button class="export-btn" style="width:auto; padding:6px 12px;" onclick="startTour()">🎓 Tour</button>
   </div>
 </div>
 
@@ -471,7 +465,10 @@
       <input id="priceInput" type="number" placeholder="Purchase Amount" oninput="saveDraft()">
       <input id="shippingInput" type="number" placeholder="Shipping Fee" oninput="saveDraft()">
       <input id="otherInput" type="number" placeholder="Other Fee" oninput="saveDraft()">
-      <div id="dropZone" class="drop-zone">📸 Tap or drag images here (max 8)<input type="file" id="imageInput" accept="image/*" multiple style="display:none"></div>
+      <div id="dropZone" style="border:2px dashed var(--accent); border-radius:12px; padding:20px; text-align:center; cursor:pointer; margin-bottom:8px;">
+        📸 Tap to select images (max 8)
+        <input type="file" id="imageInput" accept="image/*" multiple style="display:none">
+      </div>
       <div id="imagePreview" class="image-preview"></div>
       <textarea id="notesInput" class="full-col" placeholder="Notes (optional) — condition, source, buyer info..." oninput="saveDraft()"></textarea>
       <button onclick="addItem()">Add Product</button>
@@ -550,7 +547,7 @@
       <table class="monthly-table">
         <thead><tr><th>Month</th><th>Items Sold</th><th>Revenue</th><th>Capital Spent</th><th>Net Profit</th><th>Margin</th></tr></thead>
         <tbody id="monthlyTableBody"><tr><td colspan="6" style="text-align:center;color:var(--subtext);padding:20px">No sales data yet</td></tr></tbody>
-      8xa
+      </table>
     </div>
   </div>
 
@@ -584,9 +581,9 @@
     <input id="edit-shipping" type="number" placeholder="Shipping Fee">
     <input id="edit-other" type="number" placeholder="Other Fee">
     <textarea id="edit-notes" placeholder="Notes (optional)..."></textarea>
-    <div id="edit-dropZone" class="drop-zone">📸 Tap or drag images here (max 8)<input type="file" id="edit-image" accept="image/*" multiple style="display:none"></div>
+    <input id="edit-image" type="file" accept="image/*" multiple>
     <div id="editImagePreview" class="image-preview"></div>
-    <small style="color:var(--subtext);margin-top:-4px;font-size:12px;">Leave empty to keep existing photos</small>
+    <small style="color:var(--subtext);margin-top:-4px;font-size:12px;">Leave image empty to keep existing photos</small>
     <button onclick="saveEditItem()">Save Changes</button>
     <button class="btn-secondary" onclick="closeEditModal()" style="margin-top:4px;">Cancel</button>
   </div>
@@ -632,8 +629,9 @@
 </div>
 
 <script>
-  // ==================== YOUR ORIGINAL WORKING SCRIPT WITH ADDED FEATURES ====================
-  const API       = 'https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec'; // REPLACE WITH YOUR DEPLOYMENT ID
+  // ==================== PATCHED SCRIPT WITH RELIABLE IMAGE UPLOAD ON ADD ====================
+
+  const API       = 'https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec';
   const IMGBB_KEY = 'c1047f546534cb119c255afbd588a63f';
   const LOGO_URL  = 'https://i.ibb.co/p6pRc65C/received-26163013153378553.jpg';
   const MAX_IMAGES = 8;
@@ -652,19 +650,8 @@
   let pendingDelete    = null;
   let undoTimer        = null;
 
-  // Store selected files for add form (image upload fix)
+  // Store selected image files as an array of File objects (captured immediately)
   let pendingImageFiles = [];
-
-  // ========== NEW: Improved Date & Currency Formatting ==========
-  function formatCurrency(amount) {
-    return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'PHP' }).format(amount);
-  }
-  function formatDate(dateString) {
-    if (!dateString) return '—';
-    const d = new Date(dateString);
-    if (isNaN(d)) return '—';
-    return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
-  }
 
   // ========== SAFE LOCALSTORAGE HELPERS ==========
   function safeGetStorage(key, defaultValue = null) {
@@ -742,7 +729,7 @@
     renderItems();
   }
 
-  // ========== PRODUCT DETAIL MODAL (with History button) ==========
+  // ========== PRODUCT DETAIL MODAL ==========
   function openDetailModal(id) {
     const r = cachedItems?.find(x => x[0] == id);
     if (!r) {
@@ -763,7 +750,7 @@
     const notes = r[14] || '';
     const buyer = r[15] || '';
     const seller= r[16] || '';
-    const addDate = formatDate(r[1]);
+    const addDate = r[1] ? new Date(r[1]).toLocaleDateString() : '—';
     const margin  = cap > 0 ? ((pro / cap) * 100).toFixed(1) : '0';
     const pillClass = st === 'SOLD' ? 'sold' : st === 'TRADED' ? 'traded' : 'onhand';
     const pillLabel = st === 'ON HAND' ? '📦 On Hand' : st === 'SOLD' ? '✅ Sold' : '🔄 Traded';
@@ -798,14 +785,14 @@
       <div class="detail-grid">
         <div class="detail-field"><label>Date Added</label><span>${addDate}</span></div>
         <div class="detail-field"><label>Status</label><span>${pillLabel}</span></div>
-        <div class="detail-field"><label>Purchase Amount</label><span>${formatCurrency(pu)}</span></div>
-        <div class="detail-field"><label>Shipping Fee</label><span>${formatCurrency(sh)}</span></div>
-        <div class="detail-field"><label>Other Fee</label><span>${formatCurrency(o)}</span></div>
-        <div class="detail-field"><label>Total Capital</label><span>${formatCurrency(cap)}</span></div>
+        <div class="detail-field"><label>Purchase Amount</label><span>₱${pu.toLocaleString()}</span></div>
+        <div class="detail-field"><label>Shipping Fee</label><span>₱${sh.toLocaleString()}</span></div>
+        <div class="detail-field"><label>Other Fee</label><span>₱${o.toLocaleString()}</span></div>
+        <div class="detail-field"><label>Total Capital</label><span>₱${cap.toLocaleString()}</span></div>
         ${st !== 'ON HAND' ? `
-        <div class="detail-field"><label>${st==='TRADED'?'Trade':'Sold'} Date</label><span>${formatDate(r[11])}</span></div>
-        <div class="detail-field"><label>${st==='TRADED'?'Trade Value':'Sold Amount'}</label><span>${formatCurrency(soldp)}</span></div>
-        <div class="detail-field ${pro>=0?'profit-pos':'profit-neg'}"><label>Net Profit</label><span>${formatCurrency(pro)}</span></div>
+        <div class="detail-field"><label>${st==='TRADED'?'Trade':'Sold'} Date</label><span>${soldDate}</span></div>
+        <div class="detail-field"><label>${st==='TRADED'?'Trade Value':'Sold Amount'}</label><span>₱${soldp.toLocaleString()}</span></div>
+        <div class="detail-field ${pro>=0?'profit-pos':'profit-neg'}"><label>Net Profit</label><span>₱${pro.toLocaleString()}</span></div>
         <div class="detail-field"><label>Margin</label><span>${pro>=0?'+':''}${margin}%</span></div>
         ` : ''}
         ${buyer  ? `<div class="detail-field"><label>Buyer</label><span>${buyer}</span></div>` : ''}
@@ -815,25 +802,9 @@
       <div class="detail-action-row">
         <button onclick="closeDetailModal();openEditModal('${r[0]}','${p.replace(/'/g,"\\'")}','${c}','${pu}','${sh}','${o}','${notes.replace(/'/g,"\\'")}')">✏️ Edit</button>
         <button class="btn-danger" onclick="closeDetailModal();confirmDelete('${r[0]}','${p.replace(/'/g,"\\'")}')">🗑️ Delete</button>
-        <button class="btn-secondary" onclick="showProductHistory('${r[0]}')">📜 History</button>
       </div>
     `;
     document.getElementById('detailModal').classList.add('show');
-  }
-
-  // ========== NEW: Audit Log / History ==========
-  async function showProductHistory(id) {
-    const res = await safeFetch(API + '?action=getHistory&id=' + id);
-    if (!res || !res.length) {
-      toast('No history found for this product', 'error');
-      return;
-    }
-    let html = '<div style="max-height:300px; overflow-y:auto;"><table style="width:100%; font-size:12px;"><tr><th>Time</th><th>Action</th><th>Details</th></tr>';
-    res.forEach(h => {
-      html += `<tr><td>${formatDate(h[0])}</td><td>${h[2]}</td><td>${h[3]} → ${h[4]}</td></tr>`;
-    });
-    html += '</table></div>';
-    showConfirm('📜', 'Product History', html, 'Close', 'btn-secondary', () => {});
   }
 
   function closeDetailModal(e) {
@@ -925,7 +896,7 @@
     if (!confirmModal) return;
     document.getElementById('confirmIcon').innerText=icon;
     document.getElementById('confirmTitle').innerText=title;
-    document.getElementById('confirmMsg').innerHTML=msg;
+    document.getElementById('confirmMsg').innerText=msg;
     const btn=document.getElementById('confirmOkBtn');
     btn.innerText=okLabel;
     btn.className=okClass;
@@ -1033,10 +1004,11 @@
   function loadDraft(){try{const d=safeGetStorage(DRAFT_KEY,null);if(!d)return;if(d.name && document.getElementById('nameInput')) document.getElementById('nameInput').value=d.name;if(d.category && document.getElementById('categoryInput')) document.getElementById('categoryInput').value=d.category;if(d.price && document.getElementById('priceInput')) document.getElementById('priceInput').value=d.price;if(d.shipping && document.getElementById('shippingInput')) document.getElementById('shippingInput').value=d.shipping;if(d.other && document.getElementById('otherInput')) document.getElementById('otherInput').value=d.other;if(d.notes && document.getElementById('notesInput')) document.getElementById('notesInput').value=d.notes;if((d.name||d.price) && document.getElementById('nameInput')) toast('📝 Draft restored!','');}catch(e){}}
   function clearDraft(){safeSetStorage(DRAFT_KEY,null);}
 
-  // ========== DRAG & DROP AND PREVIEW FOR ADD FORM ==========
+  // ========== IMAGE PICKER FOR ADD FORM (stores files immediately) ==========
   const addImageInput = document.getElementById('imageInput');
   const addDropZone = document.getElementById('dropZone');
   const imagePreview = document.getElementById('imagePreview');
+
   if (addImageInput) {
     addImageInput.addEventListener('change', function(e) {
       const files = Array.from(e.target.files);
@@ -1046,6 +1018,7 @@
         return;
       }
       pendingImageFiles = files;
+      // show preview
       imagePreview.innerHTML = '';
       files.forEach(file => {
         const reader = new FileReader();
@@ -1058,27 +1031,26 @@
         reader.readAsDataURL(file);
       });
     });
+    // also handle drag & drop if desired
     if (addDropZone) {
       addDropZone.addEventListener('click', () => addImageInput.click());
-      addDropZone.addEventListener('dragover', e => { e.preventDefault(); addDropZone.classList.add('drag-over'); });
-      addDropZone.addEventListener('dragleave', () => addDropZone.classList.remove('drag-over'));
+      addDropZone.addEventListener('dragover', e => e.preventDefault());
       addDropZone.addEventListener('drop', e => {
         e.preventDefault();
-        addDropZone.classList.remove('drag-over');
         const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
         if (files.length > MAX_IMAGES) {
           toast(`Maximum ${MAX_IMAGES} images allowed`, 'error');
           return;
         }
         pendingImageFiles = files;
-        addImageInput.files = files;
+        addImageInput.files = files; // sync
         const changeEvent = new Event('change', { bubbles: true });
         addImageInput.dispatchEvent(changeEvent);
       });
     }
   }
 
-  // ========== ADD ITEM (uses pendingImageFiles) ==========
+  // ========== ADD ITEM ==========
   function checkDuplicate(name){if(!name)return false;return cachedItems.some(r=>(r[2]||'').toLowerCase()===name.toLowerCase()&&(r[10]||'ON HAND')==='ON HAND');}
   async function addItem(){
     const nameVal=document.getElementById('nameInput')?.value.trim();
@@ -1102,18 +1074,21 @@
     toast('Adding product...','');showSpinner();
     const result=await safeFetch(API,{method:'POST',body:JSON.stringify({action:'addItem',productName:nameVal,category:categoryVal,purchaseAmount:+priceVal,shippingFee:+shippingVal,otherFee:+otherVal,quantity:1,photoURL:'',notes:notesVal})});
     if(!result||result.status!=='success'){hideSpinner();return toast('Failed to add. Try again.','error');}
+    // Upload images using stored pendingImageFiles
     if(pendingImageFiles.length){
       const photoURLs=await uploadImages(pendingImageFiles);
-      if(photoURLs)await safeFetch(API,{method:'POST',body:JSON.stringify({action:'uploadImage',id:result.id,photoURL:photoURLs})});
+      if(photoURLs) await safeFetch(API,{method:'POST',body:JSON.stringify({action:'uploadImage',id:result.ids && result.ids[0],photoURL:photoURLs})});
+      // Clear stored images and preview
       pendingImageFiles = [];
       if(addImageInput) addImageInput.value = '';
       imagePreview.innerHTML = '';
     }
-    document.getElementById('nameInput').value='';
-    document.getElementById('priceInput').value='';
-    document.getElementById('shippingInput').value='';
-    document.getElementById('otherInput').value='';
-    document.getElementById('notesInput').value='';
+    // Clear form
+    if(document.getElementById('nameInput')) document.getElementById('nameInput').value='';
+    if(document.getElementById('priceInput')) document.getElementById('priceInput').value='';
+    if(document.getElementById('shippingInput')) document.getElementById('shippingInput').value='';
+    if(document.getElementById('otherInput')) document.getElementById('otherInput').value='';
+    if(document.getElementById('notesInput')) document.getElementById('notesInput').value='';
     clearDraft();
     logActivity('added', nameVal, result.id);
     hideSpinner();toast('Product Added! ✅','success');showCelebration('https://media1.tenor.com/m/BpCpdZNSlqIAAAAd/trombone-donald-duck.gif',"Added a new item!");
@@ -1203,48 +1178,7 @@
     hideSpinner();toast('Item Updated ✅','success');closeEditModal();cachedItems=[];loadDashboard();loadItems(true);
   }
 
-  // Setup drag & drop for edit modal
-  const editImageInput = document.getElementById('edit-image');
-  const editDropZone = document.getElementById('edit-dropZone');
-  const editImagePreview = document.getElementById('editImagePreview');
-  if (editImageInput && editDropZone) {
-    editImageInput.addEventListener('change', function(e) {
-      const files = Array.from(e.target.files);
-      if (files.length > MAX_IMAGES) {
-        toast(`Maximum ${MAX_IMAGES} images allowed`, 'error');
-        editImageInput.value = '';
-        return;
-      }
-      editImagePreview.innerHTML = '';
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = ev => {
-          const img = document.createElement('img');
-          img.src = ev.target.result;
-          img.className = 'preview-thumb';
-          editImagePreview.appendChild(img);
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-    editDropZone.addEventListener('click', () => editImageInput.click());
-    editDropZone.addEventListener('dragover', e => { e.preventDefault(); editDropZone.classList.add('drag-over'); });
-    editDropZone.addEventListener('dragleave', () => editDropZone.classList.remove('drag-over'));
-    editDropZone.addEventListener('drop', e => {
-      e.preventDefault();
-      editDropZone.classList.remove('drag-over');
-      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-      if (files.length > MAX_IMAGES) {
-        toast(`Maximum ${MAX_IMAGES} images allowed`, 'error');
-        return;
-      }
-      editImageInput.files = files;
-      const changeEvent = new Event('change', { bubbles: true });
-      editImageInput.dispatchEvent(changeEvent);
-    });
-  }
-
-  // ========== TRADE MODAL (unchanged) ==========
+  // ========== TRADE ==========
   function openTradeModal(id,name,capital){
     const originalId = document.getElementById('trade-original-id');
     const originalCapital = document.getElementById('trade-original-capital');
@@ -1285,10 +1219,10 @@
     const profitEl = document.getElementById('prev-profit');
     const newCapitalEl = document.getElementById('prev-new-capital');
     if (profitEl) {
-      profitEl.innerText = `Profit on your item: ${formatCurrency(profit)}`;
+      profitEl.innerText = `Profit on your item: ₱${profit.toLocaleString()}`;
       profitEl.style.color = profit>=0?'var(--green)':'var(--red)';
     }
-    if (newCapitalEl) newCapitalEl.innerText = `New item capital: ${formatCurrency(newCapital)}`;
+    if (newCapitalEl) newCapitalEl.innerText = `New item capital: ₱${newCapital.toLocaleString()}`;
   }
   async function submitTrade(){
     const originalId = document.getElementById('trade-original-id')?.value;
@@ -1321,12 +1255,13 @@
 
   // ========== DASHBOARD & ITEMS ==========
   function setCategoryFilter(cat,btn){activeCategory=cat;document.querySelectorAll('.category-tabs button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');currentPage=1;renderItems();}
-  function loadDashboard(){safeFetch(API+'?action=getDashboard').then(d=>{if(!d)return;document.getElementById('capital').innerText=formatCurrency(d.totalCapital||0);document.getElementById('sales').innerText=formatCurrency(d.totalSales||0);document.getElementById('profit').innerText=formatCurrency(d.totalProfit||0);document.getElementById('onhand').innerText=d.onHand||0;document.getElementById('sold').innerText=d.soldCount||0;document.getElementById('traded').innerText=d.tradedCount||0;});}
+  function loadDashboard(){safeFetch(API+'?action=getDashboard').then(d=>{if(!d)return;if(document.getElementById('capital')) document.getElementById('capital').innerText='₱'+(d.totalCapital||0).toLocaleString();if(document.getElementById('sales')) document.getElementById('sales').innerText='₱'+(d.totalSales||0).toLocaleString();if(document.getElementById('profit')) document.getElementById('profit').innerText='₱'+(d.totalProfit||0).toLocaleString();if(document.getElementById('onhand')) document.getElementById('onhand').innerText=d.onHand||0;if(document.getElementById('sold')) document.getElementById('sold').innerText=d.soldCount||0;if(document.getElementById('traded')) document.getElementById('traded').innerText=d.tradedCount||0;});}
   function showSkeletons(){const container=document.getElementById('productContainer');if(container) container.innerHTML=`<div class="grid">${Array(6).fill(`<div class="skeleton"><div class="skel-img"></div><div class="skel-body"><div class="skel-line med"></div><div class="skel-line short"></div><div class="skel-line med"></div><div class="skel-line short"></div></div></div>`).join('')}</div>`;}
   const imgObserver=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){const img=e.target;if(img.dataset.src){img.src=img.dataset.src;img.removeAttribute('data-src');}imgObserver.unobserve(img);}});},{rootMargin:'120px'});
 
   function loadItems(forceRefresh=false){const now=Date.now();if(!forceRefresh&&cachedItems.length>0&&(now-cacheTimestamp)<CACHE_TTL){renderItems();return;}showSkeletons();safeFetch(API+'?action=getItems').then(data=>{if(!Array.isArray(data)){if(document.getElementById('productContainer')) document.getElementById('productContainer').innerHTML='';return;}cachedItems=data;cacheTimestamp=Date.now();currentPage=1;renderItems();buildChart(data);});}
 
+  // Helper to get action buttons for product card
   function getActionButtons(r, safeP, safeN, id, c, pu, sh, o, cap, st) {
     if (st === 'ON HAND') {
       return `<input id='sold-${id}' type='number' placeholder='Sold Amount' style='margin-top:8px'><button class='full-btn' style='margin-top:6px' onclick="markSold('${id}')">Mark Sold</button><div class='action-row-3' style='margin-top:8px'><button class='btn-trade' onclick="openTradeModal('${id}','${safeP}','${cap}')">🔄 Trade</button><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')">✏️ Edit</button><button class='btn-danger' onclick="confirmDelete('${id}','${safeP}')">🗑️</button></div>`;
@@ -1364,11 +1299,11 @@
           <div class="list-thumb">${thumbSrc?`<img data-src="${thumbSrc}" src="" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:10px;">`:`<span>📦</span>`}</div>
           <div class="list-info">
             <h4 onclick="event.stopPropagation();openDetailModal('${id}')">${p}</h4>
-            <p>${c} · ${formatCurrency(cap)} capital</p>
+            <p>${c} · ₱${cap.toLocaleString()} capital</p>
           </div>
           <div class="list-meta">
             <span class="list-pill ${pillClass}">${st==='ON HAND'?'On Hand':st}</span>
-            <span class="list-profit" style="color:${pro>=0?'var(--green)':'var(--red)'}">${formatCurrency(pro)}</span>
+            <span class="list-profit" style="color:${pro>=0?'var(--green)':'var(--red)'}">₱${pro.toLocaleString()}</span>
           </div>
         </div>`;
       }).join('');
@@ -1394,9 +1329,9 @@
           <div class='item-body'>
             <h3 onclick="openDetailModal('${id}')">${p}</h3>
             <p style='color:var(--subtext)'>${c}</p>
-            <p>Capital: <strong>${formatCurrency(cap)}</strong></p>
+            <p>Capital: <strong>₱${cap.toLocaleString()}</strong></p>
             ${st!=='ON HAND'&&cap>0?`<span class="margin-badge ${pro>=0?'positive':'negative'}">${pro>=0?'+':''}${margin}% margin</span>`:''}
-            ${st==='TRADED'?`<div class='trade-info'>🔄 Trade Value: <strong>${formatCurrency(soldp)}</strong><br>Profit: <strong style='color:${pro>=0?"var(--green)":"var(--red)"}'>${formatCurrency(pro)}</strong></div>`:`<p>Sold: <strong>${soldp?formatCurrency(soldp):'-'}</strong></p><p style='color:${pro>=0?"var(--green)":"var(--red)"}'>Profit: <strong>${formatCurrency(pro)}</strong></p>`}
+            ${st==='TRADED'?`<div class='trade-info'>🔄 Trade Value: <strong>₱${soldp.toLocaleString()}</strong><br>Profit: <strong style='color:${pro>=0?"var(--green)":"var(--red)"}'>₱${pro.toLocaleString()}</strong></div>`:`<p>Sold: <strong>${soldp?'₱'+soldp.toLocaleString():'-'}</strong></p><p style='color:${pro>=0?"var(--green)":"var(--red)"}'>Profit: <strong>₱${pro.toLocaleString()}</strong></p>`}
             ${notes?`<div class='item-notes'>💬 ${notes}</div>`:''}
             ${actionButtons}
           </div></div>`;
@@ -1436,7 +1371,7 @@
     });
   }
 
-  // ========== INVOICE (uses formatCurrency) ==========
+  // ========== INVOICE (simplified, uses same formatting) ==========
   async function generateAndDownloadInvoice(item, soldAmount, buyerName, sellerName) {
     if (typeof window.jspdf === 'undefined') { toast('PDF library not loaded', 'error'); return; }
     const { jsPDF } = window.jspdf;
@@ -1536,7 +1471,7 @@
     doc.setFontSize(11);
     doc.setTextColor(255, 255, 255);
     doc.text(`Item: ${item[2]}`, 28, prodY + 28);
-    doc.text(`Amount Paid: ${formatCurrency(soldAmount)}`, 28, prodY + 42);
+    doc.text(`Amount Paid: PHP ${Number(soldAmount).toLocaleString()}`, 28, prodY + 42);
     const thanksY = prodY + 60;
     const messages = [
       "Thanks for leveling up with us!",
@@ -1598,169 +1533,53 @@
 
   // ========== MONTHLY SUMMARY ==========
   function toggleMonthlySummary(){const body=document.getElementById('monthlyBody');const toggle=document.getElementById('monthlyToggle');if(!body||!toggle)return;const isOpen=body.classList.contains('open');body.classList.toggle('open');toggle.classList.toggle('open');if(!isOpen)buildMonthlySummary();}
-  function buildMonthlySummary(){const tbody=document.getElementById('monthlyTableBody');if(!tbody)return;const soldItems=cachedItems.filter(r=>r[10]==='SOLD'&&r[11]);if(!soldItems.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--subtext);padding:20px">No sales data yet</td></tr>`;return;}const months={};soldItems.forEach(r=>{const d=new Date(r[11]);if(isNaN(d))return;const key=d.toLocaleString('default',{month:'long',year:'numeric'});const sortK=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;if(!months[key])months[key]={sort:sortK,items:0,revenue:0,capital:0,profit:0};months[key].items++;months[key].revenue+=+r[12]||0;months[key].capital+=+r[7]||0;months[key].profit+=+r[13]||0;});const sorted=Object.entries(months).sort((a,b)=>b[1].sort.localeCompare(a[1].sort));tbody.innerHTML=sorted.map(([month,d])=>{const margin=d.revenue?((d.profit/d.revenue)*100).toFixed(1):0;const mColor=margin>=0?'var(--green)':'var(--red)';return`<tr><td><strong>${month}</strong></td>            const margin = d.revenue ? ((d.profit / d.revenue) * 100).toFixed(1) : 0;
-            const mColor = margin >= 0 ? 'var(--green)' : 'var(--red)';
-            return `<tr>
-              <td><strong>${month}</strong></td>
-              <td>${d.items}</td>
-              <td>${formatCurrency(d.revenue)}</td>
-              <td>${formatCurrency(d.capital)}</td>
-              <td style="color:${d.profit >= 0 ? 'var(--green)' : 'var(--red)'}"><strong>${formatCurrency(d.profit)}</strong></td>
-              <td style="color:${mColor}"><strong>${margin}%</strong></td>
-            </tr>`;
-          }).join('');
-        }
-      
-        // ========== EXPORT ==========
-        function exportCSV() {
-          if (!cachedItems.length) return toast('No data to export', 'error');
-          const headers = ['ID', 'Date', 'Product', 'Category', 'Purchase', 'Shipping', 'Other', 'Capital', 'Qty', 'Images', 'Status', 'Sold Date', 'Sold Amount', 'Profit', 'Notes', 'Buyer', 'Seller'];
-          const rows = cachedItems.map(r => r.map(v => `"${v}"`).join(','));
-          const csv = [headers.join(','), ...rows].join('\n');
-          const blob = new Blob([csv], { type: 'text/csv' });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = 'inventory_' + new Date().toISOString().slice(0, 10) + '.csv';
-          a.click();
-          toast('CSV Exported 📄', 'success');
-        }
-      
-        function exportPDF() {
-          if (!cachedItems.length) return toast('No data to export', 'error');
-          if (typeof window.jspdf === 'undefined') { toast('PDF library not loaded', 'error'); return; }
-          const { jsPDF } = window.jspdf;
-          const doc = new jsPDF({ orientation: 'landscape' });
-          doc.setFontSize(16);
-          doc.text('BuySell Inventory Report', 14, 16);
-          doc.setFontSize(10);
-          doc.text('Generated: ' + new Date().toLocaleString(), 14, 23);
-          const colWidths = [25, 55, 30, 28, 22, 28, 28, 35];
-          const colX = [14];
-          colWidths.forEach((w, i) => colX.push(colX[i] + w));
-          const totalW = colWidths.reduce((a, b) => a + b, 0);
-          const headers = ['ID', 'Product', 'Category', 'Capital', 'Status', 'Sold', 'Profit', 'Notes'];
-          let y = 32;
-          doc.setFillColor(30, 58, 95);
-          doc.rect(14, y, totalW, 8, 'F');
-          doc.setTextColor(255, 255, 255);
-          doc.setFontSize(9);
-          headers.forEach((h, i) => doc.text(h, colX[i] + 2, y + 5.5));
-          doc.setTextColor(0, 0, 0);
-          cachedItems.forEach((r, ri) => {
-            y += 8;
-            if (y > 190) { doc.addPage(); y = 20; }
-            if (ri % 2 === 0) { doc.setFillColor(235, 240, 250); doc.rect(14, y, totalW, 8, 'F'); }
-            const row = [
-              r[0] || '',
-              r[2] || '',
-              r[3] || '',
-              formatCurrency(+r[7] || 0),
-              r[10] || 'ON HAND',
-              r[12] ? formatCurrency(+r[12]) : '-',
-              formatCurrency(+r[13] || 0),
-              (r[14] || '').slice(0, 30)
-            ];
-            row.forEach((cell, i) => doc.text(String(cell).slice(0, 22), colX[i] + 2, y + 5.5));
-          });
-          doc.save('inventory_' + new Date().toISOString().slice(0, 10) + '.pdf');
-          toast('PDF Exported 🖨️', 'success');
-        }
-      
-        // ========== DARK MODE ==========
-        function toggleDarkMode() {
-          document.body.classList.toggle('dark');
-          const d = document.body.classList.contains('dark');
-          const darkSwitch = document.getElementById('darkSwitch');
-          if (darkSwitch) darkSwitch.checked = d;
-          safeSetStorage('darkmode', d ? 'on' : 'off');
-          if (cachedItems.length) buildChart(cachedItems);
-        }
-        function loadDarkMode() {
-          if (safeGetStorage('darkmode', 'off') === 'on') {
-            document.body.classList.add('dark');
-            const darkSwitch = document.getElementById('darkSwitch');
-            if (darkSwitch) darkSwitch.checked = true;
-          }
-        }
-        function toggleAddForm(force = false) {
-          const box = document.getElementById('addFormBox');
-          if (!box) return;
-          if (force) { box.style.display = 'none'; return; }
-          box.style.display = box.style.display === 'none' ? 'block' : 'none';
-        }
-        function navTo(tab) {
-          document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-          const navBtn = document.getElementById('nav-' + tab);
-          if (navBtn) navBtn.classList.add('active');
-          if (tab === 'home') {
-            const addBox = document.getElementById('addFormBox');
-            if (addBox) addBox.style.display = 'none';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          } else if (tab === 'add') {
-            toggleAddForm();
-            const addBox = document.getElementById('addFormBox');
-            if (addBox) addBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          } else if (tab === 'chart') {
-            document.querySelector('.chart-box')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          } else if (tab === 'export') {
-            document.getElementById('exportCsvBtn')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }
-      
-        // ========== RIPPLE ==========
-        document.addEventListener('click', e => {
-          const btn = e.target.closest('button');
-          if (!btn || btn.classList.contains('lightbox-close')) return;
-          btn.classList.add('ripple-host');
-          const r = document.createElement('span');
-          r.className = 'ripple';
-          const rect = btn.getBoundingClientRect();
-          const size = Math.max(rect.width, rect.height);
-          r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size / 2}px;top:${e.clientY - rect.top - size / 2}px;`;
-          btn.appendChild(r);
-          setTimeout(() => r.remove(), 600);
-        });
-      
-        // ========== NEW: Onboarding Tour ==========
-        function startTour() {
-          const steps = [
-            { selector: '#addFormBox', title: '➕ Add Product', content: 'Fill in details, drag & drop images (max 8), and save.' },
-            { selector: '.search-row', title: '🔍 Search & Filter', content: 'Find products by name or status.' },
-            { selector: '.category-tabs', title: '📂 Categories', content: 'Filter by product category.' },
-            { selector: '.chart-box', title: '📊 Analytics', content: 'View sales and profit trends.' },
-            { selector: '.monthly-box', title: '📅 Monthly Summary', content: 'See your monthly performance.' }
-          ];
-          let index = 0;
-          function showStep() {
-            if (index >= steps.length) { toast('Tour completed!', 'success'); return; }
-            const step = steps[index];
-            const el = document.querySelector(step.selector);
-            if (!el) { index++; showStep(); return; }
-            const tooltip = document.createElement('div');
-            tooltip.className = 'tour-tooltip';
-            tooltip.innerHTML = `<strong>${step.title}</strong><br>${step.content}<br><button>${index === steps.length - 1 ? 'Finish' : 'Next'}</button>`;
-            document.body.appendChild(tooltip);
-            const rect = el.getBoundingClientRect();
-            tooltip.style.top = rect.bottom + window.scrollY + 10 + 'px';
-            tooltip.style.left = rect.left + window.scrollX + 'px';
-            tooltip.querySelector('button').onclick = () => {
-              tooltip.remove();
-              index++;
-              showStep();
-            };
-          }
-          showStep();
-        }
-      
-        // ========== INIT ==========
-        window.onload = () => {
-          loadDarkMode();
-          currentView = safeGetStorage('inventoryView', 'grid');
-          setView(currentView);
-          loadDashboard();
-          loadItems(true);
-          loadDraft();
+  function buildMonthlySummary(){const tbody=document.getElementById('monthlyTableBody');if(!tbody)return;const soldItems=cachedItems.filter(r=>r[10]==='SOLD'&&r[11]);if(!soldItems.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--subtext);padding:20px">No sales data yet</td></tr>`;return;}const months={};soldItems.forEach(r=>{const d=new Date(r[11]);if(isNaN(d))return;const key=d.toLocaleString('default',{month:'long',year:'numeric'});const sortK=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;if(!months[key])months[key]={sort:sortK,items:0,revenue:0,capital:0,profit:0};months[key].items++;months[key].revenue+=+r[12]||0;months[key].capital+=+r[7]||0;months[key].profit+=+r[13]||0;});const sorted=Object.entries(months).sort((a,b)=>b[1].sort.localeCompare(a[1].sort));tbody.innerHTML=sorted.map(([month,d])=>{const margin=d.revenue?((d.profit/d.revenue)*100).toFixed(1):0;const mColor=margin>=0?'var(--green)':'var(--red)';return`<tr><td><strong>${month}</strong></td><td>${d.items}</td><td>₱${d.revenue.toLocaleString()}</td><td>₱${d.capital.toLocaleString()}</td><td style="color:${d.profit>=0?'var(--green)':'var(--red)'}"><strong>₱${d.profit.toLocaleString()}</strong></td><td style="color:${mColor}"><strong>${margin}%</strong></td></tr>`;}).join('');}
+
+  // ========== EXPORT ==========
+  function exportCSV(){if(!cachedItems.length)return toast('No data to export','error');const headers=['ID','Date','Product','Category','Purchase','Shipping','Other','Capital','Qty','Images','Status','Sold Date','Sold Amount','Profit','Notes','Buyer','Seller'];const rows=cachedItems.map(r=>r.map(v=>`"${v}"`).join(','));const csv=[headers.join(','),...rows].join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='inventory_'+new Date().toISOString().slice(0,10)+'.csv';a.click();toast('CSV Exported 📄','success');}
+  function exportPDF(){if(!cachedItems.length)return toast('No data to export','error');if(typeof window.jspdf==='undefined'){toast('PDF library not loaded','error');return;}const{jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'landscape'});doc.setFontSize(16);doc.text('BuySell Inventory Report',14,16);doc.setFontSize(10);doc.text('Generated: '+new Date().toLocaleString(),14,23);const colWidths=[25,55,30,28,22,28,28,35];const colX=[14];colWidths.forEach((w,i)=>colX.push(colX[i]+w));const totalW=colWidths.reduce((a,b)=>a+b,0);const headers=['ID','Product','Category','Capital','Status','Sold','Profit','Notes'];let y=32;doc.setFillColor(30,58,95);doc.rect(14,y,totalW,8,'F');doc.setTextColor(255,255,255);doc.setFontSize(9);headers.forEach((h,i)=>doc.text(h,colX[i]+2,y+5.5));doc.setTextColor(0,0,0);cachedItems.forEach((r,ri)=>{y+=8;if(y>190){doc.addPage();y=20;}if(ri%2===0){doc.setFillColor(235,240,250);doc.rect(14,y,totalW,8,'F');}const row=[r[0]||'',r[2]||'',r[3]||'','₱'+(+r[7]||0).toLocaleString(),r[10]||'ON HAND',r[12]?'₱'+(+r[12]).toLocaleString():'-','₱'+(+r[13]||0).toLocaleString(),(r[14]||'').slice(0,30)];row.forEach((cell,i)=>doc.text(String(cell).slice(0,22),colX[i]+2,y+5.5));});doc.save('inventory_'+new Date().toISOString().slice(0,10)+'.pdf');toast('PDF Exported 🖨️','success');}
+
+  // ========== DARK MODE ==========
+  function toggleDarkMode(){document.body.classList.toggle('dark');const d=document.body.classList.contains('dark');const darkSwitch=document.getElementById('darkSwitch');if(darkSwitch) darkSwitch.checked=d;safeSetStorage('darkmode',d?'on':'off');if(cachedItems.length)buildChart(cachedItems);}
+  function loadDarkMode(){if(safeGetStorage('darkmode','off')==='on'){document.body.classList.add('dark');const darkSwitch=document.getElementById('darkSwitch');if(darkSwitch) darkSwitch.checked=true;}}
+  function toggleAddForm(force=false){const box=document.getElementById('addFormBox');if(!box)return;if(force){box.style.display='none';return;}box.style.display=box.style.display==='none'?'block':'none';}
+  function navTo(tab){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));const navBtn=document.getElementById('nav-'+tab);if(navBtn) navBtn.classList.add('active');if(tab==='home'){const addBox=document.getElementById('addFormBox');if(addBox) addBox.style.display='none';window.scrollTo({top:0,behavior:'smooth'});}else if(tab==='add'){toggleAddForm();const addBox=document.getElementById('addFormBox');if(addBox) addBox.scrollIntoView({behavior:'smooth',block:'center'});}else if(tab==='chart'){document.querySelector('.chart-box')?.scrollIntoView({behavior:'smooth',block:'start'});}else if(tab==='export'){document.getElementById('exportCsvBtn')?.scrollIntoView({behavior:'smooth',block:'center'});}}
+
+  // ========== RIPPLE ==========
+  document.addEventListener('click',e=>{const btn=e.target.closest('button');if(!btn||btn.classList.contains('lightbox-close'))return;btn.classList.add('ripple-host');const r=document.createElement('span');r.className='ripple';const rect=btn.getBoundingClientRect();const size=Math.max(rect.width,rect.height);r.style.cssText=`width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px;`;btn.appendChild(r);setTimeout(()=>r.remove(),600);});
+
+  // ========== INIT ==========
+  loadDarkMode();
+  currentView = safeGetStorage('inventoryView', 'grid');
+  setView(currentView);
+  loadDashboard();
+  loadItems(true);
+  loadDraft();
+
+  // Setup preview for edit modal as well
+  const editImageInput = document.getElementById('edit-image');
+  const editImagePreview = document.getElementById('editImagePreview');
+  if (editImageInput && editImagePreview) {
+    editImageInput.addEventListener('change', function(e) {
+      editImagePreview.innerHTML = '';
+      const files = Array.from(e.target.files);
+      if (files.length > MAX_IMAGES) {
+        toast(`Maximum ${MAX_IMAGES} images allowed`, 'error');
+        editImageInput.value = '';
+        return;
+      }
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const img = document.createElement('img');
+          img.src = ev.target.result;
+          img.className = 'preview-thumb';
+          editImagePreview.appendChild(img);
         };
-      </script>
-    </body>
-    </html>
+        reader.readAsDataURL(file);
+      });
+    });
+  }
+</script>
+</body>
+</html>
