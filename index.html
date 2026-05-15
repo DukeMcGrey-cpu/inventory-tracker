@@ -96,10 +96,10 @@
     .category-tabs button.active { background:linear-gradient(135deg,#1e3a5f,#1d4ed8); color:#fff; border-color:transparent; }
     .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; margin-top:14px; }
     .list-view { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
-    .list-item { background:var(--glass); backdrop-filter:blur(16px); border:1px solid var(--glass-border); border-radius:16px; box-shadow:var(--shadow); display:grid; grid-template-columns:48px 1fr auto; align-items:center; gap:12px; padding:12px 14px; cursor:pointer; }
+    .list-item { background:var(--glass); backdrop-filter:blur(16px); border:1px solid var(--glass-border); border-radius:16px; box-shadow:var(--shadow); display:grid; grid-template-columns:48px 1fr auto; align-items:center; gap:12px; padding:12px 14px; cursor:pointer; position:relative; }
     .list-thumb { width:48px; height:48px; border-radius:10px; object-fit:cover; background:rgba(29,78,216,0.08); display:flex; align-items:center; justify-content:center; font-size:20px; overflow:hidden; }
     .list-info h4 { font-family:'Syne',sans-serif; font-size:14px; font-weight:800; }
-    .item { background:var(--glass); backdrop-filter:blur(16px); border:1px solid var(--glass-border); border-radius:22px; overflow:hidden; box-shadow:var(--shadow); transition:transform .3s cubic-bezier(.34,1.56,.64,1); animation:itemIn .4s cubic-bezier(.34,1.56,.64,1) both; }
+    .item { background:var(--glass); backdrop-filter:blur(16px); border:1px solid var(--glass-border); border-radius:22px; overflow:hidden; box-shadow:var(--shadow); transition:transform .3s cubic-bezier(.34,1.56,.64,1); animation:itemIn .4s cubic-bezier(.34,1.56,.64,1) both; position:relative; }
     @keyframes itemIn { from{opacity:0;transform:translateY(24px) scale(.96)} to{opacity:1;transform:translateY(0) scale(1)} }
     .item:hover { transform:translateY(-6px); box-shadow:0 24px 56px rgba(29,78,216,0.22); }
     .item-gallery img.main-img { width:100%; height:200px; object-fit:cover; cursor:zoom-in; transition:transform .3s; display:block; }
@@ -180,6 +180,18 @@
     .archive-toggle { background:rgba(100,100,150,0.2); border-radius:30px; padding:6px 12px; display:inline-flex; align-items:center; gap:8px; }
     .archive-toggle label { font-size:12px; font-weight:700; color:var(--subtext); }
     .import-btn { background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.3); }
+    .select-checkbox { width:20px; height:20px; margin-right:8px; cursor:pointer; vertical-align:middle; }
+    .batch-bar { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--glass); backdrop-filter:blur(20px); border-radius:60px; padding:10px 20px; display:flex; gap:12px; z-index:1000; box-shadow:0 8px 24px rgba(0,0,0,0.2); display:none; }
+    .batch-bar.show { display:flex; }
+    .swipe-actions { position:absolute; right:0; top:0; height:100%; display:flex; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+    .item:hover .swipe-actions { opacity:1; pointer-events:auto; }
+    @media (hover:none) { .item.swipe-left .swipe-actions, .item.swipe-right .swipe-actions { opacity:1; pointer-events:auto; } }
+    .tour-tooltip { position:absolute; background:#1e3a5f; color:white; padding:12px; border-radius:12px; max-width:250px; z-index:10001; box-shadow:0 4px 12px rgba(0,0,0,0.3); }
+    .tour-tooltip button { margin-top:8px; background:white; color:#1e3a5f; padding:4px 12px; width:auto; }
+    .tour-tooltip::before { content:''; position:absolute; top:-8px; left:20px; border-left:8px solid transparent; border-right:8px solid transparent; border-bottom:8px solid #1e3a5f; }
+    #progressOverlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:10002; justify-content:center; align-items:center; }
+    #progressBar { width:0%; height:20px; background:var(--accent); transition:width 0.3s; }
+    .advanced-filters { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
   </style>
 </head>
 <body>
@@ -191,6 +203,7 @@
 
 <div class="toast" id="toast"></div>
 <div class="spinner-overlay" id="spinnerOverlay"><div class="spinner"></div></div>
+<div id="progressOverlay"><div style="background:white; padding:20px; border-radius:12px; text-align:center; min-width:300px;"><div style="width:100%; background:#e0e0e0; border-radius:10px; overflow:hidden;"><div id="progressBar"></div></div><p id="progressText" style="margin-top:12px;">Processing...</p></div></div>
 <div class="undo-toast" id="undoToast"><span id="undoMsg">Item archived</span><button class="undo-btn" onclick="undoDelete()">↩ Undo</button><div class="undo-progress" id="undoProgress"></div></div>
 
 <nav class="bottom-nav"><div class="bottom-nav-inner">
@@ -208,7 +221,7 @@
 
 <div class="topbar">
   <div class="topbar-left"><div class="app-icon"><img src="https://i.ibb.co/p6pRc65C/received-26163013153378553.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:16px;"></div><div class="app-text"><h2>DGL | BuySell Inventory Pro</h2><p>BUY | SELL | GROW</p></div></div>
-  <div class="topbar-right"><label class="switch"><input type="checkbox" onchange="toggleDarkMode()" id="darkSwitch"><span class="slider"></span></label><button class="export-btn" style="width:auto; padding:6px 12px;" onclick="openSettingsModal()">⚙️</button></div>
+  <div class="topbar-right"><label class="switch"><input type="checkbox" onchange="toggleDarkMode()" id="darkSwitch"><span class="slider"></span></label><button class="export-btn" style="width:auto; padding:6px 12px;" onclick="openSettingsModal()">⚙️</button><button class="export-btn" style="width:auto; padding:6px 12px;" onclick="startTour()">🎓 Tour</button></div>
 </div>
 
 <div class="container">
@@ -229,7 +242,7 @@
       <input id="shippingInput" type="number" placeholder="Shipping Fee" oninput="saveDraft()">
       <input id="otherInput" type="number" placeholder="Other Fee" oninput="saveDraft()">
       <input id="quantityInput" type="number" placeholder="Quantity (create multiple)" value="1" min="1">
-      <input id="imageInput" type="file" accept="image/*" multiple>
+      <div id="dropZone" style="border:2px dashed var(--accent); border-radius:12px; padding:20px; text-align:center; cursor:pointer;">📸 Drag & drop images here or click to select<input type="file" id="imageInput" accept="image/*" multiple style="display:none"></div>
       <textarea id="notesInput" class="full-col" placeholder="Notes..." oninput="saveDraft()"></textarea>
       <button onclick="addItem()">Add Product(s)</button>
     </div>
@@ -240,9 +253,17 @@
     <div class="search-row">
       <input id="search" placeholder="🔍 Search product..." oninput="debouncedSearch()">
       <select id="filter" onchange="resetAndRender()"><option value="ALL">All Status</option><option value="ON HAND">On Hand</option><option value="SOLD">Sold</option><option value="TRADED">Traded</option></select>
-      <div class="view-toggle"><button class="view-btn active" id="btnGrid" onclick="setView('grid')">⊞</button><button class="view-btn" id="btnList" onclick="setView('list')">☰</button></div>
+      <div class="view-toggle"><button class="view-btn active" id="btnGrid" onclick="setView('grid')">⊞</button><button class="view-btn" id="btnList" onclick="setView('list')">☰</button><button class="view-btn" onclick="toggleColumnSelector()" title="Choose columns">☰ Cols</button></div>
     </div>
-    <div class="search-row" style="margin-top: 10px;">
+    <div class="advanced-filters">
+      <input type="date" id="dateFrom" placeholder="From Date" style="width:auto;">
+      <input type="date" id="dateTo" placeholder="To Date">
+      <input type="number" id="minProfit" placeholder="Min Profit" style="width:auto;">
+      <input type="number" id="maxProfit" placeholder="Max Profit">
+      <button class="chip" onclick="applyAdvancedFilter()">Apply</button>
+      <button class="chip" onclick="clearAdvancedFilter()">Clear</button>
+    </div>
+    <div class="search-row" style="margin-top:10px;">
       <div class="archive-toggle"><input type="checkbox" id="showArchived" onchange="toggleArchived()"><label for="showArchived">🗄️ Show archived</label></div>
       <button class="export-btn import-btn" onclick="document.getElementById('importFileInput').click()">📂 Import CSV</button>
       <input type="file" id="importFileInput" accept=".csv" style="display:none" onchange="importCSV(this)">
@@ -254,7 +275,7 @@
       <button class="chip" onclick="setChip('traded',this)">🔄 Traded</button>
     </div>
     <div class="sort-row"><label>Sort:</label><select id="sortSelect" onchange="resetAndRender()"><option value="newest">🕐 Newest</option><option value="oldest">🕰 Oldest</option><option value="profit_high">📈 Highest Profit</option><option value="profit_low">📉 Lowest Profit</option><option value="capital_low">💸 Lowest Capital</option><option value="capital_high">💰 Highest Capital</option><option value="name_az">🔤 Name A–Z</option></select></div>
-    <div class="export-row"><button class="export-btn" onclick="exportCSV()">📄 Export CSV</button><button class="export-btn" onclick="exportPDF()">🖨️ Export PDF</button></div>
+    <div class="export-row"><button class="export-btn" onclick="exportCSV()">📄 Export CSV</button><button class="export-btn" onclick="exportPDF()">🖨️ Export PDF</button><button class="export-btn" onclick="openReportModal()">📊 Custom Report</button></div>
   </div>
 
   <div class="category-tabs">
@@ -276,32 +297,36 @@
 
 <button onclick="toggleAddForm()" id="fabBtn">+</button>
 
-<div id="editModal" class="modal"><div class="modal-content"><h3>✏️ Edit Product</h3><input type="hidden" id="edit-id"><input id="edit-name" placeholder="Product Name"><select id="edit-category"><option>Gadget / Console</option><option>Phone</option><option>Appliance</option><option>Others</option></select><input id="edit-purchase" type="number" placeholder="Purchase Amount"><input id="edit-shipping" type="number" placeholder="Shipping Fee"><input id="edit-other" type="number" placeholder="Other Fee"><textarea id="edit-notes" placeholder="Notes..."></textarea><input id="edit-image" type="file" accept="image/*" multiple><small style="color:var(--subtext);font-size:12px;">Leave empty to keep existing photos</small><button onclick="saveEditItem()">Save Changes</button><button class="btn-secondary" onclick="closeEditModal()">Cancel</button></div></div>
+<div class="batch-bar" id="batchBar">
+  <span id="selectedCount">0 selected</span>
+  <button class="batch-edit" onclick="batchEdit()">✏️ Edit Category</button>
+  <button class="batch-delete" onclick="batchArchive()">🗑️ Archive</button>
+  <button class="batch-export" onclick="batchExport()">📄 Export</button>
+</div>
+
+<div id="editModal" class="modal"><div class="modal-content"><h3>✏️ Edit Product</h3><input type="hidden" id="edit-id"><input id="edit-name" placeholder="Product Name"><select id="edit-category"><option>Gadget / Console</option><option>Phone</option><option>Appliance</option><option>Others</option></select><input id="edit-purchase" type="number" placeholder="Purchase Amount"><input id="edit-shipping" type="number" placeholder="Shipping Fee"><input id="edit-other" type="number" placeholder="Other Fee"><textarea id="edit-notes" placeholder="Notes..."></textarea><div id="edit-dropZone" style="border:2px dashed var(--accent); border-radius:12px; padding:20px; text-align:center; cursor:pointer;">📸 Drag & drop images here or click to select<input type="file" id="edit-image" accept="image/*" multiple style="display:none"></div><small style="color:var(--subtext);font-size:12px;">Leave empty to keep existing photos</small><button onclick="saveEditItem()">Save Changes</button><button class="btn-secondary" onclick="closeEditModal()">Cancel</button></div></div>
 
 <div id="tradeModal" class="modal"><div class="modal-content"><h3>🔄 Trade-In</h3><input type="hidden" id="trade-original-id"><input type="hidden" id="trade-original-capital"><p class="modal-section-label">📦 Your Item Being Traded Out</p><p id="trade-original-name" style="font-weight:700;color:var(--accent);"></p><hr><p class="modal-section-label">🔄 Trade-In Details</p><input id="trade-name" placeholder="Trade-In Item Name"><select id="trade-category"><option>Gadget / Console</option><option>Phone</option><option>Appliance</option><option>Others</option></select><input id="trade-value" type="number" placeholder="Trade-In Value" oninput="updateTradePreview()"><select id="trade-cash-dir" onchange="toggleCashRow()"><option value="none">💱 Straight Trade (no cash)</option><option value="customer">💵 Customer Adds Cash</option><option value="you">💸 You Add Cash</option></select><div class="cash-row" id="cashRow"><input id="trade-cash-amt" type="number" placeholder="Cash Amount" oninput="updateTradePreview()"></div><hr><p class="modal-section-label">🧾 Your Expenses for New Item</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><input id="trade-shipping" type="number" placeholder="Shipping Fee" oninput="updateTradePreview()"><input id="trade-other" type="number" placeholder="Other Fee" oninput="updateTradePreview()"></div><hr><p class="modal-section-label">📸 Photo & Notes for New Item</p><input id="trade-image" type="file" accept="image/*" multiple><textarea id="trade-notes" placeholder="Notes..."></textarea><div id="tradePreview" style="background:rgba(29,78,216,0.06);border-radius:12px;padding:12px;font-size:13px;"><strong>📊 Trade Preview</strong><br><span id="prev-profit">Profit on your item: ₱0</span><br><span id="prev-new-capital">New item capital: ₱0</span></div><button onclick="submitTrade()">✅ Confirm Trade</button><button class="btn-secondary" onclick="closeTradeModal()">Cancel</button></div></div>
 
 <div id="settingsModal" class="modal"><div class="modal-content"><h3>⚙️ Invoice Settings</h3><input id="companyName" placeholder="Company Name" value="DGL Trading"><input id="companyLogoUrl" placeholder="Logo URL (optional)"><input id="companyFooter" placeholder="Footer text" value="Thank you for your purchase!"><input id="companyTaxId" placeholder="Tax ID / VAT"><button onclick="saveInvoiceSettings()">Save</button><button class="btn-secondary" onclick="closeSettingsModal()">Cancel</button></div></div>
+
+<div id="reportModal" class="modal"><div class="modal-content" style="max-width:500px;"><h3>📊 Custom Report</h3><div class="report-columns" style="display:flex; flex-wrap:wrap; gap:10px; margin:10px 0;"><label><input type="checkbox" value="name" checked> Product Name</label><label><input type="checkbox" value="category"> Category</label><label><input type="checkbox" value="capital"> Capital</label><label><input type="checkbox" value="profit" checked> Profit</label><label><input type="checkbox" value="buyer"> Buyer</label><label><input type="checkbox" value="date"> Sale Date</label></div><select id="groupBy" style="margin:10px 0;"><option value="none">No grouping</option><option value="category">By Category</option><option value="buyer">By Buyer</option><option value="month">By Month</option></select><button onclick="generateReport()">Generate CSV</button><button class="btn-secondary" onclick="closeReportModal()">Cancel</button></div></div>
+
+<div id="columnSelector" style="display:none; position:absolute; background:var(--glass); backdrop-filter:blur(16px); border-radius:12px; padding:10px; z-index:100; border:1px solid var(--glass-border);">
+  <div><label><input type="checkbox" value="thumb" checked> Thumb</label></div>
+  <div><label><input type="checkbox" value="name" checked> Name</label></div>
+  <div><label><input type="checkbox" value="category" checked> Category</label></div>
+  <div><label><input type="checkbox" value="capital" checked> Capital</label></div>
+  <div><label><input type="checkbox" value="status" checked> Status</label></div>
+  <div><label><input type="checkbox" value="profit" checked> Profit</label></div>
+  <button onclick="saveColumnVisibility()">Save</button>
+</div>
 
 <script>
   // ==================== CONFIGURATION ====================
   const API       = 'https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec'; // REPLACE WITH YOUR DEPLOYMENT ID
   const IMGBB_KEY = 'c1047f546534cb119c255afbd588a63f';
   const LOGO_URL  = 'https://i.ibb.co/p6pRc65C/received-26163013153378553.jpg';
-
-  let cachedItems      = [];
-  let cacheTimestamp   = 0;
-  const CACHE_TTL      = 30000;
-  let salesChart       = null;
-  let currentChartType = 'bar';
-  let confirmCallback  = null;
-  let currentView      = 'grid';
-  let activeChip       = 'all';
-  let pendingDelete    = null;
-  let undoTimer        = null;
-  let showArchived     = false;
-  let currentPage      = 1;
-  const ITEMS_PER_PAGE = 12;
-  let activityLog      = [];
 
   // ========== HELPER FUNCTIONS ==========
   function safeGetStorage(key, defaultValue = null) {
@@ -331,6 +356,9 @@
   }
   function showSpinner() { const el = document.getElementById('spinnerOverlay'); if (el) el.classList.add('show'); }
   function hideSpinner() { const el = document.getElementById('spinnerOverlay'); if (el) el.classList.remove('show'); }
+  function showProgressOverlay() { document.getElementById('progressOverlay').style.display = 'flex'; }
+  function hideProgressOverlay() { document.getElementById('progressOverlay').style.display = 'none'; }
+  function updateProgress(percent, text) { const bar = document.getElementById('progressBar'); const txt = document.getElementById('progressText'); if (bar) bar.style.width = percent + '%'; if (txt) txt.innerText = text; }
   function showCelebration(icon, text) {
     const el = document.getElementById('celebration');
     const wrap = document.getElementById('confettiWrap');
@@ -358,7 +386,7 @@
     if (!modal) return;
     document.getElementById('confirmIcon').innerText = icon;
     document.getElementById('confirmTitle').innerText = title;
-    document.getElementById('confirmMsg').innerText = msg;
+    document.getElementById('confirmMsg').innerHTML = msg;
     const btn = document.getElementById('confirmOkBtn');
     btn.innerText = okLabel;
     btn.className = okClass;
@@ -368,7 +396,161 @@
   function closeConfirm() { document.getElementById('confirmModal').style.display = 'none'; confirmCallback = null; }
   document.getElementById('confirmOkBtn')?.addEventListener('click', () => { if (confirmCallback) confirmCallback(); closeConfirm(); });
 
+  // ========== FORMATTING (Improved) ==========
+  function formatCurrency(amount) { return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'PHP' }).format(amount); }
+  function formatDate(dateString) { if (!dateString) return '—'; const d = new Date(dateString); if (isNaN(d)) return '—'; return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }); }
+
+  // ========== BATCH OPERATIONS ==========
+  let selectedIds = new Set();
+  function toggleSelect(id) {
+    if (selectedIds.has(id)) selectedIds.delete(id);
+    else selectedIds.add(id);
+    updateBatchBar();
+  }
+  function updateBatchBar() {
+    const bar = document.getElementById('batchBar');
+    const count = selectedIds.size;
+    document.getElementById('selectedCount').innerText = `${count} selected`;
+    if (bar) bar.classList.toggle('show', count > 0);
+  }
+  function batchEdit() {
+    const newCategory = prompt('New category for selected items:', '');
+    if (!newCategory) return;
+    showSpinner();
+    Promise.all(Array.from(selectedIds).map(id =>
+      safeFetch(API, { method:'POST', body:JSON.stringify({ action:'editItem', id, category:newCategory }) })
+    )).then(() => {
+      hideSpinner();
+      toast(`Updated ${selectedIds.size} items`, 'success');
+      selectedIds.clear();
+      updateBatchBar();
+      loadItems(true);
+    });
+  }
+  function batchArchive() {
+    if (!confirm(`Archive ${selectedIds.size} items?`)) return;
+    showSpinner();
+    Promise.all(Array.from(selectedIds).map(id =>
+      safeFetch(API, { method:'POST', body:JSON.stringify({ action:'deleteItem', id }) })
+    )).then(() => {
+      hideSpinner();
+      toast(`Archived ${selectedIds.size} items`, 'success');
+      selectedIds.clear();
+      updateBatchBar();
+      loadItems(true);
+    });
+  }
+  function batchExport() {
+    const selectedItems = cachedItems.filter(r => selectedIds.has(r[0]));
+    const csv = convertToCSV(selectedItems);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'batch_export.csv';
+    a.click();
+    toast('Batch exported', 'success');
+  }
+  function convertToCSV(data) {
+    if (!data.length) return '';
+    const headers = Object.keys(data[0]);
+    const rows = data.map(row => headers.map(h => `"${row[h] || ''}"`).join(','));
+    return [headers.join(','), ...rows].join('\n');
+  }
+
+  // ========== ADVANCED SEARCH ==========
+  function applyAdvancedFilter() { currentPage = 1; renderItems(); }
+  function clearAdvancedFilter() {
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    document.getElementById('minProfit').value = '';
+    document.getElementById('maxProfit').value = '';
+    renderItems();
+  }
+
+  // ========== COLUMN VISIBILITY ==========
+  const columnKeys = ['thumb', 'name', 'category', 'capital', 'status', 'profit'];
+  function toggleColumnSelector() {
+    const sel = document.getElementById('columnSelector');
+    if (sel) sel.style.display = sel.style.display === 'none' ? 'block' : 'none';
+  }
+  function saveColumnVisibility() {
+    const visible = Array.from(document.querySelectorAll('#columnSelector input:checked')).map(cb => cb.value);
+    safeSetStorage('listColumns', visible);
+    renderItems();
+  }
+  function loadColumnVisibility() { return safeGetStorage('listColumns', columnKeys); }
+
+  // ========== REPORT BUILDER ==========
+  function openReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
+  function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
+  function generateReport() {
+    const selectedCols = Array.from(document.querySelectorAll('#reportModal input[type="checkbox"]:checked')).map(cb => cb.value);
+    const groupBy = document.getElementById('groupBy').value;
+    let data = cachedItems.filter(r => r[10] === 'SOLD');
+    let reportRows = data.map(r => ({
+      name: r[2], category: r[3], capital: r[7], profit: r[13], buyer: r[15],
+      date: r[11] ? new Date(r[11]).toLocaleDateString() : ''
+    }));
+    if (groupBy !== 'none') {
+      const groups = {};
+      reportRows.forEach(row => {
+        let key = row[groupBy];
+        if (!groups[key]) groups[key] = { count: 0, totalProfit: 0 };
+        groups[key].count++;
+        groups[key].totalProfit += +row.profit;
+      });
+      reportRows = Object.entries(groups).map(([key, val]) => ({ group: key, count: val.count, totalProfit: val.totalProfit }));
+      selectedCols.length = 0;
+      selectedCols.push('group', 'count', 'totalProfit');
+    }
+    const filteredRows = reportRows.map(row => {
+      const newRow = {};
+      selectedCols.forEach(col => { newRow[col] = row[col]; });
+      return newRow;
+    });
+    const csv = convertToCSV(filteredRows);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'custom_report.csv';
+    a.click();
+    closeReportModal();
+    toast('Report generated', 'success');
+  }
+
+  // ========== TOUR ==========
+  function startTour() {
+    const steps = [
+      { selector: '#addFormBox', title: '➕ Add Product', content: 'Fill in details, upload images, and set quantity.' },
+      { selector: '.search-row', title: '🔍 Search & Filter', content: 'Find products by name, status, or date range.' },
+      { selector: '.category-tabs', title: '📂 Categories', content: 'Filter by product category.' },
+      { selector: '.chart-box', title: '📊 Analytics', content: 'View sales and profit trends over time.' },
+      { selector: '.monthly-box', title: '📅 Monthly Summary', content: 'See your monthly performance.' }
+    ];
+    let index = 0;
+    function showStep() {
+      if (index >= steps.length) { toast('Tour completed!', 'success'); return; }
+      const step = steps[index];
+      const el = document.querySelector(step.selector);
+      if (!el) { index++; showStep(); return; }
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tour-tooltip';
+      tooltip.innerHTML = `<strong>${step.title}</strong><br>${step.content}<br><button>${index === steps.length-1 ? 'Finish' : 'Next'}</button>`;
+      document.body.appendChild(tooltip);
+      const rect = el.getBoundingClientRect();
+      tooltip.style.top = rect.bottom + window.scrollY + 10 + 'px';
+      tooltip.style.left = rect.left + window.scrollX + 'px';
+      tooltip.querySelector('button').onclick = () => {
+        tooltip.remove();
+        index++;
+        showStep();
+      };
+    }
+    showStep();
+  }
+
   // ========== ACTIVITY LOG ==========
+  let activityLog = [];
   function logActivity(type, name, id, extra = '') {
     activityLog.unshift({ type, name, id, extra, time: Date.now() });
     if (activityLog.length > 50) activityLog = activityLog.slice(0, 50);
@@ -427,7 +609,7 @@
     const sorted = Object.entries(months).sort((a,b) => b[1].sort.localeCompare(a[1].sort));
     tbody.innerHTML = sorted.map(([month, d]) => {
       const margin = d.revenue ? ((d.profit/d.revenue)*100).toFixed(1) : 0;
-      return `<tr><td><strong>${month}</strong></td><td>${d.items}</td><td>₱${d.revenue.toLocaleString()}</td><td>₱${d.capital.toLocaleString()}</td><td style="color:${d.profit>=0?'var(--green)':'var(--red)'}"><strong>₱${d.profit.toLocaleString()}</strong></td><td><strong>${margin}%</strong></td></tr>`;
+      return `<tr><td><strong>${month}</strong></td><td>${d.items}</td><td>${formatCurrency(d.revenue)}</td><td>${formatCurrency(d.capital)}</td><td style="color:${d.profit>=0?'var(--green)':'var(--red)'}"><strong>${formatCurrency(d.profit)}</strong></td><td><strong>${margin}%</strong></td></tr>`;
     }).join('');
   }
 
@@ -483,6 +665,23 @@
     toast('Uploading images...', '');
     const urls = await Promise.all(Array.from(files).slice(0, 5).map(uploadImage));
     return urls.filter(Boolean).join(',');
+  }
+  function setupDragAndDrop(dropZoneId, fileInputId) {
+    const dropZone = document.getElementById(dropZoneId);
+    const fileInput = document.getElementById(fileInputId);
+    if (!dropZone || !fileInput) return;
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.background = 'rgba(29,78,216,0.1)'; });
+    dropZone.addEventListener('dragleave', () => { dropZone.style.background = ''; });
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.style.background = '';
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      if (files.length) {
+        fileInput.files = files;
+        toast(`${files.length} image(s) added`, 'success');
+      }
+    });
+    dropZone.addEventListener('click', () => fileInput.click());
   }
 
   // ========== ADD ITEM ==========
@@ -579,6 +778,8 @@
   }
 
   // ========== DELETE (ARCHIVE) ==========
+  let pendingDelete = null;
+  let undoTimer = null;
   function confirmDelete(id, name) {
     pendingDelete = { id, name };
     showUndoToast(`"${name}" moved to archive`);
@@ -706,10 +907,10 @@
     const profitEl = document.getElementById('prev-profit');
     const newCapitalEl = document.getElementById('prev-new-capital');
     if (profitEl) {
-      profitEl.innerText = `Profit on your item: ₱${profit.toLocaleString()}`;
+      profitEl.innerText = `Profit on your item: ${formatCurrency(profit)}`;
       profitEl.style.color = profit >= 0 ? 'var(--green)' : 'var(--red)';
     }
-    if (newCapitalEl) newCapitalEl.innerText = `New item capital: ₱${newCapital.toLocaleString()}`;
+    if (newCapitalEl) newCapitalEl.innerText = `New item capital: ${formatCurrency(newCapital)}`;
   }
   async function submitTrade() {
     const originalId = document.getElementById('trade-original-id')?.value;
@@ -871,7 +1072,7 @@
     doc.setFontSize(11);
     doc.setTextColor(255, 255, 255);
     doc.text(`Item: ${item[2]}`, 28, prodY + 28);
-    doc.text(`Amount Paid: PHP ${Number(soldAmount).toLocaleString()}`, 28, prodY + 42);
+    doc.text(`Amount Paid: ${formatCurrency(soldAmount)}`, 28, prodY + 42);
     const thanksY = prodY + 60;
     doc.setFillColor(0, 30, 50);
     doc.roundedRect(20, thanksY, pageWidth - 40, 35, 4, 4, 'F');
@@ -952,18 +1153,34 @@
       });
     }
     if (!items.length) return toast('No valid items found', 'error');
-    showSpinner();
-    const result = await safeFetch(API, { method: 'POST', body: JSON.stringify({ action: 'importItems', items }) });
-    hideSpinner();
-    if (result && result.status === 'success') { toast(`Imported ${result.added} items`, 'success'); loadItems(true); }
-    else { toast('Import failed', 'error'); }
+    showProgressOverlay();
+    let completed = 0;
+    for (let item of items) {
+      await safeFetch(API, { method: 'POST', body: JSON.stringify({ action: 'importItems', items: [item] }) });
+      completed++;
+      updateProgress((completed/items.length)*100, `Imported ${completed} of ${items.length}`);
+    }
+    hideProgressOverlay();
+    toast(`Imported ${items.length} items`, 'success');
+    loadItems(true);
     input.value = '';
   }
 
   // ========== VIEW, FILTER, SORT, RENDER ==========
+  let cachedItems = [];
+  let cacheTimestamp = 0;
+  const CACHE_TTL = 30000;
+  let currentView = 'grid';
+  let activeChip = 'all';
+  let showArchived = false;
+  let currentPage = 1;
+  const ITEMS_PER_PAGE = 12;
+  let activeCategory = 'ALL';
+  let salesChart = null;
+  let currentChartType = 'bar';
+
   function setView(v) { currentView = v; safeSetStorage('inventoryView', v); document.getElementById('btnGrid').classList.toggle('active', v === 'grid'); document.getElementById('btnList').classList.toggle('active', v === 'list'); renderItems(); }
   function setCategoryFilter(cat, btn) { activeCategory = cat; document.querySelectorAll('.category-tabs button').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active'); currentPage = 1; renderItems(); }
-  let activeCategory = 'ALL';
   function resetAndRender() { currentPage = 1; renderItems(); }
   let searchTimer = null;
   function debouncedSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(() => { currentPage = 1; renderItems(); }, 280); }
@@ -1005,12 +1222,12 @@
   function loadDashboard() {
     safeFetch(API + '?action=getDashboard').then(d => {
       if (!d) return;
-      if (document.getElementById('capital')) document.getElementById('capital').innerText = '₱' + (d.totalCapital || 0).toLocaleString();
-      if (document.getElementById('sales')) document.getElementById('sales').innerText = '₱' + (d.totalSales || 0).toLocaleString();
-      if (document.getElementById('profit')) document.getElementById('profit').innerText = '₱' + (d.totalProfit || 0).toLocaleString();
-      if (document.getElementById('onhand')) document.getElementById('onhand').innerText = d.onHand || 0;
-      if (document.getElementById('sold')) document.getElementById('sold').innerText = d.soldCount || 0;
-      if (document.getElementById('traded')) document.getElementById('traded').innerText = d.tradedCount || 0;
+      if (document.getElementById('capital')) document.getElementById('capital').innerText = formatCurrency(d.totalCapital||0);
+      if (document.getElementById('sales')) document.getElementById('sales').innerText = formatCurrency(d.totalSales||0);
+      if (document.getElementById('profit')) document.getElementById('profit').innerText = formatCurrency(d.totalProfit||0);
+      if (document.getElementById('onhand')) document.getElementById('onhand').innerText = d.onHand||0;
+      if (document.getElementById('sold')) document.getElementById('sold').innerText = d.soldCount||0;
+      if (document.getElementById('traded')) document.getElementById('traded').innerText = d.tradedCount||0;
     });
   }
   function loadItems(forceRefresh = false) {
@@ -1047,6 +1264,17 @@
       if (name.indexOf(searchVal) === -1) return false;
       if (filterVal !== 'ALL' && st !== filterVal) return false;
       if (activeCategory !== 'ALL' && cat !== activeCategory) return false;
+      // Advanced filters
+      const dateFrom = document.getElementById('dateFrom')?.value;
+      const dateTo = document.getElementById('dateTo')?.value;
+      const minProfit = parseFloat(document.getElementById('minProfit')?.value);
+      const maxProfit = parseFloat(document.getElementById('maxProfit')?.value);
+      const addedDate = new Date(r[1]);
+      if (dateFrom && addedDate < new Date(dateFrom)) return false;
+      if (dateTo && addedDate > new Date(dateTo)) return false;
+      const profit = +r[13] || 0;
+      if (!isNaN(minProfit) && profit < minProfit) return false;
+      if (!isNaN(maxProfit) && profit > maxProfit) return false;
       return true;
     })));
     const totalFiltered = filtered.length;
@@ -1059,6 +1287,7 @@
     if (!container) return;
     if (totalFiltered === 0) { container.innerHTML = `<div class="grid"><div class="empty-state"><div style="font-size:52px">📭</div><p>No products found</p></div></div>`; return; }
     if (currentView === 'list') {
+      const visibleCols = loadColumnVisibility();
       let listHTML = `<div class="list-view">`;
       listHTML += pageItems.map(r => {
         const id = r[0]||'', p = r[2]||'', c = r[3]||'', cap = +r[7]||0;
@@ -1066,7 +1295,15 @@
         const st = r[10]||'ON HAND', pro = +r[13]||0;
         const pillClass = st === 'SOLD' ? 'sold' : (st === 'TRADED' ? 'traded' : 'onhand');
         const thumbSrc = imgs[0] || '';
-        return `<div class="list-item" onclick="openDetailModal('${id}')"><div class="list-thumb">${thumbSrc ? `<img data-src="${thumbSrc}" src="" style="width:48px;height:48px;object-fit:cover;border-radius:10px;">` : `<span>📦</span>`}</div><div class="list-info"><h4 onclick="event.stopPropagation();openDetailModal('${id}')">${p}</h4><p>${c} · ₱${cap.toLocaleString()} capital</p></div><div class="list-meta"><span class="list-pill ${pillClass}">${st === 'ON HAND' ? 'On Hand' : st}</span><span class="list-profit" style="color:${pro>=0?'var(--green)':'var(--red)'}">₱${pro.toLocaleString()}</span></div></div>`;
+        let rowHtml = `<div class="list-item" onclick="openDetailModal('${id}')">`;
+        rowHtml += `<input type="checkbox" class="select-checkbox" onclick="event.stopPropagation(); toggleSelect('${id}')" ${selectedIds.has(id) ? 'checked' : ''}>`;
+        if (visibleCols.includes('thumb')) rowHtml += `<div class="list-thumb">${thumbSrc ? `<img data-src="${thumbSrc}" src="" style="width:48px;height:48px;object-fit:cover;border-radius:10px;">` : `<span>📦</span>`}</div>`;
+        if (visibleCols.includes('name')) rowHtml += `<div class="list-info"><h4 onclick="event.stopPropagation();openDetailModal('${id}')">${p}</h4><p>${c}</p></div>`;
+        if (visibleCols.includes('capital')) rowHtml += `<div>${formatCurrency(cap)}</div>`;
+        if (visibleCols.includes('status')) rowHtml += `<div><span class="list-pill ${pillClass}">${st === 'ON HAND' ? 'On Hand' : st}</span></div>`;
+        if (visibleCols.includes('profit')) rowHtml += `<div><span class="list-profit" style="color:${pro>=0?'var(--green)':'var(--red)'}">${formatCurrency(pro)}</span></div>`;
+        rowHtml += `</div>`;
+        return rowHtml;
       }).join('');
       listHTML += `</div>`;
       container.innerHTML = listHTML;
@@ -1088,7 +1325,7 @@
           imgHTML = `<div class='item-gallery'><img class='main-img' data-src='${mainSrc}' src='' alt='${safeP}' onclick="openLightbox('${mainSrc}')">${imgs.length > 1 ? `<div class='thumb-row'>${imgs.map((url,i) => `<img data-src='${url}' src='' class='${i===0?"active":""}' onclick="switchMainImg(this,'${url}','${id}')" alt=''>`).join('')}</div>` : ''}</div>`;
         } else { imgHTML = `<div class='item-no-img'>📦</div>`; }
         const actionButtons = getActionButtons(r, safeP, safeN, id, c, pu, sh, o, cap, st);
-        gridHTML += `<div class='item' id='item-${id}'><span class='status-pill ${pillClass}'>${pillLabel}</span>${imgHTML}<div class='item-body'><h3 onclick="openDetailModal('${id}')">${p}</h3><p style='color:var(--subtext)'>${c}</p><p>Capital: <strong>₱${cap.toLocaleString()}</strong></p>${st !== 'ON HAND' && cap > 0 ? `<span class="margin-badge ${pro>=0?'positive':'negative'}">${pro>=0?'+':''}${margin}% margin</span>` : ''}${st === 'TRADED' ? `<div class='trade-info'>🔄 Trade Value: <strong>₱${soldp.toLocaleString()}</strong><br>Profit: <strong style='color:${pro>=0?"var(--green)":"var(--red)"}'>₱${pro.toLocaleString()}</strong></div>` : `<p>Sold: <strong>${soldp ? '₱'+soldp.toLocaleString() : '-'}</strong></p><p style='color:${pro>=0?"var(--green)":"var(--red)"}'>Profit: <strong>₱${pro.toLocaleString()}</strong></p>`}${notes ? `<div class='item-notes'>💬 ${notes}</div>` : ''}${actionButtons}</div></div>`;
+        gridHTML += `<div class='item' id='item-${id}'><input type="checkbox" class="select-checkbox" onchange="toggleSelect('${id}')" ${selectedIds.has(id) ? 'checked' : ''}><div class="swipe-actions"><button onclick="openEditModal('${id}','${safeP}','${c}','${pu}','${sh}','${o}','${safeN}')" style="border-radius:0;">✏️</button><button class="btn-danger" onclick="confirmDelete('${id}','${safeP}')" style="border-radius:0;">🗑️</button></div><span class='status-pill ${pillClass}'>${pillLabel}</span>${imgHTML}<div class='item-body'><h3 onclick="openDetailModal('${id}')">${p}</h3><p style='color:var(--subtext)'>${c}</p><p>Capital: <strong>${formatCurrency(cap)}</strong></p>${st !== 'ON HAND' && cap > 0 ? `<span class="margin-badge ${pro>=0?'positive':'negative'}">${pro>=0?'+':''}${margin}% margin</span>` : ''}${st === 'TRADED' ? `<div class='trade-info'>🔄 Trade Value: <strong>${formatCurrency(soldp)}</strong><br>Profit: <strong style='color:${pro>=0?"var(--green)":"var(--red)"}'>${formatCurrency(pro)}</strong></div>` : `<p>Sold: <strong>${soldp ? formatCurrency(soldp) : '-'}</strong></p><p style='color:${pro>=0?"var(--green)":"var(--red)"}'>Profit: <strong>${formatCurrency(pro)}</strong></p>`}${notes ? `<div class='item-notes'>💬 ${notes}</div>` : ''}${actionButtons}</div></div>`;
       }
       gridHTML += `</div>`;
       container.innerHTML = gridHTML;
@@ -1134,11 +1371,29 @@
     document.querySelectorAll('.item').forEach(card => {
       let startX = 0, startY = 0;
       card.addEventListener('touchstart', e => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; card.classList.add('pressing'); }, { passive: true });
-      card.addEventListener('touchmove', e => { const dx = e.touches[0].clientX - startX; const dy = e.touches[0].clientY - startY; if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) { card.classList.remove('pressing'); card.classList.toggle('swipe-left', dx < 0); card.classList.toggle('swipe-right', dx > 0); } }, { passive: true });
-      card.addEventListener('touchend', () => { card.classList.remove('pressing', 'swipe-left', 'swipe-right'); });
-      card.addEventListener('mousedown', () => card.classList.add('pressing'));
-      card.addEventListener('mouseup', () => card.classList.remove('pressing'));
-      card.addEventListener('mouseleave', () => card.classList.remove('pressing'));
+      card.addEventListener('touchmove', e => {
+        const dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 15) {
+          e.preventDefault();
+          card.style.transform = `translateX(${dx * 0.5}px)`;
+          if (dx < -30) card.classList.add('swipe-left');
+          else if (dx > 30) card.classList.add('swipe-right');
+          else { card.classList.remove('swipe-left', 'swipe-right'); }
+        }
+      }, { passive: false });
+      card.addEventListener('touchend', () => {
+        card.classList.remove('pressing');
+        card.style.transform = '';
+        if (card.classList.contains('swipe-left')) {
+          const deleteBtn = card.querySelector('.swipe-actions .btn-danger');
+          if (deleteBtn) deleteBtn.click();
+        } else if (card.classList.contains('swipe-right')) {
+          const editBtn = card.querySelector('.swipe-actions button:first-child');
+          if (editBtn) editBtn.click();
+        }
+        card.classList.remove('swipe-left', 'swipe-right');
+      });
     });
   }
 
@@ -1208,7 +1463,7 @@
       y += 8;
       if (y > 190) { doc.addPage(); y = 20; }
       if (ri % 2 === 0) { doc.setFillColor(235,240,250); doc.rect(14, y, totalW, 8, 'F'); }
-      const row = [r[0]||'', r[2]||'', r[3]||'', '₱'+(+r[7]||0).toLocaleString(), r[10]||'ON HAND', r[12] ? '₱'+(+r[12]).toLocaleString() : '-', '₱'+(+r[13]||0).toLocaleString(), (r[14]||'').slice(0,30)];
+      const row = [r[0]||'', r[2]||'', r[3]||'', formatCurrency(+r[7]||0), r[10]||'ON HAND', r[12] ? formatCurrency(+r[12]) : '-', formatCurrency(+r[13]||0), (r[14]||'').slice(0,30)];
       row.forEach((cell,i) => doc.text(String(cell).slice(0,22), colX[i]+2, y+5.5));
     });
     doc.save('inventory_' + new Date().toISOString().slice(0,10) + '.pdf');
@@ -1251,7 +1506,7 @@
     const st = r[10] || 'ON HAND';
     const soldDate = r[11] ? new Date(r[11]).toLocaleDateString() : '—';
     const soldp = +r[12] || 0, pro = +r[13] || 0, notes = r[14] || '', buyer = r[15] || '', seller = r[16] || '';
-    const addDate = r[1] ? new Date(r[1]).toLocaleDateString() : '—';
+    const addDate = formatDate(r[1]);
     const margin = cap > 0 ? ((pro / cap) * 100).toFixed(1) : '0';
     const pillClass = st === 'SOLD' ? 'sold' : (st === 'TRADED' ? 'traded' : 'onhand');
     const pillLabel = st === 'ON HAND' ? '📦 On Hand' : (st === 'SOLD' ? '✅ Sold' : '🔄 Traded');
@@ -1265,21 +1520,35 @@
     const bodyContainer = document.getElementById('detailBody');
     if (!heroContainer || !bodyContainer) return;
     heroContainer.innerHTML = heroHTML;
-    bodyContainer.innerHTML = `<div class="detail-title">${p}</div><div class="detail-category">${c} · ${r[0]}</div><div class="detail-grid"><div class="detail-field"><label>Date Added</label><span>${addDate}</span></div><div class="detail-field"><label>Status</label><span>${pillLabel}</span></div><div class="detail-field"><label>Purchase Amount</label><span>₱${pu.toLocaleString()}</span></div><div class="detail-field"><label>Shipping Fee</label><span>₱${sh.toLocaleString()}</span></div><div class="detail-field"><label>Other Fee</label><span>₱${o.toLocaleString()}</span></div><div class="detail-field"><label>Total Capital</label><span>₱${cap.toLocaleString()}</span></div>${st !== 'ON HAND' ? `<div class="detail-field"><label>${st==='TRADED'?'Trade':'Sold'} Date</label><span>${soldDate}</span></div><div class="detail-field"><label>${st==='TRADED'?'Trade Value':'Sold Amount'}</label><span>₱${soldp.toLocaleString()}</span></div><div class="detail-field ${pro>=0?'profit-pos':'profit-neg'}"><label>Net Profit</label><span>₱${pro.toLocaleString()}</span></div><div class="detail-field"><label>Margin</label><span>${pro>=0?'+':''}${margin}%</span></div>` : ''}${buyer ? `<div class="detail-field"><label>Buyer</label><span>${buyer}</span></div>` : ''}${seller ? `<div class="detail-field"><label>Seller</label><span>${seller}</span></div>` : ''}${notes ? `<div class="detail-field full"><label>Notes</label><div class="detail-notes-box">${notes}</div></div>` : ''}</div><div class="detail-action-row"><button onclick="closeDetailModal();openEditModal('${r[0]}','${p.replace(/'/g,"\\'")}','${c}','${pu}','${sh}','${o}','${notes.replace(/'/g,"\\'")}')">✏️ Edit</button><button class="btn-danger" onclick="closeDetailModal();confirmDelete('${r[0]}','${p.replace(/'/g,"\\'")}')">🗑️ Archive</button></div>`;
+    bodyContainer.innerHTML = `<div class="detail-title">${p}</div><div class="detail-category">${c} · ${r[0]}</div><div class="detail-grid"><div class="detail-field"><label>Date Added</label><span>${addDate}</span></div><div class="detail-field"><label>Status</label><span>${pillLabel}</span></div><div class="detail-field"><label>Purchase Amount</label><span>${formatCurrency(pu)}</span></div><div class="detail-field"><label>Shipping Fee</label><span>${formatCurrency(sh)}</span></div><div class="detail-field"><label>Other Fee</label><span>${formatCurrency(o)}</span></div><div class="detail-field"><label>Total Capital</label><span>${formatCurrency(cap)}</span></div>${st !== 'ON HAND' ? `<div class="detail-field"><label>${st==='TRADED'?'Trade':'Sold'} Date</label><span>${formatDate(r[11])}</span></div><div class="detail-field"><label>${st==='TRADED'?'Trade Value':'Sold Amount'}</label><span>${formatCurrency(soldp)}</span></div><div class="detail-field ${pro>=0?'profit-pos':'profit-neg'}"><label>Net Profit</label><span>${formatCurrency(pro)}</span></div><div class="detail-field"><label>Margin</label><span>${pro>=0?'+':''}${margin}%</span></div>` : ''}${buyer ? `<div class="detail-field"><label>Buyer</label><span>${buyer}</span></div>` : ''}${seller ? `<div class="detail-field"><label>Seller</label><span>${seller}</span></div>` : ''}${notes ? `<div class="detail-field full"><label>Notes</label><div class="detail-notes-box">${notes}</div></div>` : ''}</div><div class="detail-action-row"><button onclick="closeDetailModal();openEditModal('${r[0]}','${p.replace(/'/g,"\\'")}','${c}','${pu}','${sh}','${o}','${notes.replace(/'/g,"\\'")}')">✏️ Edit</button><button class="btn-danger" onclick="closeDetailModal();confirmDelete('${r[0]}','${p.replace(/'/g,"\\'")}')">🗑️ Archive</button><button class="btn-secondary" onclick="showProductHistory('${r[0]}')">📜 History</button></div>`;
     document.getElementById('detailModal').classList.add('show');
   }
   function closeDetailModal(e) { if (e && e.target !== document.getElementById('detailModal')) return; document.getElementById('detailModal').classList.remove('show'); }
   function switchDetailImg(thumb, url) { const main = document.getElementById('detailMainImg'); if (main) { main.src = url; main.onclick = () => openLightbox(url); } document.querySelectorAll('.detail-hero-thumbs img').forEach(t => t.classList.remove('active')); thumb.classList.add('active'); }
+  async function showProductHistory(id) {
+    const res = await safeFetch(API + '?action=getHistory&id=' + id);
+    if (!res || !res.length) { toast('No history found', 'error'); return; }
+    let html = '<div style="max-height:300px; overflow-y:auto;"><table style="width:100%; font-size:12px;"><tr><th>Time</th><th>Action</th><th>Details</th></tr>';
+    res.forEach(h => {
+      html += `<tr><td>${formatDate(h[0])}</td><td>${h[2]}</td><td>${h[3]} → ${h[4]}</td></tr>`;
+    });
+    html += '</table></div>';
+    showConfirm('📜', 'Product History', html, 'Close', 'btn-secondary', () => {});
+  }
 
   // ========== INIT ==========
-  loadDarkMode();
-  currentView = safeGetStorage('inventoryView', 'grid');
-  setView(currentView);
-  loadDashboard();
-  loadItems(true);
-  loadDraft();
-  activityLog = safeGetStorage('activityLog', []);
-  buildActivityFeed();
+  window.onload = () => {
+    loadDarkMode();
+    currentView = safeGetStorage('inventoryView', 'grid');
+    setView(currentView);
+    loadDashboard();
+    loadItems(true);
+    loadDraft();
+    activityLog = safeGetStorage('activityLog', []);
+    buildActivityFeed();
+    setupDragAndDrop('dropZone', 'imageInput');
+    setupDragAndDrop('edit-dropZone', 'edit-image');
+  };
 </script>
 </body>
 </html>
