@@ -8,7 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    /* ===== ALL ORIGINAL STYLES RETAINED (no new bulky features) ===== */
+    /* ===== YOUR EXISTING STYLES (same as before) ===== */
     :root {
       --bg:#e8edf5; --orb1:#1e3a5f; --orb2:#0369a1; --orb3:#1d4ed8; --orb4:#0f766e;
       --glass:rgba(255,255,255,0.62); --glass-border:rgba(255,255,255,0.82);
@@ -178,12 +178,11 @@
     .activity-dot { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; }
     .draft-badge { font-size:11px; color:var(--subtext); margin-top:6px; display:none; font-weight:600; }
     .draft-badge.show { display:block; }
-    /* New additions for drag & drop and tour */
+    .drop-zone { border:2px dashed var(--accent); border-radius:12px; padding:20px; text-align:center; cursor:pointer; transition:background 0.2s; }
+    .drop-zone.drag-over { background:rgba(29,78,216,0.1); }
     .tour-tooltip { position:absolute; background:#1e3a5f; color:white; padding:12px; border-radius:12px; max-width:250px; z-index:10001; box-shadow:0 4px 12px rgba(0,0,0,0.3); }
     .tour-tooltip button { margin-top:8px; background:white; color:#1e3a5f; padding:4px 12px; width:auto; }
     .tour-tooltip::before { content:''; position:absolute; top:-8px; left:20px; border-left:8px solid transparent; border-right:8px solid transparent; border-bottom:8px solid #1e3a5f; }
-    .drop-zone { border:2px dashed var(--accent); border-radius:12px; padding:20px; text-align:center; cursor:pointer; transition:background 0.2s; }
-    .drop-zone.drag-over { background:rgba(29,78,216,0.1); }
   </style>
 </head>
 <body>
@@ -280,7 +279,7 @@
 
 <script>
   // ==================== CONFIGURATION ====================
-  const API       = 'https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec';
+  const API       = 'https://script.google.com/macros/s/AKfycbzhvOEUeMnjsuTjdi6D2vFko9fEF_kkFcmhYoXA81dJkPjkr25ABfeyYSRbNwAu6lde/exec'; // REPLACE THIS
   const IMGBB_KEY = 'c1047f546534cb119c255afbd588a63f';
   const LOGO_URL  = 'https://i.ibb.co/p6pRc65C/received-26163013153378553.jpg';
 
@@ -309,6 +308,7 @@
       const text = await res.text();
       return JSON.parse(text);
     } catch(err) {
+      console.error('Fetch error:', err);
       toast('Network error. Please try again.', 'error');
       return null;
     }
@@ -360,7 +360,101 @@
   function closeConfirm() { document.getElementById('confirmModal').style.display = 'none'; confirmCallback = null; }
   document.getElementById('confirmOkBtn')?.addEventListener('click', () => { if (confirmCallback) confirmCallback(); closeConfirm(); });
 
-  // ========== DRAG & DROP ==========
+  // ========== IMAGE COMPRESSION & UPLOAD (FIXED FOR MOBILE) ==========
+  function compressImage(file, maxWidth = 1024, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            resolve(blob);
+          }, 'image/jpeg', quality);
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+  }
+
+  async function uploadImage(file) {
+    return new Promise(async (resolve) => {
+      const timeout = setTimeout(() => {
+        console.error('Upload timeout for', file.name);
+        resolve('');
+      }, 30000);
+
+      try {
+        const compressedBlob = await compressImage(file);
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const base64 = e.target.result.split(',')[1];
+            const formData = new FormData();
+            formData.append('image', base64);
+            const response = await fetch('https://api.imgbb.com/1/upload?key=' + IMGBB_KEY, {
+              method: 'POST',
+              body: formData
+            });
+            const data = await response.json();
+            clearTimeout(timeout);
+            if (data.success) {
+              console.log('Upload success:', data.data.url);
+              resolve(data.data.url);
+            } else {
+              console.error('ImgBB error:', data);
+              resolve('');
+            }
+          } catch (err) {
+            console.error('Upload fetch error:', err);
+            clearTimeout(timeout);
+            resolve('');
+          }
+        };
+        reader.onerror = (err) => {
+          console.error('FileReader error:', err);
+          clearTimeout(timeout);
+          resolve('');
+        };
+        reader.readAsDataURL(compressedBlob);
+      } catch (err) {
+        console.error('Compression error:', err);
+        clearTimeout(timeout);
+        resolve('');
+      }
+    });
+  }
+
+  async function uploadImages(files) {
+    if (!files || !files.length) return '';
+    toast('Uploading images...', '');
+    const urls = [];
+    for (let i = 0; i < Math.min(files.length, 5); i++) {
+      const url = await uploadImage(files[i]);
+      if (url) urls.push(url);
+    }
+    if (urls.length === 0) {
+      toast('Image upload failed', 'error');
+      return '';
+    }
+    toast(`Uploaded ${urls.length} image(s)`, 'success');
+    return urls.join(',');
+  }
+
+  // ========== DRAG & DROP SETUP (fixed for mobile) ==========
   function setupDragAndDrop(dropZoneId, fileInputId) {
     const dropZone = document.getElementById(dropZoneId);
     const fileInput = document.getElementById(fileInputId);
@@ -377,64 +471,12 @@
       }
     });
     dropZone.addEventListener('click', () => fileInput.click());
-  }
-
-  // ========== TOUR ==========
-  function startTour() {
-    const steps = [
-      { selector: '#addFormBox', title: '➕ Add Product', content: 'Fill in details, drag & drop images, and save.' },
-      { selector: '.search-row', title: '🔍 Search & Filter', content: 'Find products by name, status, or profit margin.' },
-      { selector: '.category-tabs', title: '📂 Categories', content: 'Filter by product category.' },
-      { selector: '.chart-box', title: '📊 Analytics', content: 'View sales and profit trends.' },
-      { selector: '.monthly-box', title: '📅 Monthly Summary', content: 'See your monthly performance.' }
-    ];
-    let index = 0;
-    function showStep() {
-      if (index >= steps.length) { toast('Tour completed!', 'success'); return; }
-      const step = steps[index];
-      const el = document.querySelector(step.selector);
-      if (!el) { index++; showStep(); return; }
-      const tooltip = document.createElement('div');
-      tooltip.className = 'tour-tooltip';
-      tooltip.innerHTML = `<strong>${step.title}</strong><br>${step.content}<br><button>${index === steps.length-1 ? 'Finish' : 'Next'}</button>`;
-      document.body.appendChild(tooltip);
-      const rect = el.getBoundingClientRect();
-      tooltip.style.top = rect.bottom + window.scrollY + 10 + 'px';
-      tooltip.style.left = rect.left + window.scrollX + 'px';
-      tooltip.querySelector('button').onclick = () => {
-        tooltip.remove();
-        index++;
-        showStep();
-      };
-    }
-    showStep();
-  }
-
-  // ========== IMAGE UPLOAD ==========
-  async function uploadImage(file) {
-    return new Promise(resolve => {
-      const timeout = setTimeout(() => resolve(''), 12000);
-      const reader = new FileReader();
-      reader.onload = async e => {
-        try {
-          const base64 = e.target.result.split(',')[1];
-          const fd = new FormData();
-          fd.append('image', base64);
-          const r = await fetch('https://api.imgbb.com/1/upload?key=' + IMGBB_KEY, { method: 'POST', body: fd });
-          const d = await r.json();
-          clearTimeout(timeout);
-          resolve(d.success ? d.data.url : '');
-        } catch { clearTimeout(timeout); resolve(''); }
-      };
-      reader.onerror = () => { clearTimeout(timeout); resolve(''); };
-      reader.readAsDataURL(file);
+    // Also listen to file input change (for mobile selection)
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) {
+        toast(`${fileInput.files.length} image(s) selected`, 'success');
+      }
     });
-  }
-  async function uploadImages(files) {
-    if (!files || !files.length) return '';
-    toast('Uploading images...', '');
-    const urls = await Promise.all(Array.from(files).slice(0, 5).map(uploadImage));
-    return urls.filter(Boolean).join(',');
   }
 
   // ========== ACTIVITY LOG ==========
@@ -480,7 +522,7 @@
     const tbody = document.getElementById('monthlyTableBody');
     if (!tbody) return;
     const soldItems = cachedItems.filter(r => r[10] === 'SOLD' && r[11]);
-    if (!soldItems.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px">No sales data yet</td></tr>'; return; }
+    if (!soldItems.length) { tbody.innerHTML = '<table><td colspan="6" style="text-align:center;padding:20px">No sales data yet</td></tr>'; return; }
     const months = {};
     soldItems.forEach(r => {
       const d = new Date(r[11]);
@@ -552,7 +594,9 @@
     const imageEl = document.getElementById('imageInput');
     if (imageEl && imageEl.files.length > 0 && result.id) {
       const photoURLs = await uploadImages(imageEl.files);
-      if (photoURLs) await safeFetch(API, { method: 'POST', body: JSON.stringify({ action: 'uploadImage', id: result.id, photoURL: photoURLs }) });
+      if (photoURLs) {
+        await safeFetch(API, { method: 'POST', body: JSON.stringify({ action: 'uploadImage', id: result.id, photoURL: photoURLs }) });
+      }
     }
     document.getElementById('nameInput').value = '';
     document.getElementById('priceInput').value = '';
@@ -793,14 +837,12 @@
     loadItems(true);
   }
 
-  // ========== INVOICE (simplified, but uses formatting) ==========
+  // ========== INVOICE (simplified, uses formatting) ==========
   async function generateAndDownloadInvoice(item, soldAmount, buyerName, sellerName) {
     if (typeof window.jspdf === 'undefined') { toast('PDF library not loaded', 'error'); return; }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    // Use formatting for amounts
     doc.setFontSize(16);
     doc.text('INVOICE', pageWidth/2, 20, { align: 'center' });
     doc.setFontSize(10);
@@ -1016,7 +1058,7 @@
   }
   function switchChart(type, btn) { currentChartType = type; document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active'); if (cachedItems.length) buildChart(cachedItems); }
 
-  // ========== EXPORT (uses formatting) ==========
+  // ========== EXPORT ==========
   function exportCSV() {
     if (!cachedItems.length) return toast('No data to export', 'error');
     const headers = ['ID','Date','Product','Category','Purchase','Shipping','Other','Capital','Qty','Images','Status','Sold Date','Sold Amount','Profit','Notes','Buyer','Seller'];
@@ -1095,7 +1137,6 @@
     const p = r[2] || '', c = r[3] || '', pu = +r[4] || 0, sh = +r[5] || 0, o = +r[6] || 0, cap = +r[7] || 0;
     const imgs = (r[9] || '').split(',').filter(Boolean);
     const st = r[10] || 'ON HAND';
-    const soldDate = r[11] ? new Date(r[11]).toLocaleDateString() : '—';
     const soldp = +r[12] || 0, pro = +r[13] || 0, notes = r[14] || '', buyer = r[15] || '', seller = r[16] || '';
     const addDate = formatDate(r[1]);
     const margin = cap > 0 ? ((pro / cap) * 100).toFixed(1) : '0';
@@ -1125,6 +1166,37 @@
     });
     html += '</table></div>';
     showConfirm('📜', 'Product History', html, 'Close', 'btn-secondary', () => {});
+  }
+
+  // ========== TOUR ==========
+  function startTour() {
+    const steps = [
+      { selector: '#addFormBox', title: '➕ Add Product', content: 'Fill in details, drag & drop images, and save.' },
+      { selector: '.search-row', title: '🔍 Search & Filter', content: 'Find products by name, status, or profit margin.' },
+      { selector: '.category-tabs', title: '📂 Categories', content: 'Filter by product category.' },
+      { selector: '.chart-box', title: '📊 Analytics', content: 'View sales and profit trends.' },
+      { selector: '.monthly-box', title: '📅 Monthly Summary', content: 'See your monthly performance.' }
+    ];
+    let index = 0;
+    function showStep() {
+      if (index >= steps.length) { toast('Tour completed!', 'success'); return; }
+      const step = steps[index];
+      const el = document.querySelector(step.selector);
+      if (!el) { index++; showStep(); return; }
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tour-tooltip';
+      tooltip.innerHTML = `<strong>${step.title}</strong><br>${step.content}<br><button>${index === steps.length-1 ? 'Finish' : 'Next'}</button>`;
+      document.body.appendChild(tooltip);
+      const rect = el.getBoundingClientRect();
+      tooltip.style.top = rect.bottom + window.scrollY + 10 + 'px';
+      tooltip.style.left = rect.left + window.scrollX + 'px';
+      tooltip.querySelector('button').onclick = () => {
+        tooltip.remove();
+        index++;
+        showStep();
+      };
+    }
+    showStep();
   }
 
   // ========== INIT ==========
